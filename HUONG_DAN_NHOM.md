@@ -17,34 +17,35 @@ rossman-sale-store/
 ├── store.csv                         # Dữ liệu gốc (KHÔNG CHỈNH SỬA)
 │
 ├── R/                                # ⭐ THƯ MỤC CODE CHÍNH
-│   ├── 00_setup.R                    # Shared: packages + config (TV1 quản lý)
-│   ├── tv1_data_pipeline.R           # 🔒 TV1 ONLY
-│   ├── tv1_utils.R                   # 🔒 TV1 ONLY (cả nhóm GỌI, không SỬA)
-│   ├── tv1_statistical_tests.R       # 🔒 TV1 ONLY
-│   ├── tv2_eda.R                     # 🔒 TV2 ONLY
-│   ├── tv3_visualization.R           # 🔒 TV3 ONLY
-│   ├── tv4_modeling.R                # 🔒 TV4 ONLY
-│   └── tv5_evaluation.R             # 🔒 TV5 ONLY
+│   ├── 00_setup.R                    # Shared: packages + config (Quốc Anh quản lý)
+│   ├── data_pipeline.R               # 🔒 Quốc Anh ONLY
+│   ├── utils.R                       # 🔒 Quốc Anh ONLY (cả nhóm GỌI, không SỬA)
+│   ├── statistical_tests.R           # 🔒 Quốc Anh ONLY
+│   ├── eda.R                         # 🔒 Thanh Phúc ONLY
+│   ├── visualization.R               # 🔒 Gia Hân ONLY
+│   ├── modeling.R                    # 🔒 Đức Thắng ONLY
+│   ├── evaluation.R                  # 🔒 Thành Tài ONLY
+│   └── time_series.R                 # 🔒 Thành Tài ONLY
 │
 ├── rossman_analysis.Rmd              # File Rmd chính — source() tất cả R/
 │
 ├── output/
 │   ├── data/                         # RDS files (tái tạo từ code)
-│   │   ├── df_clean.rds              # TV1 tạo → cả nhóm đọc
-│   │   ├── train_data.rds            # TV1 tạo → TV4 đọc
-│   │   ├── test_data.rds             # TV1 tạo → TV4 đọc
-│   │   ├── stat_tests.rds            # TV1 tạo
-│   │   ├── eda_results.rds           # TV2 tạo
-│   │   ├── models.rds                # TV4 tạo → TV5 đọc
-│   │   ├── predictions.rds           # TV4 tạo → TV5 đọc
-│   │   ├── feature_importance.rds    # TV4 tạo → TV5 đọc
-│   │   └── eval_results.rds          # TV5 tạo
-│   └── figures/                      # Biểu đồ PNG (TV3, TV5 tạo)
+│   │   ├── df_clean.rds              # Quốc Anh tạo → cả nhóm đọc
+│   │   ├── train_data.rds            # Quốc Anh tạo → Đức Thắng đọc
+│   │   ├── test_data.rds             # Quốc Anh tạo → Đức Thắng đọc
+│   │   ├── stat_tests.rds            # Quốc Anh tạo
+│   │   ├── eda_results.rds           # Thanh Phúc tạo
+│   │   ├── models.rds                # Đức Thắng tạo → Thành Tài đọc
+│   │   ├── predictions.rds           # Đức Thắng tạo → Thành Tài đọc
+│   │   ├── feature_importance.rds    # Đức Thắng tạo → Thành Tài đọc
+│   │   └── eval_results.rds          # Thành Tài tạo
+│   └── figures/                      # Biểu đồ PNG (Gia Hân, Thành Tài tạo)
 │
 └── report/
-    ├── reference_template.docx       # Template Word (TV5 tạo)
+    ├── reference_template.docx       # Template Word (Thành Tài tạo)
     ├── rossman_report.docx           # Báo cáo Word (knit từ Rmd)
-    └── rossman_presentation.pptx     # PowerPoint (TV5 tạo)
+    └── rossman_presentation.pptx     # PowerPoint (Thành Tài tạo)
 ```
 
 ---
@@ -52,26 +53,27 @@ rossman-sale-store/
 ## 🔗 Luồng Dữ Liệu Giữa Các Thành Viên
 
 ```
-TV1: train.csv + store.csv
+Quốc Anh: train.csv + store.csv
  ↓ clean_rossmann() + saveRDS()
- ├── df_clean.rds ─────→ TV2 (EDA), TV3 (Viz)
- ├── train_data.rds ───→ TV4 (Modeling)
- └── test_data.rds ────→ TV4 (Modeling)
+ ├── df_clean.rds ─────→ Thanh Phúc (EDA), Gia Hân (Viz)
+ ├── train_data.rds ───→ Đức Thắng (Modeling)
+ └── test_data.rds ────→ Đức Thắng (Modeling)
                               ↓ saveRDS()
-                              ├── models.rds ──────→ TV5 (Evaluation)
-                              ├── predictions.rds ─→ TV5 (Evaluation)
-                              └── feature_importance.rds → TV5
+                              ├── models.rds ──────→ Thành Tài (Evaluation)
+                              ├── predictions.rds ─→ Thành Tài (Evaluation)
+                              └── feature_importance.rds → Thành Tài
 ```
 
 **Thứ tự chạy code:**
 1. `R/00_setup.R` → cài packages
-2. `R/tv1_utils.R` → load hàm dùng chung
-3. `R/tv1_data_pipeline.R` → tạo RDS files
-4. `R/tv1_statistical_tests.R` → kiểm định thống kê
-5. `R/tv2_eda.R` → EDA (cần `df_clean.rds`)
-6. `R/tv3_visualization.R` → biểu đồ (cần `df_clean.rds`)
-7. `R/tv4_modeling.R` → mô hình (cần `train_data.rds`, `test_data.rds`)
-8. `R/tv5_evaluation.R` → đánh giá (cần `predictions.rds`, `feature_importance.rds`)
+2. `R/utils.R` → load hàm dùng chung
+3. `R/data_pipeline.R` → tạo RDS files
+4. `R/statistical_tests.R` → kiểm định thống kê
+5. `R/eda.R` → EDA (cần `df_clean.rds`)
+6. `R/visualization.R` → biểu đồ (cần `df_clean.rds`)
+7. `R/modeling.R` → mô hình (cần `train_data.rds`, `test_data.rds`)
+8. `R/evaluation.R` → đánh giá (cần `predictions.rds`, `feature_importance.rds`)
+9. `R/time_series.R` → phân tích chuỗi thời gian
 
 ---
 
@@ -128,16 +130,17 @@ ggsave(here("output", "figures", "tên_plot.png"), plot, width=10, height=5, dpi
 
 ### Bảng quyền truy cập
 
-| File | TV1 | TV2 | TV3 | TV4 | TV5 |
+| File | Quốc Anh | Thanh Phúc | Gia Hân | Đức Thắng | Thành Tài |
 |------|:---:|:---:|:---:|:---:|:---:|
 | `00_setup.R` | ✏️ Sửa | ❌ | ❌ | ❌ | ❌ |
-| `tv1_data_pipeline.R` | ✏️ Sửa | ❌ | ❌ | ❌ | ❌ |
-| `tv1_utils.R` | ✏️ Sửa | 📖 Gọi | 📖 Gọi | 📖 Gọi | 📖 Gọi |
-| `tv1_statistical_tests.R` | ✏️ Sửa | ❌ | ❌ | ❌ | ❌ |
-| `tv2_eda.R` | ❌ | ✏️ Sửa | ❌ | ❌ | ❌ |
-| `tv3_visualization.R` | ❌ | ❌ | ✏️ Sửa | ❌ | ❌ |
-| `tv4_modeling.R` | ❌ | ❌ | ❌ | ✏️ Sửa | ❌ |
-| `tv5_evaluation.R` | ❌ | ❌ | ❌ | ❌ | ✏️ Sửa |
+| `data_pipeline.R` | ✏️ Sửa | ❌ | ❌ | ❌ | ❌ |
+| `utils.R` | ✏️ Sửa | 📖 Gọi | 📖 Gọi | 📖 Gọi | 📖 Gọi |
+| `statistical_tests.R` | ✏️ Sửa | ❌ | ❌ | ❌ | ❌ |
+| `eda.R` | ❌ | ✏️ Sửa | ❌ | ❌ | ❌ |
+| `visualization.R` | ❌ | ❌ | ✏️ Sửa | ❌ | ❌ |
+| `modeling.R` | ❌ | ❌ | ❌ | ✏️ Sửa | ❌ |
+| `evaluation.R` | ❌ | ❌ | ❌ | ❌ | ✏️ Sửa |
+| `time_series.R` | ❌ | ❌ | ❌ | ❌ | ✏️ Sửa |
 | `rossman_analysis.Rmd` | ✏️ Sửa | ❌ | ❌ | ❌ | ✏️ YAML |
 | `train.csv` / `store.csv` | ❌ | ❌ | ❌ | ❌ | ❌ |
 
@@ -149,37 +152,37 @@ ggsave(here("output", "figures", "tên_plot.png"), plot, width=10, height=5, dpi
 
 ---
 
-### 🟦 TV1 — Nhóm Trưởng · Data Engineer · Báo Cáo
+### 🟦 Quốc Anh — Nhóm Trưởng · Data Engineer · Báo Cáo
 
 **Files của bạn:**
 - `R/00_setup.R`
-- `R/tv1_data_pipeline.R`
-- `R/tv1_utils.R`
-- `R/tv1_statistical_tests.R`
+- `R/data_pipeline.R`
+- `R/utils.R`
+- `R/statistical_tests.R`
 
 **Output bạn tạo:**
 - `output/data/df_clean.rds` — data sạch, cả nhóm dùng
-- `output/data/train_data.rds` — training set cho TV4
-- `output/data/test_data.rds` — test set cho TV4
+- `output/data/train_data.rds` — training set cho Đức Thắng
+- `output/data/test_data.rds` — test set cho Đức Thắng
 - `output/data/stat_tests.rds` — kết quả kiểm định
 
 **Coding tasks (13 tasks):**
 
 | # | Task | File |
 |---|------|------|
-| 1 | Đọc & merge `train.csv` + `store.csv` | `tv1_data_pipeline.R` |
-| 2 | Lọc Store 1–50, Date range, Open==1 | `tv1_data_pipeline.R` |
-| 3 | `clean_names()`, xử lý NA, convert types | `tv1_data_pipeline.R` |
-| 4 | Feature engineering: Month, WeekOfYear, IsWeekend, SalesPerCustomer | `tv1_data_pipeline.R` |
-| 5 | Phát hiện outlier IQR → flag `is_outlier`, KHÔNG xóa | `tv1_data_pipeline.R` |
-| 6 | Train/test split theo thời gian (KHÔNG random) | `tv1_data_pipeline.R` |
-| 7 | `saveRDS()` toàn bộ output | `tv1_data_pipeline.R` |
-| 8 | Viết hàm `clean_rossmann()` | `tv1_utils.R` |
-| 9 | Viết hàm `get_summary_stats(df, group_var)` | `tv1_utils.R` |
-| 10 | Viết hàm `mock_data()` | `tv1_utils.R` |
-| 11 | ANOVA: `sales ~ store_type` + Tukey post-hoc | `tv1_statistical_tests.R` |
-| 12 | Welch t-test: `sales ~ promo` + Cohen's d | `tv1_statistical_tests.R` |
-| 13 | Correlation: `cor.test(sales, competition_distance)` | `tv1_statistical_tests.R` |
+| 1 | Đọc & merge `train.csv` + `store.csv` | `data_pipeline.R` |
+| 2 | Lọc Store 1–50, Date range, Open==1 | `data_pipeline.R` |
+| 3 | `clean_names()`, xử lý NA, convert types | `data_pipeline.R` |
+| 4 | Feature engineering: Month, WeekOfYear, IsWeekend, SalesPerCustomer | `data_pipeline.R` |
+| 5 | Phát hiện outlier IQR → flag `is_outlier`, KHÔNG xóa | `data_pipeline.R` |
+| 6 | Train/test split theo thời gian (KHÔNG random) | `data_pipeline.R` |
+| 7 | `saveRDS()` toàn bộ output | `data_pipeline.R` |
+| 8 | Viết hàm `clean_rossmann()` | `utils.R` |
+| 9 | Viết hàm `get_summary_stats(df, group_var)` | `utils.R` |
+| 10 | Viết hàm `mock_data()` | `utils.R` |
+| 11 | ANOVA: `sales ~ store_type` + Tukey post-hoc | `statistical_tests.R` |
+| 12 | Welch t-test: `sales ~ promo` + Cohen's d | `statistical_tests.R` |
+| 13 | Correlation: `cor.test(sales, competition_distance)` | `statistical_tests.R` |
 
 **Viết báo cáo:**
 - Sections 1–2 (Abstract, Introduction) trong Rmd
@@ -192,9 +195,9 @@ ggsave(here("output", "figures", "tên_plot.png"), plot, width=10, height=5, dpi
 **Lệnh chạy test:**
 ```r
 source(here::here("R", "00_setup.R"))
-source(here::here("R", "tv1_utils.R"))
-source(here::here("R", "tv1_data_pipeline.R"))
-source(here::here("R", "tv1_statistical_tests.R"))
+source(here::here("R", "utils.R"))
+source(here::here("R", "data_pipeline.R"))
+source(here::here("R", "statistical_tests.R"))
 # Kiểm tra output
 file.exists(here("output", "data", "df_clean.rds"))     # TRUE
 file.exists(here("output", "data", "train_data.rds"))    # TRUE
@@ -203,14 +206,14 @@ file.exists(here("output", "data", "test_data.rds"))     # TRUE
 
 ---
 
-### 🟩 TV2 — Data Analyst · EDA
+### 🟩 Thanh Phúc — Data Analyst · EDA
 
 **Files của bạn:**
-- `R/tv2_eda.R`
+- `R/eda.R`
 
 **Input bạn cần:**
-- `output/data/df_clean.rds` (TV1 tạo)
-- Hàm `get_summary_stats()` từ `R/tv1_utils.R`
+- `output/data/df_clean.rds` (Quốc Anh tạo)
+- Hàm `get_summary_stats()` từ `R/utils.R`
 
 **Output bạn tạo:**
 - `output/data/eda_results.rds`
@@ -230,28 +233,28 @@ file.exists(here("output", "data", "test_data.rds"))     # TRUE
 
 **⚠️ Khi chưa có `df_clean.rds`:**
 ```r
-# Dùng mock data từ TV1 để dev
-source(here::here("R", "tv1_utils.R"))
+# Dùng mock data từ Quốc Anh để dev
+source(here::here("R", "utils.R"))
 df <- mock_data(n = 2000)
 ```
 
 **Lệnh chạy test:**
 ```r
 source(here::here("R", "00_setup.R"))
-source(here::here("R", "tv1_utils.R"))
-source(here::here("R", "tv2_eda.R"))
+source(here::here("R", "utils.R"))
+source(here::here("R", "eda.R"))
 file.exists(here("output", "data", "eda_results.rds"))   # TRUE
 ```
 
 ---
 
-### 🟧 TV3 — Data Visualization
+### 🟧 Gia Hân — Data Visualization
 
 **Files của bạn:**
-- `R/tv3_visualization.R`
+- `R/visualization.R`
 
 **Input bạn cần:**
-- `output/data/df_clean.rds` (TV1 tạo)
+- `output/data/df_clean.rds` (Quốc Anh tạo)
 
 **Output bạn tạo:**
 - 10 file PNG trong `output/figures/`
@@ -280,32 +283,32 @@ file.exists(here("output", "data", "eda_results.rds"))   # TRUE
 **Lệnh chạy test:**
 ```r
 source(here::here("R", "00_setup.R"))
-source(here::here("R", "tv3_visualization.R"))
+source(here::here("R", "visualization.R"))
 length(list.files(here("output", "figures"), pattern = "\\.png$"))  # >= 9
 ```
 
 ---
 
-### 🟥 TV4 — ML Engineer
+### 🟥 Đức Thắng — ML Engineer
 
 **Files của bạn:**
-- `R/tv4_modeling.R`
+- `R/modeling.R`
 
 **Input bạn cần:**
-- `output/data/train_data.rds` (TV1 tạo)
-- `output/data/test_data.rds` (TV1 tạo)
+- `output/data/train_data.rds` (Quốc Anh tạo)
+- `output/data/test_data.rds` (Quốc Anh tạo)
 
 **Output bạn tạo:**
 - `output/data/models.rds` — 3 trained models
-- `output/data/predictions.rds` — predictions + actual (TV5 cần)
-- `output/data/feature_importance.rds` — RF + XGBoost importance (TV5 cần)
+- `output/data/predictions.rds` — predictions + actual (Thành Tài cần)
+- `output/data/feature_importance.rds` — RF + XGBoost importance (Thành Tài cần)
 
 **Coding tasks (7 tasks):**
 
 | # | Task | Package |
 |---|------|---------|
 | 1 | `prepare_features()` — encode categorical, chọn features | `dplyr` |
-| 2 | Đọc train/test từ TV1 RDS | `readRDS()` |
+| 2 | Đọc train/test từ Quốc Anh RDS | `readRDS()` |
 | 3 | Model 1: Linear Regression + `summary()` | `stats::lm()` |
 | 4 | Model 2: Random Forest + importance | `ranger` |
 | 5 | Model 3: XGBoost + `xgb.cv()` + tuning | `xgboost` |
@@ -315,7 +318,7 @@ length(list.files(here("output", "figures"), pattern = "\\.png$"))  # >= 9
 **Lệnh chạy test:**
 ```r
 source(here::here("R", "00_setup.R"))
-source(here::here("R", "tv4_modeling.R"))
+source(here::here("R", "modeling.R"))
 file.exists(here("output", "data", "models.rds"))              # TRUE
 file.exists(here("output", "data", "predictions.rds"))          # TRUE
 file.exists(here("output", "data", "feature_importance.rds"))   # TRUE
@@ -323,14 +326,15 @@ file.exists(here("output", "data", "feature_importance.rds"))   # TRUE
 
 ---
 
-### 🟪 TV5 — Report Manager · Model Evaluation · Slide
+### 🟪 Thành Tài — Report Manager · Model Evaluation · Slide
 
 **Files của bạn:**
-- `R/tv5_evaluation.R`
+- `R/evaluation.R`
+- `R/time_series.R`
 
 **Input bạn cần:**
-- `output/data/predictions.rds` (TV4 tạo)
-- `output/data/feature_importance.rds` (TV4 tạo)
+- `output/data/predictions.rds` (Đức Thắng tạo)
+- `output/data/feature_importance.rds` (Đức Thắng tạo)
 
 **Output bạn tạo:**
 - `output/data/eval_results.rds`
@@ -360,7 +364,8 @@ file.exists(here("output", "data", "feature_importance.rds"))   # TRUE
 **Lệnh chạy test:**
 ```r
 source(here::here("R", "00_setup.R"))
-source(here::here("R", "tv5_evaluation.R"))
+source(here::here("R", "evaluation.R"))
+source(here::here("R", "time_series.R"))
 file.exists(here("output", "data", "eval_results.rds"))   # TRUE
 ```
 
@@ -377,16 +382,17 @@ file.exists(here("output", "data", "eval_results.rds"))   # TRUE
 
 ### Trước khi nộp
 
-TV1 chạy toàn bộ pipeline từ đầu:
+Quốc Anh chạy toàn bộ pipeline từ đầu:
 ```r
 source(here::here("R", "00_setup.R"))
-source(here::here("R", "tv1_utils.R"))
-source(here::here("R", "tv1_data_pipeline.R"))
-source(here::here("R", "tv1_statistical_tests.R"))
-source(here::here("R", "tv2_eda.R"))
-source(here::here("R", "tv3_visualization.R"))
-source(here::here("R", "tv4_modeling.R"))
-source(here::here("R", "tv5_evaluation.R"))
+source(here::here("R", "utils.R"))
+source(here::here("R", "data_pipeline.R"))
+source(here::here("R", "statistical_tests.R"))
+source(here::here("R", "eda.R"))
+source(here::here("R", "visualization.R"))
+source(here::here("R", "modeling.R"))
+source(here::here("R", "evaluation.R"))
+source(here::here("R", "time_series.R"))
 
 # Knit Rmd
 rmarkdown::render(here::here("rossman_analysis.Rmd"))
@@ -404,4 +410,4 @@ rmarkdown::render(here::here("rossman_analysis.Rmd"))
 
 ---
 
-*Tạo ngày: 2026-06-03 | Cập nhật bởi TV1 (Nhóm trưởng)*
+*Tạo ngày: 2026-06-03 | Cập nhật bởi Quốc Anh (Nhóm trưởng)*

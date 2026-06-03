@@ -1,7 +1,7 @@
 ---
 title: "Phân Tích Doanh Số Rossmann Store Sales"
 subtitle: "Đồ án cuối kỳ — Lập trình R cho phân tích dữ liệu"
-author: "Nhóm X — [TV1], [TV2], [TV3], [TV4], [TV5]"
+author: "Quốc Anh, Thanh Phúc, Gia Hân, Đức Thắng, Thành Tài"
 date: "`r format(Sys.Date(), '%d/%m/%Y')`"
 output:
   html_document:
@@ -44,25 +44,25 @@ source(here::here("R", "00_setup.R"))
 ```
 
 ```{r load-utils}
-# Load utility functions (TV1 viết, cả nhóm dùng)
-source(here::here("R", "tv1_utils.R"))
+# Load utility functions (Quốc Anh viết, cả nhóm dùng)
+source(here::here("R", "utils.R"))
 ```
 
 <!-- ================================================================== -->
-<!-- 1. TÓM TẮT (ABSTRACT) — TV1                                       -->
+<!-- 1. TÓM TẮT (ABSTRACT) — Quốc Anh                                  -->
 <!-- ================================================================== -->
 
 # Tóm tắt {-}
 
-> **TODO (TV1):** Viết tóm tắt 150–200 từ mô tả mục tiêu, phương pháp, và kết quả chính của bài phân tích.
+> **TODO (Quốc Anh):** Viết tóm tắt 150–200 từ mô tả mục tiêu, phương pháp, và kết quả chính của bài phân tích.
 
 <!-- ================================================================== -->
-<!-- 2. GIỚI THIỆU (INTRODUCTION) — TV1                                 -->
+<!-- 2. GIỚI THIỆU (INTRODUCTION) — Quốc Anh                           -->
 <!-- ================================================================== -->
 
 # Giới thiệu
 
-> **TODO (TV1):** Trình bày bối cảnh bài toán, mục tiêu phân tích, và câu hỏi nghiên cứu.
+> **TODO (Quốc Anh):** Trình bày bối cảnh bài toán, mục tiêu phân tích, và câu hỏi nghiên cứu.
 
 ## Bối cảnh
 
@@ -71,57 +71,57 @@ source(here::here("R", "tv1_utils.R"))
 ## Câu hỏi nghiên cứu
 
 <!-- ================================================================== -->
-<!-- 3. DỮ LIỆU (DATA) — TV1 + TV2                                     -->
+<!-- 3. DỮ LIỆU (DATA) — Quốc Anh + Thanh Phúc                        -->
 <!-- ================================================================== -->
 
 # Dữ liệu
 
 ## Mô tả tập dữ liệu {.tabset}
 
-> **TODO (TV1):** Mô tả nguồn dữ liệu, các biến, khoảng thời gian.
+> **TODO (Quốc Anh):** Mô tả nguồn dữ liệu, các biến, khoảng thời gian.
 
-## Đọc và merge dữ liệu — TV1
+## Đọc, Merge và Làm sạch dữ liệu — Quốc Anh
 
 ```{r data-pipeline}
-source(here::here("R", "tv1_data_pipeline.R"))
+source(here::here("R", "data_pipeline.R"))
 ```
 
-## Làm sạch dữ liệu & Feature Engineering — TV1
+## Data Pipeline — Quốc Anh
 
-> Toàn bộ pipeline đã được thực hiện trong `tv1_data_pipeline.R`, bao gồm:
+> Toàn bộ pipeline 6 bước đã được thực hiện trong `data_pipeline.R`:
 >
-> - Merge `train.csv` + `store.csv`
-> - Lọc Store 1–50, Date 2014-08-01 → 2015-07-31, Open == 1
-> - `clean_names()`, xử lý NA, convert kiểu dữ liệu
-> - Feature engineering: `month`, `week_of_year`, `is_weekend`, `sales_per_customer`
-> - Phát hiện outlier (IQR flag, không xóa)
-> - Train/Test split theo thời gian
+> 1. **Data Ingestion**: Đọc với `readr::read_csv()`, kiểm tra NA
+> 2. **Data Integration**: Merge `train.csv` + `store.csv` bằng `left_join()`
+> 3. **Data Cleaning**: Xử lý NA, đồng bộ StateHoliday, lọc nhiễu logic (Open==0, Sales==0)
+> 4. **Feature Engineering**: `year`, `month`, `day`, `week_of_year`, `is_weekend`, `sales_per_customer`, `competition_open_months`, `has_competition`, `is_outlier`
+> 5. **Data Split**: 70% Train / 30% Validation với `set.seed(42)`
+> 6. **Export**: RDS + CSV files
 
 ```{r data-overview}
 cat("Kích thước dữ liệu sau xử lý:", nrow(df_clean), "dòng x", ncol(df_clean), "cột\n")
 str(df_clean)
 ```
 
-## Kiểm định thống kê — TV1
+## Kiểm định thống kê — Quốc Anh
 
 ```{r statistical-tests}
-source(here::here("R", "tv1_statistical_tests.R"))
+source(here::here("R", "statistical_tests.R"))
 ```
 
-## Thống kê mô tả (EDA) — TV2
+## Thống kê mô tả (EDA) — Thanh Phúc
 
 ```{r eda}
-source(here::here("R", "tv2_eda.R"))
+source(here::here("R", "eda.R"))
 ```
 
 <!-- ================================================================== -->
-<!-- 4. TRỰC QUAN HÓA DỮ LIỆU (VISUALIZATION) — TV3                   -->
+<!-- 4. TRỰC QUAN HÓA DỮ LIỆU (VISUALIZATION) — Gia Hân              -->
 <!-- ================================================================== -->
 
 # Trực quan hóa dữ liệu
 
 ```{r visualization, fig.height=6}
-source(here::here("R", "tv3_visualization.R"))
+source(here::here("R", "visualization.R"))
 ```
 
 ## Xu hướng doanh số theo thời gian
@@ -160,57 +160,91 @@ p10
 ```
 
 <!-- ================================================================== -->
-<!-- 5. MÔ HÌNH HÓA DỮ LIỆU (MODELING) — TV4                          -->
+<!-- 5. MÔ HÌNH HÓA DỮ LIỆU (MODELING) — Đức Thắng + Thành Tài       -->
 <!-- ================================================================== -->
 
 # Mô hình hóa dữ liệu
 
+## Regression Models — Đức Thắng
+
 ```{r modeling}
-source(here::here("R", "tv4_modeling.R"))
+source(here::here("R", "modeling.R"))
 ```
 
-## Chuẩn bị dữ liệu
+### Chuẩn bị dữ liệu
 
-> Dữ liệu được chia theo thời gian (time-series split, không random):
+> Dữ liệu được chia 70/30 với `set.seed(42)` từ pipeline Quốc Anh:
 >
-> - **Training**: 2014-08-01 → 2015-05-31
-> - **Test**: 2015-06-01 → 2015-07-31
+> - **Training (70%)**: Huấn luyện mô hình
+> - **Validation (30%)**: Kiểm thử nội bộ
 
-## Linear Regression
+### Linear Regression
 
 ```{r lm-summary}
 summary(model_lm)
 ```
 
-## Random Forest
+### Random Forest
 
 ```{r rf-summary}
 cat("OOB R²:", model_rf$r.squared, "\n")
 print(head(rf_importance, 10))
 ```
 
-## XGBoost
+### XGBoost
 
 ```{r xgb-summary}
 cat("Best nrounds:", best_nrounds, "\n")
 print(head(xgb_importance, 10))
 ```
 
+## Time Series Analysis — Thành Tài
+
+```{r time-series, fig.height=8}
+source(here::here("R", "time_series.R"))
+```
+
+### STL Decomposition
+
+```{r ts-decomp, fig.cap="STL Decomposition: Trend, Seasonal, Remainder"}
+print(p_decomp)
+```
+
+### ARIMA Forecast
+
+```{r ts-arima, fig.cap="ARIMA Forecast vs Actual"}
+print(p_arima)
+```
+
+### ETS Forecast
+
+```{r ts-ets, fig.cap="ETS Forecast vs Actual"}
+print(p_ets)
+```
+
+### So sánh ARIMA vs ETS
+
+```{r ts-compare, fig.cap="So sánh ARIMA vs ETS"}
+print(p_ts_compare)
+kable(ts_results, caption = "So sánh ARIMA vs ETS", digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
 <!-- ================================================================== -->
-<!-- 6. THỰC NGHIỆM, KẾT QUẢ & THẢO LUẬN — TV4 + TV5                  -->
+<!-- 6. THỰC NGHIỆM, KẾT QUẢ & THẢO LUẬN — Đức Thắng + Thành Tài     -->
 <!-- ================================================================== -->
 
 # Thực nghiệm, Kết quả & Thảo luận
 
 ```{r evaluation}
-source(here::here("R", "tv5_evaluation.R"))
+source(here::here("R", "evaluation.R"))
 ```
 
-## So sánh mô hình — TV5
+## So sánh Regression Models — Thành Tài
 
 ```{r comparison-table}
 kable(results,
-      caption = "Bảng so sánh hiệu suất 3 mô hình",
+      caption = "Bảng so sánh hiệu suất 3 mô hình regression",
       digits  = 2) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
@@ -219,85 +253,85 @@ kable(results,
 print(p_metrics)
 ```
 
-## Actual vs Predicted — TV5
+## Actual vs Predicted — Thành Tài
 
 ```{r pred-vs-actual}
 print(p_pred)
 ```
 
-## Residuals — TV5
+## Residuals — Thành Tài
 
 ```{r residuals}
 print(p_resid)
 ```
 
-## Feature Importance — TV5
+## Feature Importance — Thành Tài
 
 ```{r feature-importance, fig.height=5, fig.width=14}
 print(p_fi_combined)
 ```
 
-## Thảo luận — TV4
+## Thảo luận — Đức Thắng
 
-> **TODO (TV4):** Thảo luận về kết quả, giải thích tại sao mô hình X tốt hơn, hạn chế.
+> **TODO (Đức Thắng):** Thảo luận về kết quả, giải thích tại sao mô hình X tốt hơn, hạn chế.
 
 <!-- ================================================================== -->
-<!-- 7. KẾT LUẬN (CONCLUSIONS) — TV1                                    -->
+<!-- 7. KẾT LUẬN (CONCLUSIONS) — Quốc Anh                              -->
 <!-- ================================================================== -->
 
 # Kết luận
 
-> **TODO (TV1):** Tóm tắt kết quả chính, trả lời câu hỏi nghiên cứu, đề xuất hướng phát triển.
+> **TODO (Quốc Anh):** Tóm tắt kết quả chính, trả lời câu hỏi nghiên cứu, đề xuất hướng phát triển.
 
 <!-- ================================================================== -->
-<!-- 8. PHỤ LỤC (APPENDICES) — TV2                                     -->
+<!-- 8. PHỤ LỤC (APPENDICES) — Thanh Phúc                              -->
 <!-- ================================================================== -->
 
 # Phụ lục {-}
 
-> **TODO (TV2):** Bổ sung bảng dữ liệu phụ, code bổ sung, kết quả chi tiết.
+> **TODO (Thanh Phúc):** Bổ sung bảng dữ liệu phụ, code bổ sung, kết quả chi tiết.
 
 <!-- ================================================================== -->
-<!-- 9. ĐÓNG GÓP (CONTRIBUTIONS) — TV5                                  -->
+<!-- 9. ĐÓNG GÓP (CONTRIBUTIONS) — Thành Tài                           -->
 <!-- ================================================================== -->
 
 # Đóng góp {-}
 
 | Thành viên | Vai trò | Phần phụ trách | File R |
 |-----------|---------|---------------|--------|
-| TV1 — [Tên] | Nhóm trưởng · Data Engineer | Data pipeline, Statistical tests, Sections 1-3, 7 | `tv1_*.R` |
-| TV2 — [Tên] | Data Analyst | EDA, Thống kê mô tả, Section 3.5, 8 | `tv2_eda.R` |
-| TV3 — [Tên] | Visualization | 10 biểu đồ, Section 4 | `tv3_visualization.R` |
-| TV4 — [Tên] | ML Engineer | 3 mô hình, Section 5, 6.4 | `tv4_modeling.R` |
-| TV5 — [Tên] | Report · Evaluation | So sánh mô hình, Word/PPT, Section 6.1-6.3, 9-11 | `tv5_evaluation.R` |
+| Quốc Anh | Nhóm trưởng · Data Engineer | Data pipeline, Statistical tests, Sections 1-3, 7 | `data_pipeline.R`, `utils.R`, `statistical_tests.R` |
+| Thanh Phúc | Data Analyst | EDA, Thống kê mô tả, Section 3.5, 8 | `eda.R` |
+| Gia Hân | Visualization | 10 biểu đồ, Section 4 | `visualization.R` |
+| Đức Thắng | ML Engineer | 3 mô hình regression, Section 5.1, 6.4 | `modeling.R` |
+| Thành Tài | Time Series · Evaluation · Report | Time Series, Evaluation, Word/PPT, Section 5.2, 6.1-6.3, 9-11 | `time_series.R`, `evaluation.R` |
 
 <!-- ================================================================== -->
-<!-- 10. THAM KHẢO (REFERENCES) — TV5                                   -->
+<!-- 10. THAM KHẢO (REFERENCES) — Thành Tài                             -->
 <!-- ================================================================== -->
 
 # Tham khảo {-}
 
-> **TODO (TV5):** Liệt kê tài liệu tham khảo.
+> **TODO (Thành Tài):** Liệt kê tài liệu tham khảo.
 
 1. Rossmann Store Sales — Kaggle Competition. https://www.kaggle.com/c/rossmann-store-sales
 2. Wickham, H. & Grolemund, G. (2017). *R for Data Science*. O'Reilly Media.
 3. James, G. et al. (2013). *An Introduction to Statistical Learning*. Springer.
 
 <!-- ================================================================== -->
-<!-- 11. PEER ASSESSMENT — TV5                                          -->
+<!-- 11. PEER ASSESSMENT — Thành Tài                                    -->
 <!-- ================================================================== -->
 
 # Peer Assessment {-}
 
-> **TODO (TV5):** Tổ chức họp nhóm, điền đánh giá.
+> **TODO (Thành Tài):** Tổ chức họp nhóm, điền đánh giá.
 
 | Thành viên | Mức hoàn thành | Ưu điểm | Nhược điểm |
 |-----------|:--------------:|---------|-----------|
-| TV1 — [Tên] | __% | | |
-| TV2 — [Tên] | __% | | |
-| TV3 — [Tên] | __% | | |
-| TV4 — [Tên] | __% | | |
-| TV5 — [Tên] | __% | | |
+| Quốc Anh | __% | | |
+| Thanh Phúc | __% | | |
+| Gia Hân | __% | | |
+| Đức Thắng | __% | | |
+| Thành Tài | __% | | |
 
 ---
 

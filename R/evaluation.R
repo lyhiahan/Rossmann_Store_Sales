@@ -1,10 +1,10 @@
 # =============================================================================
-# TV5 — MODEL EVALUATION & COMPARISON
-# File: R/tv5_evaluation.R
-# Người phụ trách: Thành viên 5
+# THÀNH TÀI — MODEL EVALUATION & COMPARISON
+# File: R/evaluation.R
+# Người phụ trách: Thành Tài
 # Mô tả: Đánh giá, so sánh 3 mô hình, biểu đồ kết quả
 # =============================================================================
-# CHÚ Ý: Chỉ TV5 được chỉnh sửa file này!
+# CHÚ Ý: Chỉ Thành Tài được chỉnh sửa file này!
 # Input: readRDS(here("output", "data", "predictions.rds"))
 #        readRDS(here("output", "data", "feature_importance.rds"))
 # =============================================================================
@@ -176,4 +176,4 @@ cat("MAE:",  round(best_model$MAE, 2), "\n")
 cat("R²:",   round(best_model$R2, 4), "\n")
 cat("RMSPE:", round(best_model$RMSPE, 4), "\n")
 
-cat("\n[TV5] ✅ Evaluation hoàn tất! Đã lưu: eval_results.rds\n")
+cat("\n[Thành Tài] ✅ Evaluation hoàn tất! Đã lưu: eval_results.rds\n")

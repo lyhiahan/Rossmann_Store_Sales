@@ -1,10 +1,10 @@
 # =============================================================================
-# TV2 — EXPLORATORY DATA ANALYSIS (EDA)
-# File: R/tv2_eda.R
-# Người phụ trách: Thành viên 2
+# THANH PHÚC — EXPLORATORY DATA ANALYSIS (EDA)
+# File: R/eda.R
+# Người phụ trách: Thanh Phúc
 # Mô tả: Thống kê mô tả, phân tích phân phối, phân tích nhóm
 # =============================================================================
-# CHÚ Ý: Chỉ TV2 được chỉnh sửa file này!
+# CHÚ Ý: Chỉ Thanh Phúc được chỉnh sửa file này!
 # Input: readRDS(here("output", "data", "df_clean.rds"))
 # Sử dụng: get_summary_stats() từ R/tv1_utils.R
 # =============================================================================
@@ -138,4 +138,4 @@ saveRDS(list(
   stats_promo     = stats_promo
 ), here("output", "data", "eda_results.rds"))
 
-cat("\n[TV2] ✅ EDA hoàn tất! Đã lưu: eda_results.rds\n")
+cat("\n[Thanh Phúc] ✅ EDA hoàn tất! Đã lưu: eda_results.rds\n")

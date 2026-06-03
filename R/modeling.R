@@ -1,13 +1,13 @@
 # =============================================================================
-# TV4 — DATA MODELING
-# File: R/tv4_modeling.R
-# Người phụ trách: Thành viên 4
+# ĐỨC THẮNG — DATA MODELING
+# File: R/modeling.R
+# Người phụ trách: Đức Thắng
 # Mô tả: 3 mô hình dự đoán: Linear Regression, Random Forest, XGBoost
 # =============================================================================
-# CHÚ Ý: Chỉ TV4 được chỉnh sửa file này!
+# CHÚ Ý: Chỉ Đức Thắng được chỉnh sửa file này!
 # Input: readRDS(here("output", "data", "train_data.rds"))
-#        readRDS(here("output", "data", "test_data.rds"))
-# Output: saveRDS() models + predictions cho TV5
+#        readRDS(here("output", "data", "val_data.rds"))
+# Output: saveRDS() models + predictions cho Thành Tài
 # =============================================================================
 
 library(dplyr)
@@ -16,18 +16,23 @@ library(randomForest)
 library(xgboost)
 library(here)
 
-# --- Đọc dữ liệu train/test (TV1 đã split) ---
+# --- Đọc dữ liệu train/val (Quốc Anh đã split 70/30) ---
 train_data <- readRDS(here("output", "data", "train_data.rds"))
-test_data  <- readRDS(here("output", "data", "test_data.rds"))
+test_data  <- readRDS(here("output", "data", "val_data.rds"))
 
-cat("[TV4] Train:", nrow(train_data), "dòng | Test:", nrow(test_data), "dòng\n")
+cat("[Đức Thắng] Train:", nrow(train_data), "dòng | Validation:", nrow(test_data), "dòng\n")
 
 # --- Chuẩn bị features ---
-# Chọn features cho modeling (bỏ date, store, is_outlier, các cột không cần)
+# Chọn features cho modeling
+# ⚠️ KHÔNG bao gồm sales_per_customer (Target Leakage: sales/customers → dự đoán sales)
+# ⚠️ competition_open_months: -1 = không có đối thủ (mô hình cây tự xử lý)
 feature_cols <- c("customers", "day_of_week", "promo", "state_holiday",
                   "school_holiday", "store_type", "assortment",
                   "competition_distance", "promo2", "month",
-                  "week_of_year", "is_weekend")
+                  "week_of_year", "is_weekend",
+                  "competition_open_months", "has_competition")
+
+cat("[Đức Thắng] ⚠️ sales_per_customer ĐÃ BỊ LOẠI (Target Leakage)\n")
 
 # Encode factors thành numeric cho XGBoost
 prepare_features <- function(df, feature_cols) {
@@ -50,7 +55,8 @@ cat("\n========== MODEL 1: LINEAR REGRESSION ==========\n")
 
 model_lm <- lm(sales ~ customers + day_of_week + promo + state_holiday +
                 school_holiday + store_type + assortment +
-                competition_distance + month + is_weekend,
+                competition_distance + month + is_weekend +
+                competition_open_months + has_competition,
                 data = train_data)
 
 cat("--- Summary ---\n")
@@ -60,7 +66,7 @@ print(summary(model_lm))
 pred_lm <- predict(model_lm, newdata = test_data)
 pred_lm <- pmax(pred_lm, 0)  # Sales không thể âm
 
-cat("[TV4] LR predictions range:", range(pred_lm), "\n")
+cat("[Đức Thắng] LR predictions range:", range(pred_lm), "\n")
 
 # =============================================================================
 # MÔ HÌNH 2: RANDOM FOREST
@@ -125,7 +131,13 @@ cv_result <- xgb.cv(
   verbose = 1
 )
 
-best_nrounds <- cv_result$best_iteration
+best_nrounds <- cv_result$early_stop$best_iteration
+if (is.null(best_nrounds)) {
+  best_nrounds <- cv_result$best_iteration
+}
+if (is.null(best_nrounds) || best_nrounds <= 0) {
+  best_nrounds <- 100 # Fallback default
+}
 cat("Best nrounds:", best_nrounds, "\n")
 
 # Train final model
@@ -133,7 +145,7 @@ model_xgb <- xgb.train(
   params  = params,
   data    = dtrain,
   nrounds = best_nrounds,
-  watchlist = list(train = dtrain, test = dtest),
+  evals   = list(train = dtrain, test = dtest),
   print_every_n = 50
 )
 
@@ -158,4 +170,4 @@ saveRDS(list(lm = pred_lm, rf = pred_rf, xgb = pred_xgb, actual = test_y),
 saveRDS(list(rf = rf_importance, xgb = xgb_importance),
         here("output", "data", "feature_importance.rds"))
 
-cat("\n[TV4] ✅ Modeling hoàn tất! Đã lưu: models.rds, predictions.rds, feature_importance.rds\n")
+cat("\n[Đức Thắng] ✅ Modeling hoàn tất! Đã lưu: models.rds, predictions.rds, feature_importance.rds\n")

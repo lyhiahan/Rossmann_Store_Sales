@@ -1,10 +1,10 @@
 # =============================================================================
-# TV3 — DATA VISUALIZATION
-# File: R/tv3_visualization.R
-# Người phụ trách: Thành viên 3
+# GIA HÂN — DATA VISUALIZATION
+# File: R/visualization.R
+# Người phụ trách: Gia Hân
 # Mô tả: 10 biểu đồ trực quan hóa dữ liệu bằng ggplot2 + plotly
 # =============================================================================
-# CHÚ Ý: Chỉ TV3 được chỉnh sửa file này!
+# CHÚ Ý: Chỉ Gia Hân được chỉnh sửa file này!
 # Input: readRDS(here("output", "data", "df_clean.rds"))
 # =============================================================================
 
@@ -216,4 +216,4 @@ p10_gg <- ggplot(daily_avg, aes(
 p10 <- ggplotly(p10_gg, tooltip = "text")
 print(p10)
 
-cat("\n[TV3] ✅ Visualization hoàn tất! 10 biểu đồ đã được lưu vào output/figures/\n")
+cat("\n[Gia Hân] ✅ Visualization hoàn tất! 10 biểu đồ đã được lưu vào output/figures/\n")
