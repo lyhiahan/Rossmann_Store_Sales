@@ -4,7 +4,6 @@
 
 # --- Output files (tái tạo được từ code) ---
 output/data/*.rds
-output/data/*.csv
 output/figures/*.png
 output/figures/*.pdf
 
