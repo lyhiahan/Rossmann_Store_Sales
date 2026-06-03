@@ -1,0 +1,37 @@
+# ========================
+# Rossmann R Project .gitignore
+# ========================
+
+# --- Output files (tái tạo được từ code) ---
+output/data/*.rds
+output/figures/*.png
+output/figures/*.pdf
+
+# --- Report builds ---
+report/*.docx
+report/*.pptx
+*.docx
+*.pptx
+
+# --- R / RStudio ---
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# --- Knit cache & intermediates ---
+*_cache/
+*_files/
+*.knit.md
+*.utf8.md
+*.html
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Misc ---
+*.log
+*.tmp
