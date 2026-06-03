@@ -5,8 +5,8 @@
 # Mô tả: Đánh giá, so sánh 3 mô hình, biểu đồ kết quả
 # =============================================================================
 # CHÚ Ý: Chỉ Thành Tài được chỉnh sửa file này!
-# Input: readRDS(here("output", "data", "predictions.rds"))
-#        readRDS(here("output", "data", "feature_importance.rds"))
+# Input: readRDS(here("output", "tables", "predictions.rds"))
+#        readRDS(here("output", "tables", "feature_importance.rds"))
 # =============================================================================
 
 library(dplyr)
@@ -18,8 +18,8 @@ library(Metrics)
 library(here)
 
 # --- Đọc predictions từ TV4 ---
-preds <- readRDS(here("output", "data", "predictions.rds"))
-fi    <- readRDS(here("output", "data", "feature_importance.rds"))
+preds <- readRDS(here("output", "tables", "predictions.rds"))
+fi    <- readRDS(here("output", "tables", "feature_importance.rds"))
 
 actual <- preds$actual
 
@@ -165,7 +165,7 @@ ggsave(here("output", "figures", "p_feature_importance.png"), p_fi_combined,
 # =============================================================================
 # LƯU KẾT QUẢ ĐÁNH GIÁ
 # =============================================================================
-saveRDS(results, here("output", "data", "eval_results.rds"))
+saveRDS(results, here("output", "tables", "eval_results.rds"))
 
 # --- Auto-extract key metrics cho slide ---
 best_model <- results %>% slice(1)
@@ -176,4 +176,4 @@ cat("MAE:",  round(best_model$MAE, 2), "\n")
 cat("R²:",   round(best_model$R2, 4), "\n")
 cat("RMSPE:", round(best_model$RMSPE, 4), "\n")
 
-cat("\n[Thành Tài] ✅ Evaluation hoàn tất! Đã lưu: eval_results.rds\n")
+cat("\n[Thành Tài] ✅ Evaluation hoàn tất! Đã lưu: output/tables/eval_results.rds\n")

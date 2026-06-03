@@ -12,9 +12,7 @@ library(dplyr)
 library(effectsize)
 library(here)
 
-# --- Đọc dữ liệu TRAIN ONLY cho kiểm định ---
-# ⚠️ Chỉ dùng train_data để kiểm định, tránh rò rỉ
-train_df <- readRDS(here("output", "data", "train_data.rds"))
+train_df <- readRDS(here("data", "processed", "train_data.rds"))
 
 cat("╔══════════════════════════════════════════════════════════╗\n")
 cat("║  QUỐC ANH — KIỂM ĐỊNH THỐNG KÊ                        ║\n")
@@ -194,9 +192,9 @@ stat_tests_results <- list(
   pearson_r          = rho_pearson,
   cor_test_result    = cor_result
 )
-saveRDS(stat_tests_results, here("output", "data", "stat_tests.rds"))
+saveRDS(stat_tests_results, here("output", "tables", "stat_tests.rds"))
 
 cat("\n[Quốc Anh] ✅ Kiểm định thống kê hoàn tất!\n")
 cat("[Quốc Anh] ✅ Bao gồm: Normality check + Parametric + Non-parametric đối chứng\n")
 cat("[Quốc Anh] ✅ Cohen's d: Welch-corrected (effectsize package)\n")
-cat("[Quốc Anh] ✅ Đã lưu: stat_tests.rds\n")
+cat("[Quốc Anh] ✅ Đã lưu: output/tables/stat_tests.rds\n")

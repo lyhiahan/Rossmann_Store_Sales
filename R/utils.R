@@ -20,7 +20,7 @@ library(here)
 #    → Truyền stats từ bên ngoài (train_stats) nếu cần
 # =============================================================================
 clean_rossmann <- function(data_path,
-                           store_path = here("store.csv"),
+                           store_path = here("data", "raw", "store.csv"),
                            store_range = 1:50,
                            date_from = "2014-08-01",
                            date_to   = "2015-07-31",

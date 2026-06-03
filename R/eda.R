@@ -5,8 +5,8 @@
 # Mô tả: Thống kê mô tả, phân tích phân phối, phân tích nhóm
 # =============================================================================
 # CHÚ Ý: Chỉ Thanh Phúc được chỉnh sửa file này!
-# Input: readRDS(here("output", "data", "df_clean.rds"))
-# Sử dụng: get_summary_stats() từ R/tv1_utils.R
+# Input: readRDS(here("data", "processed", "df_clean.rds"))
+# Sử dụng: get_summary_stats() từ R/utils.R
 # =============================================================================
 
 library(dplyr)
@@ -16,7 +16,7 @@ library(kableExtra)
 library(here)
 
 # --- Đọc dữ liệu ---
-df <- readRDS(here("output", "data", "df_clean.rds"))
+df <- readRDS(here("data", "processed", "df_clean.rds"))
 
 # --- 1. Summary Statistics tổng quan ---
 cat("\n========== SUMMARY STATISTICS ==========\n")
@@ -136,6 +136,6 @@ saveRDS(list(
   cor_matrix    = cor_matrix,
   stats_storetype = stats_storetype,
   stats_promo     = stats_promo
-), here("output", "data", "eda_results.rds"))
+), here("output", "tables", "eda_results.rds"))
 
-cat("\n[Thanh Phúc] ✅ EDA hoàn tất! Đã lưu: eda_results.rds\n")
+cat("\n[Thanh Phúc] ✅ EDA hoàn tất! Đã lưu: output/tables/eda_results.rds\n")

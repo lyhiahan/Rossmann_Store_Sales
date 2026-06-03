@@ -5,7 +5,7 @@
 # Mô tả: Phân tích chuỗi thời gian — Decomposition, ARIMA, ETS, Forecast
 # =============================================================================
 # CHÚ Ý: Chỉ Thành Tài được chỉnh sửa file này!
-# Input: readRDS(here("output", "data", "df_clean.rds"))
+# Input: readRDS(here("data", "processed", "df_clean.rds"))
 # =============================================================================
 
 library(dplyr)
@@ -13,8 +13,7 @@ library(ggplot2)
 library(forecast)
 library(here)
 
-# --- Đọc dữ liệu ---
-df <- readRDS(here("output", "data", "df_clean.rds"))
+df <- readRDS(here("data", "processed", "df_clean.rds"))
 
 cat("╔══════════════════════════════════════════════════════════╗\n")
 cat("║  THÀNH TÀI — TIME SERIES ANALYSIS                      ║\n")
@@ -192,9 +191,9 @@ saveRDS(list(
   ets_forecast   = fc_ets,
   ts_results     = ts_results,
   decomposition  = decomp
-), here("output", "data", "time_series_results.rds"))
+), here("output", "tables", "time_series_results.rds"))
 
 cat("\n[Thành Tài] ✅ Time Series Analysis hoàn tất!\n")
-cat("[Thành Tài] ✅ Đã lưu: time_series_results.rds\n")
+cat("[Thành Tài] ✅ Đã lưu: output/tables/time_series_results.rds\n")
 cat("[Thành Tài] ✅ Biểu đồ: p_ts_decomposition, p_ts_arima_forecast,",
     "p_ts_ets_forecast, p_ts_comparison\n")

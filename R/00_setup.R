@@ -39,10 +39,13 @@ invisible(lapply(required_packages, load_or_install))
 
 # --- 2. TỰ ĐỘNG TẠO THƯ MỤC (nếu máy thành viên chưa có) ---
 dirs_needed <- c(
-  here("output"),
-  here("output", "data"),
+  here("data", "raw"),
+  here("data", "processed"),
   here("output", "figures"),
-  here("report")
+  here("output", "tables"),
+  here("report"),
+  here("slides"),
+  here("docs")
 )
 invisible(lapply(dirs_needed, function(d) {
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
@@ -108,7 +111,7 @@ theme_rossmann <- function(base_size = 12) {
 theme_set(theme_rossmann())
 
 cat("[SETUP] ✅ Tất cả", length(required_packages), "packages đã sẵn sàng!\n")
-cat("[SETUP] ✅ Thư mục output/data, output/figures, report đã tồn tại\n")
+cat("[SETUP] ✅ Thư mục data/raw, data/processed, output/figures, output/tables, report, slides, docs đã tồn tại\n")
 cat("[SETUP] ✅ theme_rossmann() đã được set làm theme mặc định hệ thống\n")
 cat("[SETUP] ✅ COLORS palette đã sẵn sàng để truy cập\n")
 cat("[SETUP] Project root:", here(), "\n")

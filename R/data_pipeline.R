@@ -6,7 +6,7 @@
 #         Chia Train/Val TRƯỚC → tính stats trên Train → áp dụng cho cả hai
 # =============================================================================
 # CHÚ Ý: Chỉ Quốc Anh được chỉnh sửa file này!
-# Các thành viên khác: dùng readRDS(here("output","data","df_clean.rds"))
+# Các thành viên khác: dùng readRDS(here("data","processed","df_clean.rds"))
 # =============================================================================
 
 library(dplyr)
@@ -25,8 +25,8 @@ cat("╚════════════════════════
 # =============================================================================
 cat("━━━ BƯỚC 1: ĐỌC DỮ LIỆU ━━━\n")
 
-train_raw <- read_csv(here("train.csv"), show_col_types = FALSE)
-store_raw <- read_csv(here("store.csv"), show_col_types = FALSE)
+train_raw <- read_csv(here("data", "raw", "train.csv"), show_col_types = FALSE)
+store_raw <- read_csv(here("data", "raw", "store.csv"), show_col_types = FALSE)
 
 cat("[Quốc Anh] train_raw:", format(nrow(train_raw), big.mark = ","), "dòng,",
     ncol(train_raw), "cột\n")
@@ -208,25 +208,25 @@ cat("\n━━━ BƯỚC 6: XUẤT FILE ━━━\n")
 n_features <- ncol(df_clean)
 
 # --- RDS (nhanh, giữ nguyên kiểu) ---
-saveRDS(df_clean,   here("output", "data", "df_clean.rds"))
-saveRDS(train_data, here("output", "data", "train_data.rds"))
-saveRDS(val_data,   here("output", "data", "val_data.rds"))
+saveRDS(df_clean,   here("data", "processed", "df_clean.rds"))
+saveRDS(train_data, here("data", "processed", "train_data.rds"))
+saveRDS(val_data,   here("data", "processed", "val_data.rds"))
 
 # --- CSV (file trung gian, dễ kiểm tra) ---
-write_csv(df_clean,   here("output", "data", "rossmann_clean.csv"))
-write_csv(train_data, here("output", "data", "rossmann_train_cleaned.csv"))
-write_csv(val_data,   here("output", "data", "rossmann_val_cleaned.csv"))
+write_csv(df_clean,   here("data", "processed", "rossmann_clean.csv"))
+write_csv(train_data, here("data", "processed", "rossmann_train_cleaned.csv"))
+write_csv(val_data,   here("data", "processed", "rossmann_val_cleaned.csv"))
 
 # --- Lưu stats chuẩn từ TRAIN (cho utils.R reference) ---
 train_stats <- list(
   median_competition_distance = median_comp_dist,
   iqr_bounds_by_store         = iqr_stats
 )
-saveRDS(train_stats, here("output", "data", "train_stats.rds"))
+saveRDS(train_stats, here("data", "processed", "train_stats.rds"))
 
 cat("[Quốc Anh] ✅ Đã lưu: df_clean.rds, train_data.rds, val_data.rds\n")
 cat("[Quốc Anh] ✅ Đã lưu: train_stats.rds (median & IQR từ TRAIN ONLY)\n")
-cat("[Quốc Anh] ✅ Đã xuất CSV: rossmann_clean/train/val_cleaned.csv\n")
+cat("[Quốc Anh] ✅ Đã xuất CSV: data/processed/rossmann_clean.csv\n")
 
 # =============================================================================
 # 📊 TÓM TẮT

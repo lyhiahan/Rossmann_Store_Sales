@@ -5,8 +5,8 @@
 # Mô tả: 3 mô hình dự đoán: Linear Regression, Random Forest, XGBoost
 # =============================================================================
 # CHÚ Ý: Chỉ Đức Thắng được chỉnh sửa file này!
-# Input: readRDS(here("output", "data", "train_data.rds"))
-#        readRDS(here("output", "data", "val_data.rds"))
+# Input: readRDS(here("data", "processed", "train_data.rds"))
+#        readRDS(here("data", "processed", "val_data.rds"))
 # Output: saveRDS() models + predictions cho Thành Tài
 # =============================================================================
 
@@ -17,8 +17,8 @@ library(xgboost)
 library(here)
 
 # --- Đọc dữ liệu train/val (Quốc Anh đã split 70/30) ---
-train_data <- readRDS(here("output", "data", "train_data.rds"))
-test_data  <- readRDS(here("output", "data", "val_data.rds"))
+train_data <- readRDS(here("data", "processed", "train_data.rds"))
+test_data  <- readRDS(here("data", "processed", "val_data.rds"))
 
 cat("[Đức Thắng] Train:", nrow(train_data), "dòng | Validation:", nrow(test_data), "dòng\n")
 
@@ -162,12 +162,12 @@ print(head(xgb_importance, 5))
 # LƯU KẾT QUẢ
 # =============================================================================
 saveRDS(list(lm = model_lm, rf = model_rf, xgb = model_xgb),
-        here("output", "data", "models.rds"))
+        here("output", "tables", "models.rds"))
 
 saveRDS(list(lm = pred_lm, rf = pred_rf, xgb = pred_xgb, actual = test_y),
-        here("output", "data", "predictions.rds"))
+        here("output", "tables", "predictions.rds"))
 
 saveRDS(list(rf = rf_importance, xgb = xgb_importance),
-        here("output", "data", "feature_importance.rds"))
+        here("output", "tables", "feature_importance.rds"))
 
-cat("\n[Đức Thắng] ✅ Modeling hoàn tất! Đã lưu: models.rds, predictions.rds, feature_importance.rds\n")
+cat("\n[Đức Thắng] ✅ Modeling hoàn tất! Đã lưu: output/tables/models.rds, predictions.rds, feature_importance.rds\n")

@@ -17,7 +17,7 @@ library(gridExtra)
 library(here)
 
 # --- Đọc dữ liệu ---
-df <- readRDS(here("output", "data", "df_clean.rds"))
+df <- readRDS(here("data", "processed", "df_clean.rds"))
 
 # --- Theme chung cho tất cả biểu đồ ---
 theme_rossman <- theme_minimal(base_size = 12) +

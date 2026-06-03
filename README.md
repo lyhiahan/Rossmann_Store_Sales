@@ -32,10 +32,10 @@ rossman-sale-store/
 ├── .gitignore
 ├── .here                             # Marker cho here package
 ├── README.md                         # ← File này
-├── HUONG_DAN_NHOM.md                 # Hướng dẫn chi tiết phân công & quy ước
 │
-├── train.csv                         # Dữ liệu gốc — 1,017,210 dòng
-├── store.csv                         # Thông tin 1,115 cửa hàng
+├── data/                             # Thư mục chứa dữ liệu
+│   ├── raw/                          # Dữ liệu gốc (train.csv, store.csv)
+│   └── processed/                    # Dữ liệu sạch (df_clean.rds, train_data.rds,...)
 │
 ├── R/                                # Code R — mỗi người 1 file riêng
 │   ├── 00_setup.R                    # Cài packages & cấu hình chung
@@ -48,15 +48,16 @@ rossman-sale-store/
 │   ├── evaluation.R                  # Thành Tài — Đánh giá mô hình
 │   └── time_series.R                 # Thành Tài — Phân tích chuỗi thời gian
 │
-├── rossman_analysis.Rmd              # File RMarkdown chính (source tất cả R/)
+├── output/                           # Kết quả xuất ra
+│   ├── figures/                      # Biểu đồ xuất ra (PNG, PDF)
+│   └── tables/                       # Bảng kết quả, models, predictions (RDS, CSV)
 │
-├── output/
-│   ├── data/                         # RDS files (tạo khi chạy code)
-│   └── figures/                      # Biểu đồ PNG
+├── report/                           # Báo cáo RMarkdown
+│   ├── main_report.Rmd               # File tích hợp báo cáo chính
+│   └── references.bib                # File trích dẫn tài liệu
 │
-└── report/
-    ├── rossman_report.docx           # Báo cáo Word
-    └── rossman_presentation.pptx     # Slide trình bày
+├── slides/                           # Slide thuyết trình (.pptx)
+└── docs/                             # Tài liệu nhóm (HUONG_DAN_NHOM.md, đánh giá đồng đẳng)
 ```
 
 ---
@@ -110,10 +111,10 @@ source("R/evaluation.R")
 source("R/time_series.R")
 
 # 4. Knit báo cáo
-rmarkdown::render("rossman_analysis.Rmd")
+rmarkdown::render("report/main_report.Rmd")
 ```
 
-Hoặc mở `rossman_analysis.Rmd` trong RStudio và nhấn **Knit**.
+Hoặc mở `report/main_report.Rmd` trong RStudio và nhấn **Knit** (sẽ tạo ra báo cáo `report/main_report.html`).
 
 ---
 
