@@ -5,7 +5,7 @@
 # Mô tả: 10 biểu đồ trực quan hóa dữ liệu bằng ggplot2 + plotly
 # =============================================================================
 # CHÚ Ý: Chỉ Gia Hân được chỉnh sửa file này!
-# Input: readRDS(here("output", "data", "df_clean.rds"))
+# Input: readRDS(here("data", "processed", "df_clean.rds"))
 # =============================================================================
 
 library(dplyr)

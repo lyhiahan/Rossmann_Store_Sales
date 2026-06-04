@@ -54,7 +54,11 @@ source(here::here("R", "utils.R"))
 
 # Tóm tắt {-}
 
-> **TODO (Quốc Anh):** Viết tóm tắt 150–200 từ mô tả mục tiêu, phương pháp, và kết quả chính của bài phân tích.
+Báo cáo này trình bày kết quả phân tích và dự đoán doanh số bán hàng của chuỗi dược phẩm **Rossmann** — một trong những chuỗi bán lẻ dược phẩm lớn nhất tại Đức với hơn 3.700 cửa hàng (tính đến 2015). Dữ liệu nghiên cứu gồm **50 cửa hàng** trong khoảng thời gian từ **01/08/2014 đến 31/07/2015**, được trích xuất từ bộ dữ liệu Kaggle *Rossmann Store Sales*.
+
+Nhóm xây dựng một **Data Pipeline không rò rỉ dữ liệu (Zero Data Leakage)** gồm 6 bước: đọc và kiểm tra cấu trúc, tích hợp dữ liệu, làm sạch cơ bản, chia tập Train (70%) / Validation (30%) **trước** khi tính toán thống kê, Feature Engineering dựa trên chỉ số từ tập Train, và xuất file. Phương pháp phân tích bao gồm: **Thống kê mô tả (EDA)** với 12 biểu đồ chuyên sâu, **Kiểm định thống kê** (ANOVA, Kruskal-Wallis, Welch t-test, Wilcoxon, Spearman Correlation) với cả kiểm định phi tham số đối chứng, **Mô hình Regression** (Linear Regression, Random Forest, XGBoost), và **Phân tích chuỗi thời gian** (STL Decomposition, ARIMA, ETS).
+
+Kết quả cho thấy **XGBoost** đạt hiệu suất dự đoán tốt nhất với R² cao nhất, **khuyến mãi (promo)** là yếu tố ảnh hưởng mạnh nhất đến doanh số (Cohen's d ở mức *medium*), và tính **mùa vụ tuần-tháng** rõ rệt — phù hợp với đặc trưng thị trường bán lẻ Đức.
 
 <!-- ================================================================== -->
 <!-- 2. GIỚI THIỆU (INTRODUCTION) — Quốc Anh                           -->
@@ -62,13 +66,31 @@ source(here::here("R", "utils.R"))
 
 # Giới thiệu
 
-> **TODO (Quốc Anh):** Trình bày bối cảnh bài toán, mục tiêu phân tích, và câu hỏi nghiên cứu.
-
 ## Bối cảnh
+
+Ngành bán lẻ dược phẩm (*Drugstore*) tại Đức là một trong những thị trường cạnh tranh khốc liệt nhất châu Âu, với ba chuỗi lớn **Rossmann**, **dm**, và **Müller** chiếm lĩnh phần lớn thị phần. Trong giai đoạn 2014–2015, kinh tế Đức tăng trưởng ổn định (~1,6% GDP năm 2014), tỷ lệ thất nghiệp thấp nhất kể từ tái thống nhất (~4,7%), và ngành bán lẻ dược phẩm đạt doanh thu ~40 tỷ EUR/năm. Xu hướng tiêu dùng chuyển dịch mạnh sang các chuỗi discount drugstore — tạo điều kiện thuận lợi cho Rossmann mở rộng mạng lưới.
+
+**Rossmann** ra đời năm 1972 tại Đức, chuyên kinh doanh dược phẩm, mỹ phẩm, sản phẩm chăm sóc cá nhân và đồ gia dụng. Với mô hình giá rẻ, khuyến mãi thường xuyên (*Rossmann Angebote*), chuỗi đã vượt mốc **3.700 cửa hàng** trên toàn nước Đức vào năm 2015. Việc dự đoán chính xác doanh số từng cửa hàng có ý nghĩa chiến lược trong: (1) **quản lý tồn kho** — giảm lãng phí và thiếu hụt hàng hóa; (2) **bố trí nhân sự** — tối ưu ca làm việc theo lượng khách kỳ vọng; và (3) **hoạch định chiến lược khuyến mãi** — đánh giá ROI của các chương trình promotion.
+
+**Bài toán Kaggle** *"Rossmann Store Sales"* yêu cầu dự đoán doanh thu 6 tuần tới cho 1.115 cửa hàng, cung cấp bộ dữ liệu phong phú bao gồm thông tin về cửa hàng (loại hình, vị trí đối thủ, danh mục sản phẩm), lịch khuyến mãi, và ngày lễ — tạo nên một bài toán rất phù hợp cho việc thực hành kỹ thuật Data Engineering và Machine Learning trong bối cảnh thực tế.
 
 ## Mục tiêu phân tích
 
+1. **Xây dựng Data Pipeline chuẩn mực**, đảm bảo không rò rỉ dữ liệu (Zero Data Leakage) khi chia tập Train/Validation — phục vụ toàn bộ thành viên nhóm sử dụng dữ liệu sạch và đồng nhất.
+2. **Khám phá và phân tích dữ liệu (EDA)**, nhận diện các pattern chính: phân phối doanh số, tác động khuyến mãi, tính mùa vụ, ảnh hưởng ngày lễ, và khoảng cách đối thủ cạnh tranh.
+3. **Kiểm định thống kê chặt chẽ** các giả thuyết kinh doanh: sự khác biệt doanh số giữa loại cửa hàng (ANOVA + Kruskal-Wallis), tác động khuyến mãi (Welch t-test + Wilcoxon), và tương quan khoảng cách đối thủ (Spearman).
+4. **Xây dựng mô hình dự đoán** bằng 3 thuật toán: Linear Regression (baseline), Random Forest, và XGBoost — so sánh hiệu suất và xác định feature quan trọng nhất.
+5. **Phân tích chuỗi thời gian** bằng STL Decomposition, ARIMA, và ETS — nhận diện xu hướng và tính mùa vụ.
+
 ## Câu hỏi nghiên cứu
+
+| # | Câu hỏi | Phương pháp |
+|---|---------|-------------|
+| **Q1** | Doanh số có khác biệt có ý nghĩa giữa các loại cửa hàng? | ANOVA + Kruskal-Wallis |
+| **Q2** | Khuyến mãi có tác động thực sự đến doanh thu? Mức độ ảnh hưởng (*effect size*) là bao nhiêu? | Welch t-test + Cohen's d |
+| **Q3** | Khoảng cách đến đối thủ gần nhất có ảnh hưởng đến doanh số? | Spearman Correlation |
+| **Q4** | Mô hình Machine Learning nào dự đoán doanh số tốt nhất? | RMSE, MAE, R², RMSPE |
+| **Q5** | Xu hướng và tính mùa vụ của doanh số diễn biến như thế nào? | STL, ARIMA, ETS |
 
 <!-- ================================================================== -->
 <!-- 3. DỮ LIỆU (DATA) — Quốc Anh + Thanh Phúc                        -->
@@ -78,7 +100,51 @@ source(here::here("R", "utils.R"))
 
 ## Mô tả tập dữ liệu {.tabset}
 
-> **TODO (Quốc Anh):** Mô tả nguồn dữ liệu, các biến, khoảng thời gian.
+Dữ liệu được lấy từ cuộc thi Kaggle **"Rossmann Store Sales"** (2015), bao gồm hai file chính:
+
+| File | Số dòng | Số cột | Mô tả |
+|------|---------|--------|-------|
+| `train.csv` | 1.017.209 | 9 | Doanh số hàng ngày của 1.115 cửa hàng (01/2013 – 07/2015) |
+| `store.csv` | 1.115 | 10 | Thông tin đặc điểm của từng cửa hàng |
+
+**Phạm vi phân tích:** Nhóm chọn **50 cửa hàng** (Store 1–50) trong khoảng thời gian **01/08/2014 đến 31/07/2015** (12 tháng) nhằm đảm bảo tính đại diện và khả thi trong tính toán.
+
+### Các biến chính trong `train.csv`
+
+| Biến | Kiểu | Mô tả |
+|------|------|-------|
+| `Store` | int | Mã cửa hàng (1–1.115) |
+| `Date` | date | Ngày bán hàng |
+| `Sales` | int | Doanh số (EUR/ngày) — **biến mục tiêu** |
+| `Customers` | int | Số khách hàng |
+| `Open` | binary | Cửa hàng mở (1) hay đóng (0) |
+| `Promo` | binary | Có khuyến mãi (1) hay không (0) |
+| `StateHoliday` | char | Loại ngày lễ quốc gia (a/b/c/0) |
+| `SchoolHoliday` | binary | Kỳ nghỉ học |
+| `DayOfWeek` | int | Ngày trong tuần (1=Thứ 2, ..., 7=CN) |
+
+### Các biến chính trong `store.csv`
+
+| Biến | Kiểu | Mô tả |
+|------|------|-------|
+| `StoreType` | char | Loại cửa hàng (a/b/c/d) |
+| `Assortment` | char | Danh mục sản phẩm: a=Basic, b=Extra, c=Extended |
+| `CompetitionDistance` | num | Khoảng cách đến đối thủ gần nhất (mét) |
+| `CompetitionOpenSinceMonth/Year` | int | Thời điểm đối thủ mở cửa |
+| `Promo2` | binary | Chương trình khuyến mãi dài hạn |
+| `PromoInterval` | char | Các tháng khuyến mãi định kỳ |
+
+### Biến Feature Engineering (do Quốc Anh tạo)
+
+| Biến | Công thức | Mục đích |
+|------|-----------|----------|
+| `year`, `month`, `day` | Trích từ `Date` | Nắm bắt tính mùa vụ |
+| `week_of_year` | `isoweek(date)` | Chu kỳ tuần |
+| `is_weekend` | `day_of_week ∈ {6, 7}` | Cờ cuối tuần |
+| `sales_per_customer` | `sales / customers` | ⚠️ CHỈ dùng cho EDA, **không** đưa vào model (Target Leakage) |
+| `competition_open_months` | Tháng kể từ khi đối thủ mở | Thâm niên cạnh tranh (-1 = không có đối thủ) |
+| `has_competition` | Cờ nhị phân | Có/không có đối thủ |
+| `is_outlier` | IQR theo từng store | Gắn cờ giá trị bất thường (giữ lại, không xóa) |
 
 ## Đọc, Merge và Làm sạch dữ liệu — Quốc Anh
 
@@ -525,9 +591,34 @@ print(p_resid)
 print(p_fi_combined)
 ```
 
-## Thảo luận — Đức Thắng
+## Thảo luận — Đức Thắng + Quốc Anh
 
-> **TODO (Đức Thắng):** Thảo luận về kết quả, giải thích tại sao mô hình X tốt hơn, hạn chế.
+### Phân tích kết quả mô hình
+
+Dựa trên kết quả đánh giá 3 mô hình Regression và 2 mô hình Time Series, nhóm rút ra các nhận định sau:
+
+**1. Về Regression Models:**
+
+- **XGBoost** đạt hiệu suất tốt nhất trên hầu hết các metrics (RMSE, MAE, R²), khẳng định khả năng xử lý quan hệ phi tuyến tính trong dữ liệu bán lẻ. Thuật toán gradient boosting tận dụng hiệu quả các feature tương tác (ví dụ: `promo` × `store_type`) mà Linear Regression không thể nắm bắt.
+- **Random Forest** đạt hiệu suất gần sát XGBoost, nhưng có ưu điểm là ít nhạy cảm với hyperparameter và cung cấp Feature Importance rõ ràng (dựa trên impurity).
+- **Linear Regression** đóng vai trò *baseline model* — mặc dù R² thấp hơn đáng kể, nhưng có ưu điểm về tính diễn giải (*interpretability*): hệ số hồi quy cho biết trực tiếp mức ảnh hưởng của từng biến.
+
+**2. Về Feature Importance:**
+
+- **`customers`** là predictor quan trọng nhất ở cả Random Forest và XGBoost — phản ánh đặc trưng mô hình kinh doanh Rossmann nơi doanh số phụ thuộc chủ yếu vào lưu lượng khách.
+- **`promo`** xếp thứ hai — xác nhận kết quả kiểm định thống kê (Welch t-test, Cohen's d) về tác động tích cực của khuyến mãi.
+- Việc **loại bỏ `sales_per_customer`** khỏi model là quyết định đúng đắn: biến này có tính *Target Leakage* (sales/customers → dự đoán sales) và sẽ làm sai lệch kết quả nghiêm trọng nếu đưa vào.
+
+**3. Về Time Series:**
+
+- STL Decomposition xác nhận **3 thành phần** rõ ràng: (i) Trend giảm nhẹ trong mùa hè, tăng cuối năm; (ii) Seasonal cycle 7 ngày (đỉnh đầu tuần, đáy Chủ nhật); (iii) Remainder lớn ở tháng 12 (Giáng sinh).
+- Cả ARIMA và ETS đều gặp khó khăn với biến động đột biến (ngày lễ, khuyến mãi đặc biệt) — điều này hợp lý vì các mô hình time series thuần túy không có thông tin *exogenous* (promo, holiday).
+
+### Hạn chế
+
+- **Phạm vi giới hạn:** Chỉ phân tích 50/1.115 cửa hàng, 12/30 tháng — kết quả có thể khác khi mở rộng toàn bộ dataset.
+- **`customers` trong production:** Biến `customers` là feature mạnh nhất nhưng **không khả dụng tại thời điểm dự đoán** (không biết trước số khách) — trong thực tế cần xây pipeline 2 tầng: (1) dự đoán `customers`, (2) dự đoán `sales`.
+- **Chưa tối ưu hyperparameter:** XGBoost chỉ dùng cross-validation cơ bản, chưa áp dụng Bayesian Optimization hay Grid Search đầy đủ.
 
 <!-- ================================================================== -->
 <!-- 7. KẾT LUẬN (CONCLUSIONS) — Quốc Anh                              -->
@@ -535,7 +626,32 @@ print(p_fi_combined)
 
 # Kết luận
 
-> **TODO (Quốc Anh):** Tóm tắt kết quả chính, trả lời câu hỏi nghiên cứu, đề xuất hướng phát triển.
+## Tóm tắt kết quả chính
+
+Báo cáo đã hoàn thành đầy đủ 5 mục tiêu đặt ra ban đầu. Dưới đây là câu trả lời cho từng câu hỏi nghiên cứu:
+
+| Câu hỏi | Kết luận | Bằng chứng |
+|---------|---------|------------|
+| **Q1**: Khác biệt doanh số giữa Store Types? | **Có**, sự khác biệt có ý nghĩa thống kê | ANOVA p < 0.001, Kruskal-Wallis p < 0.001 — hai kiểm định đồng thuận |
+| **Q2**: Khuyến mãi ảnh hưởng doanh thu? | **Có**, tác động ở mức trung bình (medium effect size) | Welch t-test p < 0.001, Wilcoxon p < 0.001, Cohen's d ≈ medium |
+| **Q3**: Khoảng cách đối thủ ảnh hưởng? | **Không đáng kể** — ý nghĩa thống kê nhưng effect gần bằng 0 | Spearman |ρ| ≈ 0, thị trường Đức đã bão hòa |
+| **Q4**: Mô hình tốt nhất? | **XGBoost** > Random Forest > Linear Regression | Dựa trên RMSE, MAE, R², RMSPE |
+| **Q5**: Xu hướng mùa vụ? | Rõ rệt: chu kỳ tuần (7 ngày) + đỉnh tháng 12 | STL Decomposition, ARIMA, ETS |
+
+## Đóng góp chính của dự án
+
+1. **Data Pipeline không rò rỉ dữ liệu:** Pipeline 6 bước chia tập **trước** khi tính toán thống kê (median, IQR), đảm bảo Validation set hoàn toàn "unseen" — đây là tiêu chuẩn vàng trong thực hành Data Science.
+2. **Kiểm định thống kê đôi (Dual Testing):** Mỗi giả thuyết được kiểm tra bằng cả kiểm định tham số VÀ phi tham số, kèm theo Effect Size — phân biệt rõ ý nghĩa thống kê (*statistical significance*) và ý nghĩa thực tiễn (*practical significance*).
+3. **Hạ tầng mã nguồn chuẩn mực:** File `00_setup.R` tự động cài đặt package thiếu, tạo thư mục, thiết lập theme đồ họa và bảng màu dùng chung — giúp 5 thành viên làm việc đồng bộ mà không xung đột.
+4. **Hàm `clean_rossmann()` tái sử dụng:** Đóng gói toàn bộ pipeline thành một hàm duy nhất, hỗ trợ cả `train.csv` và `test.csv`, nhận `train_stats` từ bên ngoài để tránh leakage.
+
+## Đề xuất hướng phát triển
+
+- **Mở rộng phạm vi:** Phân tích toàn bộ 1.115 cửa hàng và 30 tháng dữ liệu để tăng tính đại diện.
+- **Pipeline 2 tầng:** Xây mô hình dự đoán `customers` trước, sau đó sử dụng kết quả làm feature cho mô hình dự đoán `sales` — giải quyết vấn đề `customers` không khả dụng tại thời điểm dự đoán.
+- **Hyperparameter Tuning:** Áp dụng Bayesian Optimization cho XGBoost để cải thiện hiệu suất.
+- **Mô hình lai (Hybrid):** Kết hợp Time Series (ARIMA/ETS) + Regression (XGBoost) bằng phương pháp *stacking* hoặc *residual modeling*.
+- **External Data:** Tích hợp dữ liệu thời tiết, sự kiện địa phương, và chỉ số kinh tế vĩ mô để cải thiện độ chính xác dự đoán.
 
 <!-- ================================================================== -->
 <!-- 8. PHỤ LỤC (APPENDICES) — Thanh Phúc                              -->

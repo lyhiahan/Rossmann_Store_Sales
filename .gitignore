@@ -3,7 +3,9 @@
 # ========================
 
 # --- Output files (tái tạo được từ code) ---
-output/data/*.rds
+data/processed/*.rds
+data/processed/*.csv
+output/tables/*.rds
 output/figures/*.png
 output/figures/*.pdf
 
