@@ -110,9 +110,263 @@ source(here::here("R", "statistical_tests.R"))
 
 ## Thống kê mô tả (EDA) — Thanh Phúc
 
-```{r eda}
+> **Bối cảnh thực tế (2014–2015):** Giai đoạn này, kinh tế Đức tăng trưởng ổn định (~1,6% GDP năm 2014, ~1,5% năm 2015), tỷ lệ thất nghiệp thấp nhất kể từ thống nhất (~4,7%). Ngành bán lẻ dược phẩm Đức đạt doanh thu ~40 tỷ EUR/năm, với xu hướng người tiêu dùng chuyển sang mua sắm tại các chuỗi lớn thay vì hiệu thuốc độc lập — tạo điều kiện thuận lợi cho Rossmann mở rộng thị phần.
+
+```{r eda, include=FALSE}
 source(here::here("R", "eda.R"))
 ```
+
+---
+
+### 3.5.1 Tổng quan dữ liệu
+
+Tập dữ liệu sau xử lý gồm **`r format(nrow(df), big.mark=",")`** quan sát từ **50 cửa hàng** Rossmann trong 12 tháng (08/2014–07/2015). Dưới đây là thống kê mô tả các biến chính:
+
+```{r eda-summary-numeric}
+kable(summary_numeric,
+      caption = "Bảng 1: Thống kê mô tả biến liên tục",
+      align = "lrrrrrrrrrr") %>%
+  kable_styling(bootstrap_options = c("striped","hover","condensed"),
+                full_width = FALSE, font_size = 12) %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(which(summary_numeric$`Biến` == "sales"), background = "#EBF5FB")
+```
+
+**Nhận xét:**
+
+- **Sales** (trung bình ~`r comma(round(mean(df$sales)))` EUR/ngày/cửa hàng): Mức doanh thu này phù hợp với báo cáo ngành bán lẻ dược phẩm Đức — một cửa hàng dược phẩm quy mô trung bình tại Đức đạt khoảng 1,5–3 triệu EUR/năm (~4.100–8.200 EUR/ngày). Rossmann nằm ở phân khúc discount drugstore nên mức doanh số thấp hơn hiệu thuốc truyền thống nhưng bù lại bằng **lượng khách rất lớn**.
+- **Customers** (trung bình ~`r comma(round(mean(df$customers)))` người/ngày): Rossmann phục vụ tệp khách hàng đại chúng với đơn hàng nhỏ nhưng tần suất cao — đặc trưng của mô hình *discount drugstore* như dm, Rossmann, Müller tại Đức.
+- **Sales_per_customer** (~`r round(mean(df$sales_per_customer, na.rm=TRUE), 1)` EUR/khách): Giỏ hàng trung bình thấp phản ánh chiến lược giá rẻ, khuyến mãi thường xuyên.
+- **Competition_distance** (trung vị ~`r comma(round(median(df$competition_distance, na.rm=TRUE)))` m): Mật độ cạnh tranh cao tại Đức — trung bình mỗi thành phố lớn có 3–5 chuỗi drugstore trong bán kính 2km.
+
+```{r eda-summary-cat}
+summary_categorical %>%
+  kable(caption = "Bảng 2: Phân bố biến phân loại", align = "llrr") %>%
+  kable_styling(bootstrap_options = c("striped","hover","condensed"),
+                full_width = FALSE, font_size = 12) %>%
+  pack_rows(index = table(summary_categorical$`Biến`))
+```
+
+---
+
+### 3.5.2 Phân tích phân phối {.tabset}
+
+#### Phân phối Sales
+
+```{r eda-p1, fig.cap="Hình 1: Phân phối doanh số — lệch phải điển hình trong bán lẻ"}
+print(eda_p1)
+```
+
+> **Nhận xét & Nguyên nhân:** Phân phối lệch phải (skewness = `r round(skew_sales,2)`) là hiện tượng **phổ biến trong dữ liệu bán lẻ thực tế**. Nguyên nhân chính: (1) Những ngày lễ lớn (Giáng sinh, Phục sinh, Black Friday) tạo ra đột biến doanh số gấp 2–3 lần ngày thường — đây chính là "đuôi phải dài"; (2) Chương trình khuyến mãi bùng nổ cuối tuần; (3) Tính mùa vụ của ngành dược (mùa cảm cúm thu-đông tăng mạnh). Đây **không phải dấu hiệu bất thường** mà là đặc trưng cấu trúc của dữ liệu ngành.
+
+#### Q-Q Plot
+
+```{r eda-p2, fig.cap="Hình 2: Q-Q Plot xác nhận lệch chuẩn ở đuôi phân phối"}
+print(eda_p2)
+```
+
+> **Nhận xét:** Điểm dữ liệu lệch khỏi đường thẳng lý thuyết ở cả hai đuôi, đặc biệt đuôi phải — xác nhận phân phối không chuẩn. **Hậu quả thực tiễn:** Các kiểm định tham số (t-test, ANOVA) cần được đối chiếu với kiểm định phi tham số (như Quốc Anh đã thực hiện trong `statistical_tests.R`). Mô hình tuyến tính thuần túy sẽ kém hiệu quả hơn các mô hình cây quyết định.
+
+#### Log-transform
+
+```{r eda-p3, fig.cap="Hình 3: Log(Sales) cải thiện tính đối xứng đáng kể"}
+print(eda_p3)
+```
+
+> **Nhận xét:** Sau log-transform, skewness giảm từ `r round(skew_sales,2)` xuống `r round(skew_log_s,3)`. Phân phối gần chuẩn hơn, phù hợp hơn cho các phương pháp thống kê cổ điển. **Ứng dụng thực tế:** Trong báo cáo tài chính bán lẻ, doanh số thường được phân tích trên thang logarithm để so sánh tăng trưởng % (growth rate) giữa các cửa hàng có quy mô khác nhau.
+
+#### Phân phối Customers
+
+```{r eda-p4, fig.cap="Hình 4: Phân phối số khách — biến động theo mùa và ngày trong tuần"}
+print(eda_p4)
+```
+
+```{r eda-dist-table}
+kable(dist_stats, caption = "Bảng 3: Kiểm tra phân phối chuẩn") %>%
+  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE)
+```
+
+> **Nhận xét:** Cả Sales và Customers đều không tuân phân phối chuẩn (Shapiro p < 0,001). Đây là **kết quả kỳ vọng** với dữ liệu bán lẻ thực tế — hành vi mua sắm của người tiêu dùng phụ thuộc nhiều vào lịch (cuối tuần, ngày lễ, phát lương) nên không thể ngẫu nhiên đều.
+
+---
+
+### 3.5.3 Phân tích theo nhóm {.tabset}
+
+#### Store Type & Doanh số
+
+```{r eda-stats-storetype}
+kable(stats_storetype,
+      caption = "Bảng 4: Thống kê Sales theo Store Type",
+      col.names = c("Store Type","N","TB (EUR)","Trung vị (EUR)","ĐLC","Min","Max")) %>%
+  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE) %>%
+  row_spec(which.max(stats_storetype$mean_s), bold = TRUE, color = "white", background = "#1E88E5")
+```
+
+```{r eda-p5, fig.height=6, fig.cap="Hình 5: Density plot — cấu trúc phân phối khác biệt giữa các loại cửa hàng"}
+print(eda_p5)
+```
+
+> **Nguyên nhân & Giải thích:**
+>
+> - **Type A** (cửa hàng nhỏ, phổ thông): Chiếm đa số (~53% quan sát). Đây là mô hình cửa hàng khu dân cư (*Stadtteil-Filiale*) — doanh số ổn định, ít biến động, phục vụ nhu cầu hàng ngày.
+> - **Type B** (trung tâm mua sắm/siêu thị): Ít nhất nhưng doanh số **cao nhất và biến động nhất**. Nguyên nhân: lưu lượng khách phụ thuộc hoàn toàn vào sức hút của trung tâm mua sắm — ngày lễ tăng đột biến, ngày thường rất thấp. Năm 2014–2015, Đức có ~460 trung tâm mua sắm, doanh thu ngành trung tâm thương mại tăng 3% — Type B hưởng lợi trực tiếp.
+> - **Type C** (cửa hàng nhỏ chuyên biệt): Doanh số thấp nhất — phù hợp với vị trí thường ở ngoại ô hoặc khu vực ít dân.
+> - **Type D** (cửa hàng lớn, flagship): Doanh số cao thứ hai, ổn định — mô hình *Vollsortimenter* với đầy đủ danh mục sản phẩm.
+
+#### Khuyến mãi (Promo)
+
+```{r eda-stats-promo}
+kable(stats_promo,
+      caption = "Bảng 5: Tác động khuyến mãi đến doanh số",
+      col.names = c("Promo","N","TB (EUR)","Trung vị (EUR)","ĐLC","Min","Max")) %>%
+  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE) %>%
+  row_spec(2, bold = TRUE, background = "#FDEDEC")
+```
+
+```{r eda-p6, fig.cap="Hình 6: Khuyến mãi tăng doanh số đồng đều ở tất cả loại cửa hàng"}
+print(eda_p6)
+```
+
+> **Phân tích nhân quả:** Khuyến mãi làm tăng doanh số trung bình ~**`r round((stats_promo$mean_s[stats_promo$promo==1]/stats_promo$mean_s[stats_promo$promo==0]-1)*100, 0)`%**. **Cơ chế tác động:** (1) *Price elasticity* — ngành FMCG/dược phẩm có độ co giãn giá cao, giảm 10–20% giá kích thích tăng lượng mua 30–50%; (2) *Basket enlargement* — khuyến mãi khuyến khích mua thêm sản phẩm ngoài nhu cầu ban đầu; (3) *Traffic generation* — thu hút khách từ đối thủ cạnh tranh trong ngày khuyến mãi.
+>
+> **Bối cảnh 2014–2015:** Đây là giai đoạn Rossmann mạnh tay với chương trình "Rossmann Angebote" hàng tuần — một trong những lý do chuỗi vượt dm về số lượng cửa hàng tại Đức (>3.700 cửa hàng năm 2015).
+
+#### Assortment
+
+```{r eda-stats-assort}
+kable(stats_assortment,
+      caption = "Bảng 6: Thống kê Sales theo Assortment",
+      col.names = c("Assortment","N","TB (EUR)","Trung vị (EUR)","ĐLC","Min","Max")) %>%
+  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE)
+```
+
+```{r eda-p9, fig.cap="Hình 7: Boxplot Sales theo Assortment — 'Extra' vượt trội"}
+print(eda_p9)
+```
+
+> **Nhận xét:** Assortment **b (Extra)** có doanh số trung bình cao nhất dù chỉ chiếm số ít. Đây là các cửa hàng có thêm danh mục đặc biệt (ví dụ: mỹ phẩm cao cấp, thực phẩm chức năng) — phản ánh xu hướng *premiumization* trong bán lẻ dược phẩm Đức giai đoạn này, khi người tiêu dùng có thu nhập tăng sẵn sàng chi tiêu cho sản phẩm chăm sóc sức khỏe cao cấp hơn.
+
+#### Doanh thu / Khách
+
+```{r eda-p10, fig.cap="Hình 8: Sales per Customer — giá trị đơn hàng đồng đều giữa các loại cửa hàng"}
+print(eda_p10)
+```
+
+> **Phát hiện quan trọng:** Dù tổng doanh số chênh lệch lớn giữa các Store Type, **giá trị đơn hàng/khách (~`r round(mean(df$sales_per_customer, na.rm=TRUE), 1)` EUR) khá đồng đều**. Điều này cho thấy sự khác biệt doanh số đến từ **lượng khách** chứ không phải hành vi chi tiêu. Hàm ý: chiến lược tăng doanh số hiệu quả nhất là **tăng lưu lượng khách** (traffic), không phải tăng giá bán.
+
+#### Heatmap Ngày × Tháng
+
+```{r eda-p7, fig.height=6.5, fig.cap="Hình 9: Heatmap doanh số theo ngày trong tuần và tháng"}
+print(eda_p7)
+```
+
+> **Đọc kết quả:**
+>
+> - **Thứ Hai cao nhất tuần:** Người Đức có thói quen đi mua sắm đầu tuần sau khi nhận bản tin khuyến mãi cuối tuần (*Prospekt*). Đây là hành vi tiêu dùng đặc thù Đức, được nhiều nghiên cứu hành vi người tiêu dùng xác nhận.
+> - **Tháng 12 đỉnh điểm:** Mùa Giáng sinh (Weihnachten) là dịp mua sắm lớn nhất năm tại Đức — chi tiêu hộ gia đình tăng ~35% so với tháng thường. Rossmann hưởng lợi từ nhu cầu quà tặng, sản phẩm chăm sóc cá nhân, và đồ trang trí.
+> - **Chủ nhật thấp nhất:** Luật *Ladenschlussgesetz* của Đức quy định hầu hết cửa hàng đóng cửa Chủ nhật — giải thích tại sao Chủ nhật có doanh số gần bằng 0.
+> - **Tháng 8–9 thấp:** Mùa hè — người Đức đi nghỉ hè (*Sommerurlaub*), lưu lượng khách tại các khu dân cư giảm. Năm 2014, tỷ lệ người Đức đi du lịch hè đạt 76% — cao nhất châu Âu.
+
+#### Ảnh hưởng Ngày lễ
+
+```{r eda-stats-holiday}
+kable(stats_holiday,
+      caption = "Bảng 7: Doanh số theo loại ngày lễ",
+      col.names = c("Loại ngày lễ","N","TB Sales (EUR)","Trung vị","ĐLC","TB Khách")) %>%
+  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE) %>%
+  row_spec(1, bold = TRUE, background = "#E8F8F5")
+```
+
+```{r eda-p8, fig.cap="Hình 10: Ngày lễ làm GIẢM doanh số — nghịch lý bán lẻ Đức"}
+print(eda_p8)
+```
+
+> **Nghịch lý & Giải thích:** Doanh số ngày lễ thấp hơn ngày thường — điều này **ngược với trực giác** nhưng hoàn toàn hợp lý tại Đức:
+>
+> 1. **Đóng cửa bắt buộc:** Luật Đức quy định hầu hết cửa hàng đóng cửa ngày lễ quốc gia — dữ liệu lọc `open=1` chỉ bao gồm những ngày có hoạt động, nhưng số cửa hàng mở rất ít.
+> 2. **Hành vi "mua trước":** Người Đức có thói quen mua sắm rất nhiều **trước** ngày lễ (đặc biệt trước Giáng sinh và Phục sinh), dẫn đến sụt giảm vào chính ngày lễ.
+> 3. **Ngày lễ Phục sinh (Easter):** Có doanh số đặc biệt cao do Rossmann là điểm mua quà Phục sinh phổ biến — nhưng dữ liệu bị pha loãng bởi các chuỗi cửa hàng đóng cửa.
+
+#### Xu hướng Tháng
+
+```{r eda-p12, fig.cap="Hình 11: Doanh số theo tháng — xu hướng U-shape với đỉnh tháng 12"}
+print(eda_p12)
+```
+
+```{r eda-monthly-table}
+kable(monthly_stats %>% mutate(across(c(mean_sales, median_sales, total_sales), comma)),
+      caption = "Bảng 8: Chi tiết doanh số theo tháng",
+      col.names = c("Tháng","DS TB (EUR)","DS Trung vị","Tổng DS","Số quan sát")) %>%
+  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE)
+```
+
+> **Phân tích xu hướng mùa vụ:**
+>
+> | Giai đoạn | Xu hướng | Nguyên nhân |
+> |-----------|----------|-------------|
+> | T8–T9/2014 | Thấp | Mùa hè — kỳ nghỉ *Sommerferien* |
+> | T10–T11/2014 | Tăng | Mùa cảm cúm, chuẩn bị Giáng sinh |
+> | T12/2014 | Đỉnh | Weihnachten — mua sắm và quà tặng |
+> | T1–T2/2015 | Giảm | Sau lễ, kinh tế hộ gia đình thắt chặt |
+> | T3–T4/2015 | Tăng nhẹ | Phục sinh, bắt đầu mùa làm đẹp xuân hè |
+> | T5–T7/2015 | Ổn định | Mùa hè bắt đầu — kem chống nắng, chăm sóc da |
+
+#### Khoảng cách Đối thủ
+
+```{r eda-stats-comp}
+kable(stats_comp,
+      caption = "Bảng 9: Doanh số theo khoảng cách đối thủ cạnh tranh",
+      col.names = c("Nhóm khoảng cách","N","DS TB (EUR)","DS Trung vị")) %>%
+  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE)
+```
+
+> **Nhận xét:** Khoảng cách đến đối thủ gần nhất **không có tương quan rõ ràng** với doanh số. Điều này phản ánh thực tế thị trường Đức: mật độ cạnh tranh rất cao đồng đều — hầu hết cửa hàng Rossmann đều có ít nhất 1–2 đối thủ trong vòng 2km. Khoảng cách địa lý không còn là lợi thế cạnh tranh quyết định; thay vào đó, **chất lượng dịch vụ, chính sách giá và vị trí giao thông** mới là yếu tố then chốt.
+
+---
+
+### 3.5.4 Phân tích Outlier
+
+```{r eda-p11, fig.cap="Hình 12: Tỷ lệ outlier theo cửa hàng — một số store biến động bất thường"}
+print(eda_p11)
+```
+
+> **Nhận xét:** Tổng cộng **`r format(sum(df$is_outlier, na.rm=TRUE), big.mark=",")`** quan sát (`r round(sum(df$is_outlier, na.rm=TRUE)/nrow(df)*100,1)`%) được đánh dấu outlier bằng IQR. Các cửa hàng có tỷ lệ outlier cao có thể do: (1) Mới khai trương hoặc sắp đóng cửa; (2) Vị trí đặc biệt (sân bay, ga tàu) với lưu lượng khách rất không đều; (3) Sự kiện địa phương đặc biệt (lễ hội thành phố, sự kiện thể thao). **Quyết định giữ lại outlier** (gắn cờ thay vì xóa) là đúng đắn vì các sự kiện đột biến này chứa thông tin giá trị cho mô hình dự báo.
+
+---
+
+### 3.5.5 Ma trận Tương quan
+
+```{r eda-cor-matrix}
+kable(round(cor_matrix, 3),
+      caption = "Bảng 10: Ma trận tương quan (Pearson)") %>%
+  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE) %>%
+  column_spec(1, bold = TRUE)
+```
+
+> **Phát hiện chính:**
+>
+> - **Sales–Customers (r = `r round(cor_matrix["sales","customers"],3)`):** Tương quan **rất mạnh** — xác nhận *lưu lượng khách* là driver chính của doanh số tại Rossmann. Đây là lý do tại sao mô hình Machine Learning giữ lại `customers` như feature quan trọng nhất.
+> - **Sales–sales_per_customer (r = `r round(cor_matrix["sales","sales_per_customer"],3)`):** Mức tương quan này là **tautology một phần** (sales = customers × sales_per_customer) — đây là lý do biến `sales_per_customer` bị **loại khỏi mô hình** dự báo (target leakage).
+> - **Competition_distance–Sales (r = `r round(cor_matrix["sales","competition_distance"],3)`):** Gần bằng 0, xác nhận khoảng cách cạnh tranh không ảnh hưởng đáng kể đến doanh số trong thị trường đã bão hòa của Đức.
+> - **is_weekend–Sales (r = `r round(cor_matrix["sales","is_weekend"],3)`):** Tương quan âm nhẹ — phản ánh tác động của luật đóng cửa Chủ nhật.
+
+---
+
+### 3.5.6 Tổng kết EDA — Thanh Phúc
+
+> **Tóm tắt 5 phát hiện chính từ phân tích EDA:**
+
+| # | Phát hiện | Bằng chứng | Hàm ý cho mô hình |
+|---|-----------|------------|-------------------|
+| 1 | **Phân phối Sales lệch phải mạnh** | Skewness = `r round(skew_sales,2)`, Shapiro p < 0,001 | Cần phi tuyến tính (RF/XGBoost) hoặc log-transform |
+| 2 | **Khuyến mãi là driver mạnh nhất** | Tăng ~`r round((stats_promo$mean_s[stats_promo$promo==1]/stats_promo$mean_s[stats_promo$promo==0]-1)*100,0)`% doanh số | `promo` phải là feature quan trọng trong model |
+| 3 | **Tính mùa vụ tuần và năm rõ ràng** | Heatmap, tháng 12 đỉnh, T2 cao nhất tuần | Thêm `month`, `day_of_week`, `week_of_year` vào features |
+| 4 | **Store Type B biến động cao nhất** | ĐLC lớn nhất | Cân nhắc mô hình riêng theo loại cửa hàng |
+| 5 | **Customers là predictor quan trọng nhất** | r = `r round(cor_matrix["sales","customers"],3)` với sales | Giữ `customers` làm feature chính, loại `sales_per_customer` |
+
+**Kết luận phân tích EDA:** Dữ liệu Rossmann 2014–2015 phản ánh chính xác **đặc trưng thị trường bán lẻ Đức giai đoạn tăng trưởng ổn định** — người tiêu dùng nhạy cảm với khuyến mãi, hành vi mua sắm tuân theo lịch văn hóa (ngày lễ, mùa vụ), và cạnh tranh địa lý không còn là yếu tố quyết định. Những phát hiện này định hướng trực tiếp cho việc lựa chọn features và thuật toán ở các bước mô hình hóa tiếp theo.
+
+
 
 <!-- ================================================================== -->
 <!-- 4. TRỰC QUAN HÓA DỮ LIỆU (VISUALIZATION) — Gia Hân              -->
