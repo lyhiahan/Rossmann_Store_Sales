@@ -272,9 +272,9 @@ ggsave(here("output", "figures", "p5_dumbbell.png"), BieuDo5,
        width = 11, height = 6, dpi = 150)
 ```
 
-**Nhận xét:** Biểu đồ tạ đôi cho thấy khuyến mãi mang lại hiệu quả tăng trưởng doanh số trên tất cả các ngày mở cửa, nhưng mức độ tác động **không đồng đều** giữa các ngày trong tuần:
+**Nhận xét:** Khuyến mãi mang lại hiệu quả tăng trưởng doanh số trên tất cả các ngày mở cửa, nhưng mức độ tác động **không đồng đều** giữa các ngày trong tuần:
 
-- **Thứ Hai** ghi nhận mức Lift cao nhất trong tuần. Đây là ngày các chương trình khuyến mãi mới chính thức có hiệu lực nên kích thích tâm lý khách hàng "đi sớm để mua được giá tốt", đẩy doanh số vọt lên mạnh mẽ nhất.
+- **Thứ Hai** ghi nhận mức tăng cao nhất trong tuần. Đây là ngày các chương trình khuyến mãi mới chính thức có hiệu lực nên kích thích tâm lý khách hàng "đi sớm để mua được giá tốt", đẩy doanh số vọt lên mạnh mẽ nhất.
 - Mức tăng trưởng nhờ khuyến mãi **giảm dần** từ Thứ Ba đến Thứ Sáu khi sức hấp dẫn của chương trình ưu đãi đầu tuần dần phai nhạt, khách hàng đã mua phần lớn nhu yếu phẩm trong những ngày đầu.
 - **Thứ Bảy** là ngày khuyến mãi kém hiệu quả nhất, vì lượng khách ghé thăm vào cuối tuần vốn đã thấp do thói quen nghỉ ngơi của người dân Đức, dẫn đến hiệu ứng kích cầu bị hạn chế đáng kể.
 
@@ -328,14 +328,15 @@ ggsave(here("output", "figures", "p6_heatmap.png"), BieuDo6,
 
 **Nhận xét:** Bản đồ nhiệt phản ánh chi tiết sự phân bố doanh thu theo hai chiều thời gian giữa các ngày trong tuần và các tháng trong năm.
 
-- Điểm nóng mua sắm lớn nhất là vào các ngày **Thứ Hai** hàng tuần khi áp dụng chương trình khuyến mãi mới.
-- Doanh thu cũng tập trung ở mức cực đại trong suốt **tháng 12** do nhu cầu mua sắm cao điểm dịp lễ hội Giáng sinh.
+- Điểm nóng doanh thu cao nhất toàn hệ thống tại các ngày **Thứ $2$ của Tháng $12$**. Nguyên nhân là do sức mua bùng nổ đỉnh điểm vào mùa cao điểm trước thềm Giáng Sinh kết hợp với hiệu ứng nhu cầu dồn nén sau ngày Chủ nhật, đưa doanh số trung bình chạm các mốc cực đại (biểu thị bằng vùng màu xanh navy đậm nhất)..
 - Các ngày **Chủ nhật** do quy định đóng cửa nghiêm ngặt ghi nhận doanh số gần như bằng **0**.
 - Thời kỳ nghỉ hè vào **tháng 8** và **tháng 9** là những điểm lạnh ghi nhận mức doanh thu thấp nhất của toàn bộ chuỗi hệ thống.
 
-Sự phân bố nhiệt này giúp chuỗi Rossmann chủ động tối ưu hóa nhân sự và lượng hàng tồn kho dự trữ theo từng tuần và từng tháng cụ thể.
+
+Sự phân bổ sắc độ trên toàn ma trận khẳng định quy luật vận hành cốt lõi: Thứ $2$ luôn là ngày kéo doanh thu cao nhất trong tuần, sau đó giảm dần về phía Thứ $7$ trước khi đóng cửa vào Chủ nhật, và chu trình này được khuếch đại hoặc thu hẹp theo biên độ của từng tháng. Dữ liệu quan trọng này giúp doanh nghiệp tối ưu hóa kế hoạch phân bổ ca trực nhân sự và chiến lược điều phối chuỗi cung ứng Logistics theo từng cặp chu kỳ tuần-tháng.
 
 ---
+
 
 ### 📍 Biểu đồ 7: Chi tiêu Trung bình mỗi Khách hàng theo Cơ cấu Sản phẩm
 
@@ -419,8 +420,6 @@ MauCanhTranh <- c("Không có đối thủ" = "#4CAF50",
 
 BieuDo8 <- ggplot(ThongKeCanhTranh, aes(x = NhomCanhTranh, y = DoanhThuTB, fill = NhomCanhTranh)) +
   geom_col(alpha = 0.85, width = 0.65) +
-  geom_errorbar(aes(ymin = DoanhThuTB - SaiSoChuan, ymax = DoanhThuTB + SaiSoChuan),
-                width = 0.2, linewidth = 0.4) +
   geom_text(aes(label = comma(round(DoanhThuTB))),
             vjust = -1.2, size = 3.5, fontface = "bold") +
   geom_text(aes(label = paste0("n=", comma(SoLuong)), y = 500),
@@ -429,27 +428,21 @@ BieuDo8 <- ggplot(ThongKeCanhTranh, aes(x = NhomCanhTranh, y = DoanhThuTB, fill 
   scale_y_continuous(labels = comma, expand = expansion(mult = c(0, 0.18))) +
   labs(
     title    = "Ảnh hưởng của Thời gian Đối thủ Cạnh tranh đến Doanh số",
-    subtitle = "Số tháng đối thủ gần nhất đã hoạt động | Error bar = ±1 SE | n = số ngày quan sát",
-    x = "Thời gian đối thủ đã hoạt động", y = "Doanh số trung bình (EUR/ngày)",
+    x = "Thời gian đối thủ đã hoạt động", 
+    y = "Doanh số trung bình (EUR/ngày)",
     fill = NULL
-  ) +
-  GiaoDienRossmann +
-  theme(
-    legend.position = "none",
-    axis.text.x = element_text(size = 9)
-  )
+  ) 
 
 print(BieuDo8)
-ggsave(here("output", "figures", "p8_competition_duration.png"), BieuDo8,
-       width = 11, height = 6, dpi = 150)
+ggsave(here("output", "figures", "p8_competition_duration.png"), BieuDo8, width = 11, height = 6, dpi = 150)
 ```
 
 **Nhận xét:** Phân tích tác động của thời gian cạnh tranh cho thấy sự thích ứng đặc biệt của chuỗi Rossmann trong môi trường cạnh tranh khốc liệt:
 
-- **Cửa hàng không có đối thủ gần** đạt mức doanh số cao nhất hệ thống, xác nhận lợi thế độc quyền khu vực vẫn là yếu tố quan trọng dù hệ số tương quan tổng thể thấp.
-- **Giai đoạn đối thủ mới mở (dưới 1 năm)**: Doanh số sụt giảm nhẹ do hiệu ứng "tò mò chuyển đổi" khi khách hàng thử nghiệm cửa hàng mới mở trong khu vực.
+- **Cửa hàng không có đối thủ gần** đạt mức doanh số cao nhất hệ thống **$6.947$ EUR/ ngày**, xác nhận lợi thế độc quyền khu vực vẫn là yếu tố quan trọng dù hệ số tương quan tổng thể thấp.
+- **Giai đoạn đối thủ mới mở (dưới 1 năm)**: thấp nhất chỉ đạt khoảng hơn **$5.500$ EUR/ngày**. Nguyên nhân là do khi đối thủ mới khai trương trong vòng 1 năm đầu, họ thường tung ra nhiều chương trình khuyến mãi và giảm giá mạnh để thu hút khách hàng, khiến Rossmann bị chia sẻ một phần lưu lượng khách và sụt giảm doanh thu tạm thời.
 - **Giai đoạn 1–5 năm**: Doanh số bắt đầu phục hồi và ổn định trở lại. Điều này cho thấy Rossmann có khả năng giữ chân khách hàng trung thành nhờ chất lượng dịch vụ, giá cả cạnh tranh và mạng lưới khuyến mãi mạnh mẽ.
-- **Đối thủ hoạt động trên 10 năm**: Doanh số đạt mức tương đối cao, phản ánh hiện tượng "cạnh tranh cộng sinh". Khi nhiều cửa hàng bán lẻ tập trung trong cùng khu vực trong thời gian dài, chúng cùng thu hút lưu lượng khách hàng lớn hơn cho toàn bộ khu vực thương mại.
+- **Đối thủ hoạt động trên 10 năm**: Doanh số đạt mức cao nhất  **$9.041$ EUR/ ngày**, phản ánh hiện tượng "cạnh tranh cộng sinh". Khi nhiều cửa hàng bán lẻ tập trung trong cùng khu vực trong thời gian dài, chúng cùng thu hút lưu lượng khách hàng lớn hơn cho toàn bộ khu vực thương mại.
 
 Phát hiện này gợi ý rằng Rossmann **không cần lo ngại** khi đối thủ mở cửa hàng gần, mà nên tập trung vào việc duy trì chất lượng dịch vụ và chiến lược khuyến mãi để giữ chân khách hàng trong giai đoạn 1–2 năm đầu tiên sau khi đối thủ xuất hiện.
 
