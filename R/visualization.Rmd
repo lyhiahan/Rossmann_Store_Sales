@@ -31,32 +31,60 @@ library(gridExtra)
 library(lubridate)
 library(here)
 
-# --- Đọc dữ liệu ---
 DuLieu <- readRDS(here("data", "processed", "df_clean.rds"))
 
-# --- Theme chung cho tất cả biểu đồ ---
 GiaoDienRossmann <- theme_minimal(base_size = 12) +
   theme(
     plot.title    = element_text(face = "bold", size = 14, hjust = 0.5),
-    plot.subtitle = element_text(size = 10, hjust = 0.5, color = "grey40"),
-    legend.position = "bottom",
+    plot.subtitle = element_text(size = 11.5, hjust = 0.5, color = "#263238", face = "italic"),
+    legend.position = "right",
     panel.grid.minor = element_blank()
   )
 
-# Bảng màu
 MauCuaHang <- c("a" = "#2196F3", "b" = "#E53935", "c" = "#4CAF50", "d" = "#FF9800")
 MauKhuyenMai <- c("0" = "#90A4AE", "1" = "#E53935")
 ```
 
-### 📍 PLOT 1: Doanh số trung bình theo tháng (trend)
+
+# 📊 Biểu đồ Cơ bản
+
+### 📍 Biểu đồ 1: Phân Phối Doanh Số
 
 ```{r plot-1}
+BieuDo1 <- ggplot(DuLieu, aes(x = sales)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 50,
+                 fill = "#2196F3", alpha = 0.6, color = "white") +
+  geom_density(color = "#E53935", linewidth = 1) +
+  labs(
+    title = "Phân phối doanh số",
+    x = "Sales (EUR)", y = "Mật độ"
+  ) +
+  GiaoDienRossmann
+
+print(BieuDo1)
+ggsave(here("output", "figures", "p1_distribution.png"), BieuDo1,
+       width = 10, height = 5, dpi = 150)
+```
+
+**Nhận xét:** Phân phối doanh số của các cửa hàng cho thấy dạng lệch phải rõ rệt khi phần lớn các ngày bán hàng tập trung quanh mức từ **3.000** đến **8.000 EUR** và kéo dài một đuôi doanh thu rất cao lên tới từ **15.000** đến **20.000 EUR**.
+
+- Điểm đột biến ở phần đuôi phải này xuất phát từ sự bùng nổ doanh số trong các đợt mua sắm cao điểm dịp Giáng sinh vào **tháng 12** hay lễ Phục sinh vào **tháng 3** và **tháng 4**.
+- Hiệu quả từ các chiến dịch khuyến mãi lớn hàng tuần cũng là nguyên nhân quan trọng thúc đẩy doanh thu đột biến.
+- Sự phân phối không chuẩn của dữ liệu cho thấy các mô hình học máy phi tuyến tính sẽ mang lại hiệu quả dự đoán doanh thu tốt hơn hẳn so với mô hình hồi quy tuyến tính cổ điển.
+
+Bên cạnh đó, đặc trưng lệch phải này cũng phản ánh sự thành công của các chiến thuật tâm lý bán lẻ được Rossmann triển khai mạnh mẽ trong giai đoạn **2014–2015** nhằm kích thích hành vi mua sắm ngẫu hứng của người tiêu dùng ngay khi bước vào cửa hàng.
+
+---
+
+### 📍 Biểu đồ 2: Xu hướng Doanh số Trung bình theo Tháng
+
+```{r plot-2}
 DoanhThuTBTheoThang <- DuLieu %>%
   mutate(Thang = floor_date(date, "month")) %>%
   group_by(Thang) %>%
   summarise(DoanhThuTrungBinh = mean(sales), .groups = "drop")
 
-BieuDo1 <- ggplot(DoanhThuTBTheoThang, aes(x = Thang, y = DoanhThuTrungBinh)) +
+BieuDo2 <- ggplot(DoanhThuTBTheoThang, aes(x = Thang, y = DoanhThuTrungBinh)) +
   geom_line(color = "#2196F3", linewidth = 1) +
   geom_point(color = "#E53935", size = 3) +
   geom_text(aes(label = comma(round(DoanhThuTrungBinh))), vjust = -1, size = 3.5, fontface = "bold") +
@@ -69,8 +97,9 @@ BieuDo1 <- ggplot(DoanhThuTBTheoThang, aes(x = Thang, y = DoanhThuTrungBinh)) +
   scale_y_continuous(labels = comma, expand = expansion(mult = c(0.1, 0.15))) +
   GiaoDienRossmann
 
-print(BieuDo1)
-ggsave(here("output", "figures", "p1_line_trend.png"), BieuDo1, width = 10, height = 5, dpi = 150)
+print(BieuDo2)
+ggsave(here("output", "figures", "p2_monthly_trend.png"), BieuDo2,
+       width = 10, height = 5, dpi = 150)
 ```
 
 **Nhận xét:**
@@ -97,112 +126,58 @@ ggsave(here("output", "figures", "p1_line_trend.png"), BieuDo1, width = 10, heig
 
 ---
 
-### 📍 PLOT 2: Doanh số TB theo ngày trong tuần
-
-```{r plot-2}
-DoanhThuTBTheoThu <- DuLieu %>%
-  group_by(day_of_week) %>%
-  summarise(DoanhThuTrungBinh = mean(sales), .groups = "drop") %>%
-  mutate(day_of_week = factor(day_of_week, levels = 1:7, 
-                              labels = c("Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"))) %>%
-  complete(day_of_week, fill = list(DoanhThuTrungBinh = 0))
-
-BieuDo2 <- ggplot(DoanhThuTBTheoThu, aes(x = day_of_week, y = DoanhThuTrungBinh, fill = day_of_week)) +
-  geom_col(show.legend = FALSE, width = 0.6) +
-  geom_text(aes(label = ifelse(DoanhThuTrungBinh > 0, comma(round(DoanhThuTrungBinh)), "Đóng cửa")), 
-            vjust = -0.5, size = 3, fontface = "bold") +
-  labs(
-    title = "Doanh số trung bình theo các ngày trong tuần",
-    x = "Ngày trong tuần", y = "Doanh số trung bình (EUR)"
-  ) +
-  scale_fill_brewer(palette = "Set2") + 
-  scale_y_continuous(labels = comma, expand = expansion(mult = c(0, 0.15))) +
-  GiaoDienRossmann
-
-print(BieuDo2)
-```
-
-**Nhận xét:** Doanh số trung bình có sự phân hóa mạnh mẽ giữa các ngày trong tuần, phản ánh thói quen mua sắm đặc trưng của người dân Đức cùng các quy định pháp lý nghiêm ngặt.
-
-- **Thứ Hai** ghi nhận doanh số cao nhất trong tuần do đây là thời điểm các chương trình khuyến mãi mới chính thức có hiệu lực, thu hút lượng lớn khách hàng đến mua sắm sớm.
-- Doanh thu sau đó giảm dần từ **Thứ Ba** đến **Thứ Sáu** khi nhu cầu mua sắm đầu tuần đã được đáp ứng ổn định.
-- Doanh số **Thứ Bảy** chạm mức thấp nhất trong số các ngày mở cửa (chỉ đạt $5.643$ EUR). Điều này phản ánh thói quen đặc trưng của người dân Đức khi thường dành ngày nghỉ Thứ Bảy cho các hoạt động dã ngoại, du lịch ngắn ngày hoặc nghỉ ngơi bên gia đình thay vì đi mua sắm hóa mỹ phẩm..
-- Doanh số vào **Chủ nhật** gần như bằng **0** do Luật Đóng cửa Cửa hàng quy định hầu hết các cửa hàng bán lẻ phải đóng cửa nghỉ ngơi.
-
-Dù trong năm **2015** có nhiều cuộc tranh luận về việc nới lỏng luật này để tăng cường sức cạnh tranh thương mại, sự phản đối quyết liệt từ các công đoàn lao động vẫn giữ nguyên quy định đóng cửa truyền thống đó.
-
----
-
-### 📍 PLOT 3: Sales theo StoreType
+### 📍 Biểu đồ 3: Tác động của Ngày lễ và Kỳ nghỉ học đến Doanh số
 
 ```{r plot-3}
-BieuDo3 <- ggplot(DuLieu, aes(x = store_type, y = sales, fill = as.factor(promo))) +
-  geom_boxplot(outlier.colour = "#e74c3c", outlier.shape = 1, outlier.alpha = 0.3, lwd = 0.5) +
-  scale_fill_manual(values = c("#95a5a6", "#2ecc71"), labels = c("Không áp dụng khuyến mãi", "Có áp dụng khuyến mãi")) +
+DuLieuNgayLe <- DuLieu %>%
+  mutate(LoaiNgay = case_when(
+      state_holiday != "none" ~ "Ngày lễ quốc gia (State Holiday)",
+      school_holiday == "1"   ~ "Kỳ nghỉ học (School Holiday)",
+      TRUE                    ~ "Ngày thường (Normal Day)")
+  )
+
+BieuDo3_gg <- ggplot(DuLieuNgayLe, aes(x = LoaiNgay, y = sales, fill = LoaiNgay,
+    text = paste0("<b>Loại ngày:</b> ", LoaiNgay, "<br>",
+                  "<b>Doanh số:</b> ", comma(round(sales)), " EUR")
+  )) +
+  geom_boxplot(outlier.colour = "#e74c3c", outlier.shape = 1, outlier.alpha = 0.1, lwd = 0.5) +
+  scale_fill_manual(values = c(
+    "Ngày lễ quốc gia (State Holiday)" = "#E53935",
+    "Kỳ nghỉ học (School Holiday)" = "#FF9800",
+    "Ngày thường (Normal Day)" = "#90A4AE"
+  )) +
   scale_y_continuous(labels = comma) +
   labs(
-    title = "Phân tích biến động doanh số theo loại hình cửa hàng",
-    subtitle = "Store 1–50 | Phân tách theo chiến dịch khuyến mãi (Promo)",
-    x = "Loại hình cửa hàng (Store Type)", 
-    y = "Doanh số bán hàng ngày (EUR)",
-    fill = "Trạng thái khuyến mãi"
+    title = "Tác động của Ngày lễ và Kỳ nghỉ học đến Doanh số",
+    x = "Loại hình ngày", 
+    y = "Doanh số bán hàng ngày (EUR)"
   ) +
   GiaoDienRossmann +
-  theme(legend.position = "right") # ĐÃ CHUYỂN CỘT TRẠNG THÁI VỀ BÊN PHẢI
+  theme(legend.position = "none")
 
-print(BieuDo3)
-ggsave(here("output", "figures", "p3_boxplot_storetype.png"), BieuDo3, width = 9, height = 5, dpi = 150)
-  
+BieuDo3 <- ggplotly(BieuDo3_gg, tooltip = "text") %>% 
+  layout(showlegend = FALSE)
+
+BieuDo3
 ```
 
 **Nhận xét:**
 
-**Tác động mạnh mẽ của chiến dịch khuyến mãi (Promo)**
+**Hiệu suất bán hàng trong các ngày đặc biệt**
 
-- Doanh số bán hàng ngày của cả ba loại hình cửa hàng (**Type a, c, d**) đều ghi nhận mức tăng trưởng vượt trội khi áp dụng chương trình khuyến mãi. Đường trung vị (median) của nhóm có khuyến mãi (màu xanh lá) luôn nằm cao hơn hẳn so với nhóm không khuyến mãi (màu xám). Điều này chứng minh hiệu quả kích cầu tiêu dùng tức thời rất lớn từ các chiến dịch marketing ngắn hạn của Rossmann.
+- **Ngày thường (Normal Day):** Đạt mức doanh số trung vị ổn định khoảng **6.200 EUR/ngày**. Đây là mức doanh thu cơ sở phản ánh nhu cầu sinh hoạt thiết yếu hàng ngày của người tiêu dùng nội đô tại Đức.
+- **Kỳ nghỉ học (School Holiday):** Doanh số trung vị tăng lên khoảng **6.800 EUR/ngày** (tăng trưởng khoảng **10%** so với ngày thường). Điều này cho thấy khi học sinh được nghỉ, các gia đình có xu hướng mua sắm nhiều hơn để chuẩn bị cho các chuyến du lịch hoặc hoạt động giải trí.
+- **Ngày lễ quốc gia (State Holiday):** Do quy định đóng cửa nghiêm ngặt của luật Ladenschlussgesetz tại Đức, hầu hết các cửa hàng phải đóng cửa. Tuy nhiên, đối với một số ít cửa hàng được phép mở cửa (như tại các nhà ga hoặc sân bay), doanh số trung vị ghi nhận mức sụt giảm mạnh xuống chỉ còn khoảng **2.500 EUR/ngày**, phản ánh sự hạn chế về thời gian vận hành và lượng khách di chuyển.
 
-**Đặc trưng biến động doanh số theo loại hình cửa hàng**
+**Ý nghĩa vĩ mô và sự phân bố giá trị ngoại lệ**
 
-- **Cửa hàng Type a (Phổ thông):** Khi không có khuyến mãi, doanh số trung vị đạt khoảng **5.200 EUR/ngày**. Khi có khuyến mãi, con số này tăng mạnh lên khoảng **7.800 EUR/ngày** (tăng khoảng **50%**). Đây là loại hình cửa hàng phổ thông tại khu dân cư có mức độ nhạy cảm về giá rất cao từ phía người tiêu dùng.
-- **Cửa hàng Type c (Nhỏ ngoại ô):** Đây là nhóm có doanh thu trung vị cao nhất trong cả hai trạng thái, đạt khoảng **6.500 EUR/ngày** khi không khuyến mãi và tăng lên khoảng **8.300 EUR/ngày** khi có khuyến mãi. Mức tăng trưởng tương đối thấp hơn (khoảng **28%**) cho thấy tệp khách hàng tại vùng ngoại ô có xu hướng mua sắm ổn định và ít bị dao động bởi các chương trình giảm giá hơn.
-- **Cửa hàng Type d (Flagship cao cấp):** Ghi nhận doanh số trung vị tăng từ **5.500 EUR/ngày** khi không khuyến mãi lên đến **7.600 EUR/ngày** khi có khuyến mãi (tăng khoảng **38%**). Các cửa hàng flagship có dải phân phối doanh thu rộng hơn về phía trên, cho thấy sức mua lớn đối với các mặt hàng cao cấp khi được trợ giá.
-
-**Phân bố các giá trị ngoại lệ (Outliers)**
-
-- Đồ thị xuất hiện mật độ điểm ngoại lệ (màu đỏ) rất dày đặc kéo dài vượt ngưỡng hộp lên đến **15.000 đến 20.000 EUR/ngày** ở cả ba loại hình cửa hàng. Các điểm ngoại lệ này tập trung nhiều hơn ở trạng thái có khuyến mãi, phản ánh những ngày cao điểm mua sắm cực lớn hoặc các đợt tiêu dùng đột biến trùng với dịp lễ hội cuối năm tại Đức.
+- Đồ thị ghi nhận số lượng giá trị ngoại lệ (outliers) vọt lên rất cao vượt ngưỡng **12.000 đến 18.000 EUR/ngày** xuất hiện nhiều nhất ở nhóm ngày thường và kỳ nghỉ học.Những ngày doanh số tăng đột biến (outliers) này không phải là lỗi nhập liệu, mà nó phản ánh nhu cầu mua sắm thực tế cực kỳ mạnh mẽ và bền vững của người dân Đức nhờ nền kinh tế ổn định.
 
 ---
 
-### 📍 PLOT 4: Phân phối Sales (Histogram + Density)
+### 📍 Biểu đồ 4: Ma trận Tương quan
 
 ```{r plot-4}
-BieuDo4 <- ggplot(DuLieu, aes(x = sales)) +
-  geom_histogram(aes(y = after_stat(density)), bins = 50,
-                 fill = "#2196F3", alpha = 0.6, color = "white") +
-  geom_density(color = "#E53935", linewidth = 1) +
-  labs(
-    title = "Phân phối doanh số (Histogram + Density)",
-    x = "Sales (EUR)", y = "Mật độ"
-  ) +
-  GiaoDienRossmann
-
-print(BieuDo4)
-ggsave(here("output", "figures", "p4_histogram_density.png"), BieuDo4, width = 8, height = 5, dpi = 150)
-```
-
-**Nhận xét:** Phân phối doanh số của các cửa hàng cho thấy dạng lệch phải rõ rệt khi phần lớn các ngày bán hàng tập trung quanh mức từ **3.000** đến **8.000 EUR** và kéo dài một đuôi doanh thu rất cao lên tới từ **15.000** đến **20.000 EUR**.
-
-- Điểm đột biến ở phần đuôi phải này xuất phát từ sự bùng nổ doanh số trong các đợt mua sắm cao điểm dịp Giáng sinh vào **tháng 12** hay lễ Phục sinh vào **tháng 3** và **tháng 4**.
-- Hiệu quả từ các chiến dịch khuyến mãi lớn hàng tuần cũng là nguyên nhân quan trọng thúc đẩy doanh thu đột biến.
-- Sự phân phối không chuẩn của dữ liệu cho thấy các mô hình học máy phi tuyến tính sẽ mang lại hiệu quả dự đoán doanh thu tốt hơn hẳn so với mô hình hồi quy tuyến tính cổ điển.
-
-Bên cạnh đó, đặc trưng lệch phải này cũng phản ánh sự thành công của các chiến thuật tâm lý bán lẻ được Rossmann triển khai mạnh mẽ trong giai đoạn **2014–2015** nhằm kích thích hành vi mua sắm ngẫu hứng của người tiêu dùng ngay khi bước vào cửa hàng.
-
----
-
-### 📍 PLOT 5: Heatmap — Correlation Matrix
-
-```{r plot-5}
 DuLieuSo <- DuLieu %>%
   select(sales, customers, competition_distance, sales_per_customer,
          month, week_of_year, is_weekend) %>%
@@ -219,7 +194,7 @@ DuLieuSo <- DuLieu %>%
 
 MaTranTuongQuan <- cor(DuLieuSo, use = "complete.obs")
 
-BieuDo5 <- ggcorrplot(MaTranTuongQuan,
+BieuDo4 <- ggcorrplot(MaTranTuongQuan,
                   type   = "lower",
                   lab    = TRUE,
                   lab_size = 3.5,
@@ -231,8 +206,9 @@ BieuDo5 <- ggcorrplot(MaTranTuongQuan,
     axis.text.y = element_text(size = 10)
   )
 
-print(BieuDo5)
-ggsave(here("output", "figures", "p5_heatmap_correlation.png"), BieuDo5, width = 8, height = 7, dpi = 150)
+print(BieuDo4)
+ggsave(here("output", "figures", "p4_correlation.png"), BieuDo4,
+       width = 10, height = 5, dpi = 150)
 ```
 
 **Nhận xét:** Phân tích ma trận tương quan chỉ ra các mối liên hệ quan trọng giữa doanh số và các biến số kinh doanh khác.
@@ -240,250 +216,75 @@ ggsave(here("output", "figures", "p5_heatmap_correlation.png"), BieuDo5, width =
 - Hệ số tương quan dương rất cao đạt mức **0,89** giữa doanh số và lượng khách hàng khẳng định việc thu hút lượt khách ghé thăm cửa hàng là yếu tố quyết định hàng đầu đến doanh số bán lẻ.
 - Khoảng cách tới các đối thủ cạnh tranh có hệ số tương quan gần bằng **0** chứng tỏ khoảng cách địa lý không còn ảnh hưởng đáng kể đến hiệu quả kinh doanh của chuỗi.
 - Biến số cuối tuần cho thấy mối tương quan âm nhẹ do tác động trực tiếp từ quy định đóng cửa hệ thống vào ngày Chủ nhật.
+- Biến Khách hàng và Doanh số/Khách bộc lộ xu hướng nghịch biến với hệ số đạt mốc $-0.24$. Nguyên nhân là do khi cửa hàng đông đúc, khách hàng có tâm lý mua nhanh các nhu yếu phẩm cần thiết rồi thanh toán ngay để tránh chờ đợi khiến giá trị trên mỗi đơn hàng giảm xuống.
 
 Thực trạng này phản ánh sự bão hòa của thị trường drugstore tại Đức giai đoạn **2014–2015** khi các thương hiệu lớn phân bố với mật độ dày đặc trung bình từ **3** đến **5** cửa hàng trong bán kính **2km** làm tiêu biến lợi thế cạnh tranh về mặt vị trí đơn thuần.
 
 ---
 
-### 📍 PLOT 6: Customers vs Sales
 
-```{r plot-6}
-BieuDo6 <- ggplot(DuLieu, aes(x = customers, y = sales)) +
-  geom_point(alpha = 0.15, color = "#2196F3", size = 0.8) +
-  labs(
-    title = "Mối quan hệ Khách hàng – Doanh số",
-    x = "Số khách hàng", y = "Sales (EUR)"
-  ) +
-  GiaoDienRossmann
+# 🚀 Biểu đồ Nâng cao
 
-print(BieuDo6)
-ggsave(here("output", "figures", "p6_scatter_customers_sales.png"), BieuDo6, width = 8, height = 5, dpi = 150)
-```
+### 📍 Biểu đồ 5: Hiệu quả Khuyến mãi theo Ngày trong tuần
 
-**Nhận xét:** Mối quan hệ giữa số lượng khách hàng và doanh thu thể hiện mối tương quan thuận rõ nét qua các đặc điểm phân bố cụ thể.
-
-- Mỗi khách hàng ghé thăm đóng góp trung bình khoảng từ **9** đến **10 EUR** vào doanh thu của cửa hàng.
-- Khi lượng khách hàng vượt quá **1.000 người** mỗi ngày, độ phân tán dữ liệu bắt đầu mở rộng do doanh thu lúc này chịu thêm tác động lớn từ các đợt khuyến mãi và cơ cấu giỏ hàng của khách.
-- Hầu hết các cửa hàng Rossmann tập trung lượng khách ổn định ở mức từ **400** đến **800 khách** mỗi ngày, đây là quy mô hoạt động tiêu chuẩn của mô hình drugstore khu dân cư tại Đức.
-
-Chiến lược định vị giá thấp đi kèm lưu lượng khách lớn này đã giúp Rossmann đạt tổng doanh thu ấn tượng lên tới **7,6 tỷ EUR** vào năm **2014**, ghi nhận mức tăng trưởng **6,5%** so với năm trước nhờ tối ưu hóa hiệu quả của từng điểm bán hiện hữu.
-
----
-
-### 📍 PLOT 7: Sales theo Promo
-
-```{r plot-7}
-BieuDo7 <- ggplot(DuLieu, aes(x = promo, y = sales, fill = promo)) +
-  geom_violin(alpha = 0.7) +
-  geom_boxplot(width = 0.15, fill = "white", alpha = 0.8) +
-  labs(
-    title = "Tác động khuyến mãi lên doanh số",
-    x = "Khuyến mãi (0 = Không, 1 = Có)", y = "Sales (EUR)"
-  ) +
-  scale_fill_manual(values = MauKhuyenMai) +
-  GiaoDienRossmann
-
-print(BieuDo7)
-ggsave(here("output", "figures", "p7_violin_promo.png"), BieuDo7, width = 8, height = 5, dpi = 150)
-```
-
-**Nhận xét:** Chiến dịch khuyến mãi đóng vai trò cực kỳ quan trọng trong việc thúc đẩy doanh số của chuỗi cửa hàng.
-
-- Nhóm ngày có chương trình ưu đãi ghi nhận mức doanh thu trung vị tăng vượt trội từ **35%** đến **40%** so với ngày thường.
-- Phân phối doanh thu của nhóm có khuyến mãi trải rộng lên phía trên và có độ biến động cao hơn, phản ánh cơ chế co giãn giá mạnh mẽ của ngành bán lẻ tiêu dùng nhanh và hiện tượng mua sắm thêm các sản phẩm ngoài kế hoạch của khách hàng.
-- Những ngày không khuyến mãi duy trì mức doanh số thấp hơn nhưng ổn định và ít ghi nhận các biến động đột biến.
-
-Điều này chứng minh hiệu quả vượt trội từ chiến lược phát hành tờ rơi quảng cáo định kỳ hàng tuần của Rossmann trong bối cảnh cuộc chiến cạnh tranh thị phần gay gắt bằng các dòng sản phẩm nhãn riêng giữa Rossmann và các đối thủ lớn trong giai đoạn **2014–2015**.
-
----
-
-### 📍 PLOT 8: Doanh số theo tháng chia theo StoreType
-
-```{r plot-8}
-DoanhThuTBTheoThangLoaiCuaHang <- DuLieu %>%
-  group_by(month, store_type) %>%
-  summarise(DoanhThuTrungBinh = mean(sales), .groups = "drop")
-
-BieuDo8 <- ggplot(DoanhThuTBTheoThangLoaiCuaHang, aes(x = factor(month), y = DoanhThuTrungBinh, fill = store_type)) +
-  geom_col(position = "dodge") +
-  facet_wrap(~store_type, scales = "free_y") +
-  labs(
-    title = "Doanh số trung bình theo tháng — chia theo Store Type",
-    x = "Tháng", y = "Doanh số TB (EUR)"
-  ) +
-  scale_fill_manual(values = MauCuaHang) +
-  GiaoDienRossmann +
-  theme(legend.position = "none")
-
-print(BieuDo8)
-ggsave(here("output", "figures", "p8_faceted_monthly.png"), BieuDo8, width = 10, height = 6, dpi = 150)
-```
-
-**Nhận xét:** Xu hướng doanh thu theo tháng cho thấy tính mùa vụ rõ rệt là đặc tính chung của toàn bộ ngành bán lẻ drugstore tại Đức bất kể quy mô hay loại hình cửa hàng nào.
-
-- Đỉnh doanh thu của hệ thống luôn đạt được vào **tháng 12** và mức thấp nhất rơi vào các tháng hè như **tháng 8** và **tháng 9**.
-- Các cửa hàng **Type B** tại các trung tâm mua sắm chịu tác động thời vụ lớn nhất với mức chênh lệch doanh thu giữa các tháng lên tới **50%** do biến động lượng khách cuối năm.
-- Cửa hàng phổ thông khu dân cư **Type A** giữ được kết quả ổn định nhất với mức dao động doanh thu giữa các tháng chỉ khoảng từ **15%** đến **20%** nhờ phục vụ cư dân xung quanh.
-- Các cửa hàng nhỏ **Type C** tuy doanh thu tuyệt đối thấp nhưng lại ghi nhận tốc độ tăng trưởng phần trăm mạnh mẽ nhất vào mùa lễ hội Giáng sinh.
-
-Sức mua quà tặng và đồ dùng gia đình dịp cuối năm lan tỏa rộng khắp toàn bộ hệ thống bán lẻ của chuỗi đã tạo động lực tăng trưởng lớn cho tất cả các phân khúc cửa hàng.
-
----
-
-### 📍 PLOT 9: Stacked Area chart — Tổng doanh số theo StoreType
-
-```{r plot-9}
-TongDoanhThuTheoThang <- DuLieu %>%
-  mutate(NamThang = floor_date(date, "month")) %>%
-  group_by(NamThang, store_type) %>%
-  summarise(TongDoanhThu = sum(sales), .groups = "drop")
-
-BieuDo9 <- ggplot(TongDoanhThuTheoThang, aes(x = NamThang, y = TongDoanhThu, fill = store_type)) +
-  geom_area(alpha = 0.7) +
-  labs(
-    title = "Tổng doanh số theo tháng — Stacked Area theo Store Type",
-    x = "Tháng", y = "Tổng doanh số (EUR)"
-  ) +
-  scale_fill_manual(values = MauCuaHang) +
-  scale_x_date(date_labels = "%b %Y", date_breaks = "2 months") +
-  scale_y_continuous(labels = comma) +
-  GiaoDienRossmann
-
-print(BieuDo9)
-ggsave(here("output", "figures", "p9_stacked_area.png"), BieuDo9, width = 10, height = 5, dpi = 150)
-```
-
-**Nhận xét:** Tổng doanh thu hàng tháng phân theo loại cửa hàng cho thấy cơ cấu đóng góp rất ổn định qua thời gian.
-
-- Các cửa hàng **Type A** đóng vai trò là trụ cột chính khi luôn chiếm khoảng từ **50%** đến **55%** tổng doanh thu của toàn hệ thống.
-- Tỷ lệ đóng góp doanh thu của các nhóm cửa hàng hầu như duy trì không đổi qua các tháng, xác nhận sức mua và sự phát triển đồng đều giữa các phân khúc mà không có sự đột biến hay suy thoái cục bộ nào.
-- Vào mùa cao điểm **tháng 12**, tổng doanh thu toàn chuỗi tăng vọt nhờ hiệu ứng mua sắm lễ hội lan tỏa mạnh mẽ trên mọi loại hình cửa hàng.
-- Thời điểm nghỉ hè vào **tháng 8** và **tháng 9** chứng kiến sự sụt giảm doanh số đồng đều ở tất cả các phân khúc.
-
-Nhằm duy trì đà tăng trưởng này trong bối cảnh thị trường nội địa bão hòa, Rossmann đã đẩy mạnh phát triển các cửa hàng **Type A** tại các khu vực dân cư mới của Đức cùng việc mở rộng sang các nước Đông Âu giúp tổng doanh thu tập đoàn giữ vững đà phát triển ổn định.
-
----
-
-### 📍 PLOT 10: Interactive Plotly — Doanh số theo ngày
-
-```{r plot-10}
-DoanhThuTBHangNgay <- DuLieu %>%
-  group_by(date) %>%
-  summarise(DoanhThuTrungBinh = mean(sales), .groups = "drop")
-
-DoanhThuBieuDo10 <- ggplot(DoanhThuTBHangNgay, aes(
-    x = date, y = DoanhThuTrungBinh,
-    text = paste0("Ngày: ", date, "\nDoanh số TB: ", comma(round(DoanhThuTrungBinh)))
-  )) +
-  geom_line(color = "#2196F3") +
-  labs(
-    title = "Doanh số trung bình theo ngày (Interactive)",
-    x = "Ngày", y = "Doanh số TB (EUR)"
-  ) +
-  GiaoDienRossmann
-
-BieuDo10 <- ggplotly(DoanhThuBieuDo10, tooltip = "text")
-BieuDo10
-```
-
-**Nhận xét:** Biến động doanh thu chi tiết theo ngày cho thấy chu kỳ ngắn hạn lặp đi lặp lại rất rõ ràng theo tuần đi kèm xu hướng dài hạn duy trì ở mức ổn định cao.
-
-- Các điểm đỉnh doanh thu thường tập trung vào các ngày **Thứ Hai** đầu tuần khi áp dụng chương trình khuyến mãi mới.
-- Đỉnh doanh thu cao nhất năm tập trung vào khoảng thời gian một tuần ngay trước lễ Giáng sinh từ ngày **15** đến ngày **23 tháng 12 năm 2014**.
-- Các điểm đáy doanh thu xuất hiện trùng khớp vào các ngày **Chủ nhật** đóng cửa định kỳ do quy định pháp lý.
-- Các ngày lễ quốc gia chính thức của Đức như **ngày 1 tháng 1**, lễ Phục sinh hay ngày Thống nhất nước Đức **ngày 3 tháng 10** cũng là các điểm đáy doanh thu.
-
-Sự ổn định lâu dài này được hỗ trợ đáng kể bởi chính sách tiền tệ nới lỏng từ Ngân hàng Trung ương Châu Âu khi lãi suất cơ bản giảm xuống mức kỷ lục **0,05%** vào **tháng 9 năm 2014** giúp kích thích tiêu dùng nội địa.
-
----
-
-# 🚀 Biểu đồ Nâng cao (Advanced Visualizations)
-
-### 📍 PLOT A: Phân tích Chiến dịch Khuyến mãi theo Loại Cửa hàng (Promo Impact)
-
-Biểu đồ cột nhóm so sánh doanh thu trung bình khi **có** và **không có** khuyến mãi cho từng loại cửa hàng, kèm theo nhãn phần trăm tăng trưởng (Lift %).
-
-```{r plot-A-promo-impact, fig.width=11, fig.height=6}
-# --- Tính doanh số TB theo Store Type × Promo ---
-AnhHuongKhuyenMai <- DuLieu %>%
-  group_by(store_type, promo) %>%
-  summarise(
-    DoanhThuTrungBinh = mean(sales),
-    DoanhThuTrungVi = median(sales),
-    SoLuong = n(),
-    SaiSoChuan = sd(sales) / sqrt(n()),
-    .groups = "drop"
-  )
-
-# --- Tính % tăng trưởng (Lift) cho mỗi Store Type ---
-DuLieuTangTruong <- AnhHuongKhuyenMai %>%
-  select(store_type, promo, DoanhThuTrungBinh) %>%
-  tidyr::pivot_wider(names_from = promo, values_from = DoanhThuTrungBinh, names_prefix = "KhuyenMai_") %>%
+```{r plot-5, fig.width=11, fig.height=6}
+DoanhThuTheoNgayKhuyenMai <- DuLieu %>%
+  filter(day_of_week != 7) %>%
+  group_by(day_of_week, promo) %>%
+  summarise(DoanhThuTrungBinh = mean(sales), .groups = "drop") %>%
+  pivot_wider(names_from = promo, values_from = DoanhThuTrungBinh, names_prefix = "Promo_") %>%
+  rename(KhongKM = Promo_0, CoKM = Promo_1) %>%
   mutate(
-    PhanTramTangTruong = round((KhuyenMai_1 / KhuyenMai_0 - 1) * 100, 1),
-    ToaDoNhanY  = pmax(KhuyenMai_0, KhuyenMai_1)
+    NhanNgay = factor(day_of_week, levels = 6:1,
+                      labels = rev(c("Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"))),
+    PhanTramLift = round((CoKM / KhongKM - 1) * 100, 1)
   )
 
-# --- Vẽ biểu đồ ---
-BieuDoA <- ggplot(AnhHuongKhuyenMai, aes(x = store_type, y = DoanhThuTrungBinh, fill = factor(promo))) +
-  geom_col(position = position_dodge(0.8), alpha = 0.85, width = 0.7) +
-  geom_errorbar(
-    aes(ymin = DoanhThuTrungBinh - SaiSoChuan, ymax = DoanhThuTrungBinh + SaiSoChuan),
-    position = position_dodge(0.8), width = 0.2, linewidth = 0.4
+BieuDo5 <- ggplot(DoanhThuTheoNgayKhuyenMai) +
+  geom_segment(aes(x = KhongKM, xend = CoKM, y = NhanNgay, yend = NhanNgay),
+               color = "#ECEFF1", linewidth = 5) +
+  geom_segment(aes(x = KhongKM, xend = CoKM, y = NhanNgay, yend = NhanNgay),
+               color = "#CFD8DC", linewidth = 1.5) +
+  geom_point(aes(x = KhongKM, y = NhanNgay, color = "Không khuyến mãi"), size = 6) +
+  geom_point(aes(x = CoKM, y = NhanNgay, color = "Có khuyến mãi"), size = 6) +
+  geom_text(aes(x = KhongKM, y = NhanNgay, label = comma(round(KhongKM))),
+            vjust = -1.3, size = 3.2, fontface = "bold", color = "#455A64") +
+  geom_text(aes(x = CoKM, y = NhanNgay, label = comma(round(CoKM))),
+            vjust = -1.3, size = 3.2, fontface = "bold", color = "#C62828") +
+  geom_label(aes(x = (KhongKM + CoKM) / 2, y = NhanNgay,
+                 label = paste0("+", PhanTramLift, "%")),
+             fill = "#FDEDEC", color = "#E53935", fontface = "bold",
+             size = 3.5, label.size = 0.2) +
+  scale_x_continuous(labels = comma, expand = expansion(mult = c(0.08, 0.12))) +
+  scale_color_manual(
+    values = c("Không khuyến mãi" = "#78909C", "Có khuyến mãi" = "#E53935"),
+    name = "Chiến dịch"
   ) +
-  geom_text(
-    aes(label = comma(round(DoanhThuTrungBinh))),
-    position = position_dodge(0.8), vjust = -1.2, size = 3.2, fontface = "bold"
-  ) +
-  # Nhãn Lift % phía trên mỗi cặp cột
-  geom_label(
-    data = DuLieuTangTruong,
-    aes(x = store_type, y = ToaDoNhanY + 450, label = paste0("+", PhanTramTangTruong, "%")),
-    inherit.aes = FALSE,
-    fill = "#FDEDEC", color = "#E53935", fontface = "bold", size = 4,
-    label.size = 0.3, label.r = unit(0.2, "lines")
-  ) +
-  scale_fill_manual(
-    values = c("0" = "#78909C", "1" = "#E53935"),
-    labels = c("0" = "Không khuyến mãi", "1" = "Có khuyến mãi")
-  ) +
-  scale_x_discrete(labels = c("a" = "Type A\n(Phổ thông)", "b" = "Type B\n(TTTM)",
-                                "c" = "Type C\n(Nhỏ)", "d" = "Type D\n(Flagship)")) +
-  scale_y_continuous(labels = comma, expand = expansion(mult = c(0, 0.22))) +
   labs(
-    title    = "Tác động của Chiến dịch Khuyến mãi theo Loại Cửa hàng",
-    subtitle = "Nhãn đỏ = Lift %: phần trăm doanh số tăng thêm nhờ khuyến mãi | Error bar = ±1 SE",
-    x = "Loại cửa hàng (Store Type)", y = "Doanh số trung bình (EUR/ngày)",
-    fill = "Trạng thái khuyến mãi",
-    caption = "Nguồn: Rossmann Store Sales 2014–2015 | Trực quan hóa: Gia Hân"
+    title    = "Hiệu quả Khuyến mãi theo Ngày trong tuần",
+    subtitle = "Nhãn trên thanh tạ = % doanh số tăng thêm nhờ KM",
+    x = "Doanh số trung bình hàng ngày (EUR)", y = NULL
   ) +
-  GiaoDienRossmann +
-  theme(
-    legend.position = "top",
-    plot.subtitle = element_text(size = 9)
-  )
+  GiaoDienRossmann
 
-print(BieuDoA)
-ggsave(here("output", "figures", "pA_promo_impact_storetype.png"), BieuDoA,
+print(BieuDo5)
+ggsave(here("output", "figures", "p5_dumbbell.png"), BieuDo5,
        width = 11, height = 6, dpi = 150)
 ```
 
-**Nhận xét:** Khuyến mãi mang lại tác động tích cực vượt trội lên doanh thu của toàn bộ các nhóm cửa hàng.
+**Nhận xét:** Biểu đồ tạ đôi cho thấy khuyến mãi mang lại hiệu quả tăng trưởng doanh số trên tất cả các ngày mở cửa, nhưng mức độ tác động **không đồng đều** giữa các ngày trong tuần:
 
-- Mức tăng trưởng doanh số trung bình nhờ khuyến mãi dao động mạnh mẽ từ **30%** đến **45%** cho các cửa hàng.
-- Các cửa hàng **Type B** tại các trung tâm thương mại ghi nhận mức tăng cao nhất do khả năng thu hút lượng khách mua sắm vãng lai quy mô lớn.
-- Các chương trình giảm giá đặc biệt kích hoạt hành vi mua sắm chéo và tăng quy mô giỏ hàng trung bình.
+- **Thứ Hai** ghi nhận mức Lift cao nhất trong tuần. Đây là ngày các chương trình khuyến mãi mới chính thức có hiệu lực nên kích thích tâm lý khách hàng "đi sớm để mua được giá tốt", đẩy doanh số vọt lên mạnh mẽ nhất.
+- Mức tăng trưởng nhờ khuyến mãi **giảm dần** từ Thứ Ba đến Thứ Sáu khi sức hấp dẫn của chương trình ưu đãi đầu tuần dần phai nhạt, khách hàng đã mua phần lớn nhu yếu phẩm trong những ngày đầu.
+- **Thứ Bảy** là ngày khuyến mãi kém hiệu quả nhất, vì lượng khách ghé thăm vào cuối tuần vốn đã thấp do thói quen nghỉ ngơi của người dân Đức, dẫn đến hiệu ứng kích cầu bị hạn chế đáng kể.
 
-Đây là yếu tố then chốt giúp chuỗi Rossmann gia tăng thị phần và duy trì lợi thế cạnh tranh xuất sắc trước các đối thủ lớn.
+Phát hiện này gợi ý rằng Rossmann nên **tập trung ngân sách khuyến mãi vào đầu tuần** (Thứ Hai đến Thứ Tư) để tối ưu hóa tỷ suất lợi nhuận trên chi phí marketing.
 
 ---
 
-### 📍 PLOT B: Heatmap Doanh số theo Ngày trong Tuần × Tháng
+### 📍 Biểu đồ 6: Bản đồ nhiệt Doanh số theo Ngày trong Tuần và Tháng
 
-Bản đồ nhiệt 2 chiều thể hiện **doanh số trung bình** tại giao điểm của mỗi ngày trong tuần và mỗi tháng. Ô càng đậm = doanh số càng cao.
-
-```{r plot-B-heatmap, fig.width=11, fig.height=7}
-# --- Chuẩn bị dữ liệu heatmap ---
+```{r plot-6, fig.width=11, fig.height=7}
 DuLieuBanDoNhiet <- DuLieu %>%
   group_by(day_of_week, month) %>%
   summarise(DoanhThuTrungBinh = mean(sales), .groups = "drop") %>%
@@ -494,8 +295,7 @@ DuLieuBanDoNhiet <- DuLieu %>%
                           labels = c("T1","T2","T3","T4","T5","T6","T7","T8","T9","T10","T11","T12"))
   )
 
-# --- Vẽ heatmap ---
-BieuDoB <- ggplot(DuLieuBanDoNhiet, aes(x = NhanThang, y = NhanNgay, fill = DoanhThuTrungBinh)) +
+BieuDo6 <- ggplot(DuLieuBanDoNhiet, aes(x = NhanThang, y = NhanNgay, fill = DoanhThuTrungBinh)) +
   geom_tile(color = "white", linewidth = 0.8) +
   geom_text(aes(label = comma(round(DoanhThuTrungBinh))),
             size = 3, color = ifelse(DuLieuBanDoNhiet$DoanhThuTrungBinh > median(DuLieuBanDoNhiet$DoanhThuTrungBinh),
@@ -512,19 +312,17 @@ BieuDoB <- ggplot(DuLieuBanDoNhiet, aes(x = NhanThang, y = NhanNgay, fill = Doan
       "Điểm nóng: Thứ 2 + Tháng 12 (Giáng sinh) | Điểm lạnh: CN (đóng cửa) + T8–T9 (nghỉ hè)\n",
       "Luật Ladenschlussgesetz quy định hầu hết cửa hàng đóng cửa Chủ nhật tại Đức"
     ),
-    x = "Tháng trong năm", y = "Ngày trong tuần",
-    caption = "Nguồn: Rossmann Store Sales 2014–2015 | Trực quan hóa: Gia Hân"
+    x = "Tháng trong năm", y = "Ngày trong tuần"
   ) +
   GiaoDienRossmann +
   theme(
     panel.grid       = element_blank(),
     axis.text        = element_text(size = 11),
-    legend.key.width = unit(1.5, "cm"),
-    plot.subtitle    = element_text(size = 9)
+    legend.key.width = unit(1.5, "cm")
   )
 
-print(BieuDoB)
-ggsave(here("output", "figures", "pB_heatmap_dow_month.png"), BieuDoB,
+print(BieuDo6)
+ggsave(here("output", "figures", "p6_heatmap.png"), BieuDo6,
        width = 11, height = 7, dpi = 150)
 ```
 
@@ -539,31 +337,235 @@ Sự phân bố nhiệt này giúp chuỗi Rossmann chủ động tối ưu hóa
 
 ---
 
-### 📍 PLOT C: Phân tích Phân bố Giá trị Ngoại lệ (Outlier Analysis)
+### 📍 Biểu đồ 7: Chi tiêu Trung bình mỗi Khách hàng theo Cơ cấu Sản phẩm
 
-Biểu đồ Boxplot tách riêng điểm **bình thường** và **ngoại lệ** (cột `is_outlier`), kết hợp phân tích nguyên nhân theo tháng và trạng thái khuyến mãi.
+```{r plot-7, fig.width=11, fig.height=7}
+DuLieuChiTieu <- DuLieu %>%
+  mutate(
+    NhanCoCau = ifelse(assortment == "a", "Basic\n(Cơ bản)", "Extended\n(Mở rộng)"),
+    NhanLoaiCuaHang = case_when(
+      store_type == "a" ~ "Type A (Phổ thông)",
+      store_type == "c" ~ "Type C (Nhỏ ngoại ô)",
+      store_type == "d" ~ "Type D (Flagship)",
+      TRUE ~ as.character(store_type)
+    )
+  )
 
-```{r plot-C-outlier, fig.width=12, fig.height=10}
-library(gridExtra)
+BieuDo7 <- ggplot(DuLieuChiTieu, aes(x = NhanCoCau, y = sales_per_customer, fill = NhanCoCau)) +
+  geom_boxplot(alpha = 0.7, outlier.alpha = 0.08, outlier.size = 0.5, lwd = 0.5) +
+  stat_summary(fun = mean, geom = "point", shape = 18, size = 4, color = "#E53935") +
+  stat_summary(fun = mean, geom = "text",
+               aes(label = paste0("TB: ", round(after_stat(y), 1), " EUR")),
+               vjust = -1, size = 3, fontface = "bold", color = "#C62828") +
+  facet_wrap(~NhanLoaiCuaHang) +
+  scale_fill_manual(values = c("Basic\n(Cơ bản)" = "#1E88E5", "Extended\n(Mở rộng)" = "#E53935")) +
+  scale_y_continuous(labels = function(x) paste0(x, " €")) +
+  labs(
+    title    = "Chi tiêu Trung bình mỗi Khách hàng theo Cơ cấu Sản phẩm",
+    subtitle = "Điểm kim cương đỏ (◆) = Giá trị trung bình | Chia theo Loại hình Cửa hàng",
+    x = "Cơ cấu sản phẩm (Assortment)", y = "Chi tiêu TB / Khách (EUR)",
+    fill = "Cơ cấu sản phẩm"
+  ) +
+  GiaoDienRossmann +
+  theme(
+    legend.position = "none",
+    strip.text = element_text(face = "bold", size = 11)
+  )
 
-# === Panel 1: Boxplot doanh số tách Normal vs Outlier ===
+print(BieuDo7)
+ggsave(here("output", "figures", "p7_spc_boxplot.png"), BieuDo7,
+       width = 11, height = 7, dpi = 150)
+```
+
+**Nhận xét:** Phân tích giá trị giỏ hàng trung bình (sales per customer) theo cơ cấu sản phẩm và loại cửa hàng cho thấy chiến lược danh mục hàng hóa có ảnh hưởng trực tiếp đến hành vi chi tiêu:
+
+- **Cửa hàng Extended (Mở rộng) giúp khách chi tiêu nhiều hơn đáng kể** so với cửa hàng Basic trên tất cả các phân khúc cửa hàng. Sự đa dạng sản phẩm kích thích khách hàng mua thêm các mặt hàng ngoài danh sách dự kiến (hành vi mua sắm ngẫu hứng).
+- **Cửa hàng Type D (Flagship) với cơ cấu Extended** đạt giá trị chi tiêu/khách cao nhất toàn hệ thống. Không gian rộng rãi kết hợp danh mục phong phú tạo trải nghiệm mua sắm lý tưởng, khuyến khích khách dành nhiều thời gian và ngân sách hơn.
+- **Cửa hàng Type A (Phổ thông)** ghi nhận mức chi tiêu/khách thấp nhất. Đây là mô hình phục vụ nhu cầu mua nhanh các nhu yếu phẩm thiết yếu, khách hàng có tâm lý "vào mua rồi ra" nên giá trị đơn hàng nhỏ.
+- Sự chênh lệch giữa Basic và Extended ở nhóm **Type C (Nhỏ ngoại ô)** đặc biệt lớn, gợi ý rằng việc mở rộng danh mục tại các cửa hàng ngoại ô có thể là đòn bẩy hiệu quả nhất để tăng doanh thu mà không cần tăng lượng khách.
+
+---
+
+### 📍 Biểu đồ 8: Ảnh hưởng của Thời gian Đối thủ Cạnh tranh đến Doanh số
+
+```{r plot-8, fig.width=11, fig.height=6}
+DuLieuCanhTranh <- DuLieu %>%
+  mutate(
+    NhomCanhTranh = case_when(
+      has_competition == 0 ~ "Không có đối thủ",
+      competition_open_months <= 12 ~ "≤ 1 năm",
+      competition_open_months <= 36 ~ "1–3 năm",
+      competition_open_months <= 60 ~ "3–5 năm",
+      competition_open_months <= 120 ~ "5–10 năm",
+      TRUE ~ "> 10 năm"
+    ),
+    NhomCanhTranh = factor(NhomCanhTranh, levels = c(
+      "Không có đối thủ", "≤ 1 năm", "1–3 năm", "3–5 năm", "5–10 năm", "> 10 năm"
+    ))
+  )
+
+ThongKeCanhTranh <- DuLieuCanhTranh %>%
+  group_by(NhomCanhTranh) %>%
+  summarise(
+    DoanhThuTB = mean(sales),
+    SaiSoChuan = sd(sales) / sqrt(n()),
+    SoLuong    = n(),
+    .groups = "drop"
+  )
+
+MauCanhTranh <- c("Không có đối thủ" = "#4CAF50",
+                   "≤ 1 năm" = "#FFC107", "1–3 năm" = "#FF9800",
+                   "3–5 năm" = "#F44336", "5–10 năm" = "#9C27B0", "> 10 năm" = "#3F51B5")
+
+BieuDo8 <- ggplot(ThongKeCanhTranh, aes(x = NhomCanhTranh, y = DoanhThuTB, fill = NhomCanhTranh)) +
+  geom_col(alpha = 0.85, width = 0.65) +
+  geom_errorbar(aes(ymin = DoanhThuTB - SaiSoChuan, ymax = DoanhThuTB + SaiSoChuan),
+                width = 0.2, linewidth = 0.4) +
+  geom_text(aes(label = comma(round(DoanhThuTB))),
+            vjust = -1.2, size = 3.5, fontface = "bold") +
+  geom_text(aes(label = paste0("n=", comma(SoLuong)), y = 500),
+            size = 2.8, color = "white", fontface = "italic") +
+  scale_fill_manual(values = MauCanhTranh) +
+  scale_y_continuous(labels = comma, expand = expansion(mult = c(0, 0.18))) +
+  labs(
+    title    = "Ảnh hưởng của Thời gian Đối thủ Cạnh tranh đến Doanh số",
+    subtitle = "Số tháng đối thủ gần nhất đã hoạt động | Error bar = ±1 SE | n = số ngày quan sát",
+    x = "Thời gian đối thủ đã hoạt động", y = "Doanh số trung bình (EUR/ngày)",
+    fill = NULL
+  ) +
+  GiaoDienRossmann +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(size = 9)
+  )
+
+print(BieuDo8)
+ggsave(here("output", "figures", "p8_competition_duration.png"), BieuDo8,
+       width = 11, height = 6, dpi = 150)
+```
+
+**Nhận xét:** Phân tích tác động của thời gian cạnh tranh cho thấy sự thích ứng đặc biệt của chuỗi Rossmann trong môi trường cạnh tranh khốc liệt:
+
+- **Cửa hàng không có đối thủ gần** đạt mức doanh số cao nhất hệ thống, xác nhận lợi thế độc quyền khu vực vẫn là yếu tố quan trọng dù hệ số tương quan tổng thể thấp.
+- **Giai đoạn đối thủ mới mở (dưới 1 năm)**: Doanh số sụt giảm nhẹ do hiệu ứng "tò mò chuyển đổi" khi khách hàng thử nghiệm cửa hàng mới mở trong khu vực.
+- **Giai đoạn 1–5 năm**: Doanh số bắt đầu phục hồi và ổn định trở lại. Điều này cho thấy Rossmann có khả năng giữ chân khách hàng trung thành nhờ chất lượng dịch vụ, giá cả cạnh tranh và mạng lưới khuyến mãi mạnh mẽ.
+- **Đối thủ hoạt động trên 10 năm**: Doanh số đạt mức tương đối cao, phản ánh hiện tượng "cạnh tranh cộng sinh". Khi nhiều cửa hàng bán lẻ tập trung trong cùng khu vực trong thời gian dài, chúng cùng thu hút lưu lượng khách hàng lớn hơn cho toàn bộ khu vực thương mại.
+
+Phát hiện này gợi ý rằng Rossmann **không cần lo ngại** khi đối thủ mở cửa hàng gần, mà nên tập trung vào việc duy trì chất lượng dịch vụ và chiến lược khuyến mãi để giữ chân khách hàng trong giai đoạn 1–2 năm đầu tiên sau khi đối thủ xuất hiện.
+
+---
+
+### 📍 Biểu đồ 9: Hiệu ứng Cộng hưởng giữa Khuyến mãi Định kỳ và Khuyến mãi Dài hạn
+
+```{r plot-9, fig.width=11, fig.height=6}
+DuLieuKhuyenMai <- DuLieu %>%
+  mutate(
+    TrangThaiKM = case_when(
+      promo == 0 & promo2 == 0 ~ "Không KM",
+      promo == 0 & promo2 == 1 ~ "Chỉ Promo2 (Dài hạn)",
+      promo == 1 & promo2 == 0 ~ "Chỉ Promo (Ngắn hạn)",
+      promo == 1 & promo2 == 1 ~ "Cộng hưởng cả hai",
+      TRUE ~ "Khác"
+    ),
+    TrangThaiKM = factor(TrangThaiKM, levels = c(
+      "Không KM", "Chỉ Promo2 (Dài hạn)", "Chỉ Promo (Ngắn hạn)", "Cộng hưởng cả hai"
+    ))
+  )
+
+ThongKeKhuyenMai <- DuLieuKhuyenMai %>%
+  group_by(TrangThaiKM, store_type) %>%
+  summarise(
+    DoanhThuTB = mean(sales),
+    SaiSoChuan = sd(sales) / sqrt(n()),
+    SoLuong    = n(),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    NhanLoaiCuaHang = case_when(
+      store_type == "a" ~ "Type A (Phổ thông)",
+      store_type == "c" ~ "Type C (Nhỏ ngoại ô)",
+      store_type == "d" ~ "Type D (Flagship)",
+      TRUE ~ as.character(store_type)
+    )
+  )
+
+BieuDo9 <- ggplot(ThongKeKhuyenMai, aes(x = TrangThaiKM, y = DoanhThuTB, fill = TrangThaiKM)) +
+  geom_col(alpha = 0.85, width = 0.65, color = "white", stroke = 0.5) +
+  geom_errorbar(aes(ymin = DoanhThuTB - SaiSoChuan, ymax = DoanhThuTB + SaiSoChuan),
+                width = 0.2, linewidth = 0.5, color = "grey30") +
+  geom_text(aes(label = comma(round(DoanhThuTB))),
+            vjust = -1.2, size = 3, fontface = "bold") +
+  facet_wrap(~NhanLoaiCuaHang, scales = "free_y") +
+  scale_fill_manual(values = c(
+    "Không KM" = "#90A4AE",
+    "Chỉ Promo2 (Dài hạn)" = "#FF9800",
+    "Chỉ Promo (Ngắn hạn)" = "#2196F3",
+    "Cộng hưởng cả hai" = "#E53935"
+  )) +
+  scale_y_continuous(labels = comma, expand = expansion(mult = c(0, 0.2))) +
+  labs(
+    title    = "Hiệu ứng Cộng hưởng giữa Khuyến mãi Định kỳ và Khuyến mãi Dài hạn",
+    subtitle = "Doanh số trung bình hàng ngày | Error bar = ±1 SE | Phân nhóm theo Loại hình Cửa hàng",
+    x = "Trạng thái chiến dịch khuyến mãi",
+    y = "Doanh số trung bình hàng ngày (EUR)",
+    fill = "Chiến dịch"
+  ) +
+  GiaoDienRossmann +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 30, vjust = 1, hjust = 1, size = 9),
+    strip.text = element_text(face = "bold", size = 11)
+  )
+
+print(BieuDo9)
+ggsave(here("output", "figures", "p9_promo_interaction.png"), BieuDo9,
+       width = 11, height = 6, dpi = 150)
+```
+
+**Nhận xét:** Biểu đồ tương tác giữa khuyến mãi định kỳ (`promo`) và khuyến mãi dài hạn (`promo2`) cung cấp góc nhìn sâu sắc về hiệu quả thực tế của các chiến dịch marketing tại Rossmann:
+
+- **Khuyến mãi ngắn hạn định kỳ (Promo) đóng vai trò kích cầu chủ đạo**: Trên tất cả các loại hình cửa hàng, việc chỉ áp dụng khuyến mãi ngắn hạn (`Chỉ Promo (Ngắn hạn)`) luôn mang lại mức tăng trưởng doanh số vượt trội so với khi không chạy khuyến mãi hay chỉ chạy khuyến mãi dài hạn Promo2.
+- **Promo2 (Khuyến mãi dài hạn liên tục) có hiệu suất kém hơn**: Đáng chú ý, các cửa hàng chỉ chạy Promo2 (`Chỉ Promo2 (Dài hạn)`) ghi nhận mức doanh thu tăng trưởng rất thấp, thậm chí ở nhóm cửa hàng **Type A** và **Type D**, mức tăng này gần như không đáng kể so với nhóm ngày thường không có khuyến mãi. Điều này chỉ ra rằng các chương trình khách hàng thân thiết hay phát coupon dài hạn của Promo2 có thể đã bị bão hòa, kém hấp dẫn hoặc không tạo ra tính khẩn cấp để kích thích khách hàng mua sắm ngay lập tức.
+- **Có hiệu ứng cộng hưởng nhẹ nhưng không đột biến**: Khi kết hợp cả hai chiến dịch (`Cộng hưởng cả hai`), doanh số có xu hướng tăng nhẹ so với việc chỉ chạy Promo ở nhóm **Type A** và **Type D**. Tuy nhiên, mức tăng thêm này là tương đối nhỏ và không tạo ra cú hích lớn, cảnh báo rằng chi phí vận hành song song cả 2 chương trình cần được tối ưu hóa để tránh lãng phí ngân sách marketing.
+
+---
+
+### 📍 Biểu đồ 10: Phân tích Phân bố Giá trị Ngoại lệ
+
+#### Biểu đồ 10A: Phân phối Doanh số: Bình thường vs Ngoại lệ theo Loại cửa hàng
+
+```{r plot-10a}
 DuLieuGanNhanNgoaiLe <- DuLieu %>%
   mutate(NhanNgoaiLe = ifelse(is_outlier, "Ngoại lệ (Outlier)", "Bình thường (Normal)"))
 
-BieuDoC1 <- ggplot(DuLieuGanNhanNgoaiLe, aes(x = store_type, y = sales, fill = NhanNgoaiLe)) +
+BieuDo10A <- ggplot(DuLieuGanNhanNgoaiLe, aes(x = store_type, y = sales, fill = NhanNgoaiLe)) +
   geom_boxplot(alpha = 0.7, outlier.size = 0.5, outlier.alpha = 0.3) +
   scale_fill_manual(values = c("Bình thường (Normal)" = "#1E88E5", "Ngoại lệ (Outlier)" = "#E53935")) +
   scale_x_discrete(labels = c("a" = "Type A", "b" = "Type B", "c" = "Type C", "d" = "Type D")) +
   scale_y_continuous(labels = comma) +
   labs(
-    title    = "C1. Phân phối Doanh số: Bình thường vs. Ngoại lệ",
-    subtitle = "Outlier flag được tính bằng IQR theo từng cửa hàng (từ tập Train)",
+    title    = "Biểu đồ 10A: Phân phối Doanh số: Bình thường vs Ngoại lệ",
+    subtitle = "Outlier flag được tính bằng IQR theo từng cửa hàng (tập Train)",
     x = "Loại cửa hàng", y = "Doanh số (EUR)", fill = NULL
   ) +
   GiaoDienRossmann +
-  theme(legend.position = "top")
+  theme(legend.position = "right")
 
-# === Panel 2: Tỷ lệ Outlier theo Tháng ===
+print(BieuDo10A)
+ggsave(here("output", "figures", "p10a_outlier_distribution.png"), BieuDo10A,
+       width = 10, height = 5, dpi = 150)
+```
+
+**Nhận xét Biểu đồ 10A:** Biểu đồ hộp thể hiện khoảng doanh thu bình thường và khoảng doanh thu ngoại lệ của từng loại hình cửa hàng:
+
+- Cửa hàng **Type B** có doanh số trung vị cho cả hai nhóm (Bình thường & Ngoại lệ) cao nhất và dải phân phối rộng nhất. Tuy nhiên, số lượng cửa hàng Type B trong hệ thống rất ít và chủ yếu nằm ở vị trí đắc địa (nhà ga, sân bay), dẫn đến lượng khách vãng lai cực kỳ lớn và nhiều ngày doanh thu đột biến.
+- Các nhóm cửa hàng **Type A**, **Type C** và **Type D** có phân phối nhóm Bình thường rất tập trung và ổn định (dao động từ 3.000 đến 9.000 EUR), trong khi nhóm Ngoại lệ kéo dài lên rất cao (vượt ngưỡng 15.000 EUR đến 25.000 EUR), thể hiện sức mua tăng vọt đột biến vào các ngày đặc biệt.
+
+---
+
+#### Biểu đồ 10B: Tỷ lệ Outlier theo Tháng
+
+```{r plot-10b}
 TyLeNgoaiLeTheoThang <- DuLieu %>%
   group_by(month) %>%
   summarise(
@@ -575,7 +577,7 @@ TyLeNgoaiLeTheoThang <- DuLieu %>%
   mutate(NhanThang = factor(month, levels = 1:12,
                                labels = c("T1","T2","T3","T4","T5","T6","T7","T8","T9","T10","T11","T12")))
 
-BieuDoC2 <- ggplot(TyLeNgoaiLeTheoThang, aes(x = NhanThang, y = PhanTramNgoaiLe)) +
+BieuDo10B <- ggplot(TyLeNgoaiLeTheoThang, aes(x = NhanThang, y = PhanTramNgoaiLe)) +
   geom_col(aes(fill = PhanTramNgoaiLe > mean(PhanTramNgoaiLe)), alpha = 0.85, width = 0.7) +
   geom_text(aes(label = paste0(PhanTramNgoaiLe, "%")), vjust = -0.5, size = 3.2, fontface = "bold") +
   geom_hline(yintercept = mean(TyLeNgoaiLeTheoThang$PhanTramNgoaiLe), linetype = "dashed",
@@ -587,13 +589,27 @@ BieuDoC2 <- ggplot(TyLeNgoaiLeTheoThang, aes(x = NhanThang, y = PhanTramNgoaiLe)
                     labels = c("Dưới TB", "Trên TB"), name = "So với trung bình") +
   scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
   labs(
-    title    = "C2. Tỷ lệ Outlier theo Tháng",
+    title    = "Biểu đồ 10B: Tỷ lệ Outlier theo Tháng",
     subtitle = "Tháng 12 (Giáng sinh) có tỷ lệ ngoại lệ cao nhất — do doanh số đột biến mùa lễ",
     x = "Tháng", y = "% Outlier"
   ) +
   GiaoDienRossmann
 
-# === Panel 3: Tỷ lệ Outlier theo Promo ===
+print(BieuDo10B)
+ggsave(here("output", "figures", "p10b_outlier_month.png"), BieuDo10B,
+       width = 10, height = 5, dpi = 150)
+```
+
+**Nhận xét Biểu đồ 10B:** Tỷ lệ giao dịch ngoại lệ có sự chênh lệch rõ rệt qua các tháng trong năm, thể hiện tính chu kỳ mua sắm mạnh mẽ:
+
+- **Tháng 12** ghi nhận tỷ lệ ngoại lệ vượt trội cao nhất toàn năm (lên tới **14.2%**), vượt xa mức trung bình chung là **8.1%**. Nguyên nhân trực tiếp là do làn sóng mua sắm chuẩn bị cho kỳ nghỉ Lễ Giáng Sinh và đón năm mới thúc đẩy doanh số của hầu hết các cửa hàng tăng đột biến vượt khỏi giới hạn hoạt động bình thường.
+- **Tháng 11** cũng ghi nhận tỷ lệ ngoại lệ cao (**9.5%**) nhờ các chiến dịch kích cầu tiền Giáng sinh (Black Friday). Ngược lại, các tháng đầu năm (Tháng 1, 2) và mùa hè (Tháng 8, 9) có tỷ lệ ngoại lệ rất thấp (chỉ từ 5.5% đến 6.5%), phản ánh sức mua ổn định ở mức nền thấp và không có nhiều biến động bất thường.
+
+---
+
+#### Biểu đồ 10C: Tỷ lệ Outlier: Có vs Không Khuyến mãi
+
+```{r plot-10c}
 TyLeNgoaiLeTheoKhuyenMai <- DuLieu %>%
   group_by(promo) %>%
   summarise(
@@ -604,39 +620,93 @@ TyLeNgoaiLeTheoKhuyenMai <- DuLieu %>%
   ) %>%
   mutate(NhanKhuyenMai = ifelse(promo == 1, "Có khuyến mãi", "Không khuyến mãi"))
 
-BieuDoC3 <- ggplot(TyLeNgoaiLeTheoKhuyenMai, aes(x = NhanKhuyenMai, y = PhanTramNgoaiLe, fill = NhanKhuyenMai)) +
+BieuDo10C <- ggplot(TyLeNgoaiLeTheoKhuyenMai, aes(x = NhanKhuyenMai, y = PhanTramNgoaiLe, fill = NhanKhuyenMai)) +
   geom_col(alpha = 0.85, width = 0.5) +
   geom_text(aes(label = paste0(PhanTramNgoaiLe, "%\n(n=", comma(SoLuongNgoaiLe), ")")),
             vjust = -0.3, size = 3.5, fontface = "bold") +
   scale_fill_manual(values = c("Không khuyến mãi" = "#78909C", "Có khuyến mãi" = "#E53935")) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
   labs(
-    title    = "C3. Tỷ lệ Outlier: Có vs. Không Khuyến mãi",
+    title    = "Biểu đồ 10C: Tỷ lệ Outlier: Có vs Không Khuyến mãi",
     subtitle = "Ngày khuyến mãi thường tạo ra nhiều doanh số bất thường hơn",
     x = NULL, y = "% Outlier"
   ) +
   GiaoDienRossmann +
   theme(legend.position = "none")
 
-# === Ghép 3 panel thành 1 hình ===
-BieuDoTongHopC <- grid.arrange(
-  BieuDoC1,
-  arrangeGrob(BieuDoC2, BieuDoC3, ncol = 2, widths = c(2, 1)),
-  nrow = 2, heights = c(1, 1),
-  top = grid::textGrob(
-    "Phân tích Giá trị Ngoại lệ (Outlier Analysis) — Rossmann 2014–2015",
-    gp = grid::gpar(fontface = "bold", fontsize = 16)
-  )
-)
-
-ggsave(here("output", "figures", "pC_outlier_analysis.png"), BieuDoTongHopC,
-       width = 12, height = 10, dpi = 150)
+print(BieuDo10C)
+ggsave(here("output", "figures", "p10c_outlier_promo.png"), BieuDo10C,
+       width = 10, height = 5, dpi = 150)
 ```
 
-**Nhận xét:** Các giá trị ngoại lệ doanh số không xuất phát từ lỗi kỹ thuật hay sai lệch dữ liệu mà phản ánh đúng thực tế kinh doanh vào những giai đoạn mua sắm đặc biệt.
+**Nhận xét Biểu đồ 10C:** Chương trình khuyến mãi định kỳ (`promo`) là nhân tố chính kích hoạt các giao dịch doanh thu đột biến:
 
-- Giá trị ngoại lệ xuất phát tập trung chủ yếu vào mùa cao điểm Giáng sinh **tháng 12** khi doanh thu tăng vọt gấp **2** đến **3 lần** ngày thường.
-- Những ngày chạy chương trình khuyến mãi thu hút lượng khách đột biến cũng tạo ra các giá trị doanh thu ngoại lệ.
-- Các phân khúc cửa hàng lớn như **Type B** có tần suất xuất hiện ngoại lệ cao hơn hẳn do biến động lượng khách vãng lai.
+- Trong những ngày **Có khuyến mãi**, tỷ lệ xuất hiện giá trị ngoại lệ lên tới **15.4%** (với hơn 11.000 ngày ghi nhận doanh thu vượt ngưỡng bình thường).
+- Ngược lại, trong những ngày **Không khuyến mãi**, tỷ lệ ngoại lệ chỉ ở mức **2.5%**. Điều này chứng minh rằng các ngày doanh số bùng nổ (outliers) phần lớn được dẫn dắt bởi hiệu ứng thu hút khách hàng từ các chương trình giảm giá và phát tờ rơi quảng cáo hàng tuần của Rossmann.
 
-Việc gắn cờ và giữ lại các giá trị ngoại lệ này giúp bảo toàn những thông tin thị trường quan trọng. Chúng đóng góp giá trị lớn cho các mô hình phân tích dự báo doanh số tiếp theo của chuỗi cửa hàng Rossmann.
+---
+
+### 📍 Biểu đồ 11: Toàn cảnh Hiệu suất 50 Cửa hàng Rossmann — Biểu đồ Bong bóng Đa chiều
+
+```{r plot-11, fig.width=12, fig.height=7}
+HoSoCuaHang <- DuLieu %>%
+  group_by(store) %>%
+  summarise(
+    DoanhThuTB   = mean(sales),
+    KhachHangTB  = mean(customers),
+    ChiTieuTB    = mean(sales_per_customer),
+    KhoangCachDoiThu = first(competition_distance),
+    LoaiCuaHang  = first(store_type),
+    CoCauSanPham = first(assortment),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    NhanLoaiCuaHang = case_when(
+      LoaiCuaHang == "a" ~ "Type A (Phổ thông)",
+      LoaiCuaHang == "c" ~ "Type C (Nhỏ ngoại ô)",
+      LoaiCuaHang == "d" ~ "Type D (Flagship)",
+      TRUE ~ as.character(LoaiCuaHang)
+    ),
+    NhanCoCau = ifelse(CoCauSanPham == "a", "Basic (Cơ bản)", "Extended (Mở rộng)")
+  )
+
+BieuDo11 <- ggplot(HoSoCuaHang, aes(x = KhoangCachDoiThu, y = DoanhThuTB)) +
+  geom_point(aes(size = KhachHangTB, fill = NhanCoCau),
+             shape = 21, alpha = 0.75, color = "white", stroke = 0.8) +
+  geom_text(aes(label = store), size = 2.2, fontface = "bold", color = "grey30") +
+  facet_wrap(~NhanLoaiCuaHang, scales = "free_x") +
+  scale_size_continuous(
+    range = c(4, 18),
+    labels = comma,
+    name = "Lượng khách TB/ngày"
+  ) +
+  scale_fill_manual(
+    values = c("Basic (Cơ bản)" = "#1E88E5", "Extended (Mở rộng)" = "#E53935"),
+    name = "Cơ cấu sản phẩm"
+  ) +
+  scale_x_continuous(labels = comma) +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title    = "Toàn cảnh Hiệu suất 50 Cửa hàng Rossmann",
+    subtitle = "Kích thước = Lượng khách | Màu = Cơ cấu sản phẩm | Số = Mã cửa hàng",
+    x = "Khoảng cách đến đối thủ gần nhất (m)",
+    y = "Doanh số trung bình hàng ngày (EUR)"
+  ) +
+  GiaoDienRossmann +
+  theme(
+    legend.position = "right",
+    strip.text = element_text(face = "bold", size = 11)
+  ) +
+  guides(size = guide_legend(order = 1), fill = guide_legend(order = 2, override.aes = list(size = 6)))
+
+print(BieuDo11)
+ggsave(here("output", "figures", "p11_bubble_store_performance.png"), BieuDo11,
+       width = 12, height = 7, dpi = 150)
+```
+
+**Nhận xét:** Biểu đồ bong bóng đa chiều cung cấp cái nhìn toàn cảnh về hiệu suất kinh doanh của 50 cửa hàng Rossmann trên nhiều khía cạnh cùng lúc:
+
+- **Khoảng cách đối thủ không quyết định doanh số**: Các cửa hàng có đối thủ rất gần (dưới 500m) và rất xa (trên 10.000m) đều có thể đạt doanh số cao hoặc thấp. Điều này xác nhận kết luận từ ma trận tương quan: vị trí địa lý không còn là lợi thế cạnh tranh trong thị trường drugstore bão hòa tại Đức.
+- **Cơ cấu sản phẩm Extended (đỏ) tạo lợi thế rõ rệt** ở nhóm cửa hàng **Type A** và **Type D**: Các cửa hàng có danh mục hàng hóa mở rộng thường nằm ở vùng doanh số cao hơn, cho thấy sự đa dạng sản phẩm giúp thu hút thêm khách hàng và tăng giá trị đơn hàng.
+- **Cửa hàng Type C (Nhỏ ngoại ô)** dù quy mô khách thấp (bong bóng nhỏ) nhưng đạt doanh số ổn định nhờ tập khách hàng trung thành mua sắm nhu yếu phẩm bắt buộc hàng ngày.
+- Các cửa hàng **"ngôi sao"** có bong bóng lớn (đông khách) VÀ nằm ở vùng doanh số cao (như Store 25, 4, 35) là những điểm bán hiệu quả nhất hệ thống, cần được nghiên cứu để nhân rộng mô hình.
