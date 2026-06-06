@@ -77,6 +77,7 @@ ggsave(here("output", "figures", "p1_monthly_trend.png"), BieuDo1,
 ```
 
 **Nhận xét:**
+
 - **Dữ liệu sử dụng:** `date`, `sales`.
 - **Mục đích:** Theo dõi xu hướng biến động của doanh số trung bình qua các tháng để nhận diện các giai đoạn tăng trưởng cao điểm hoặc suy thoái mang tính chu kỳ.
 
@@ -138,6 +139,7 @@ BieuDo2
 ```
 
 **Nhận xét:**
+
 - **Dữ liệu sử dụng:** `state_holiday`, `school_holiday`, `sales`.
 - **Mục đích:** Đánh giá mức độ ảnh hưởng của các ngày lễ quốc gia và kỳ nghỉ học lên doanh số bán hàng hàng ngày của Rossmann so với các ngày thường.
 
@@ -190,6 +192,7 @@ ggsave(here("output", "figures", "p3_correlation.png"), BieuDo3,
 ```
 
 **Nhận xét:**
+
 - **Dữ liệu sử dụng:** `sales`, `customers`, `competition_distance`, `sales_per_customer`, `month`, `week_of_year`, `is_weekend`.
 - **Mục đích:** Phân tích mối liên hệ tương quan tuyến tính giữa doanh số với các yếu tố hoạt động, thời gian và đối thủ cạnh tranh để tìm ra các biến số có tầm ảnh hưởng lớn nhất.
 
@@ -254,6 +257,7 @@ ggsave(here("output", "figures", "p4_dumbbell.png"), BieuDo4,
 ```
 
 **Nhận xét:**
+
 - **Dữ liệu sử dụng:** `day_of_week`, `promo`, `sales`.
 - **Mục đích:** Đo lường và so sánh hiệu quả tăng trưởng doanh thu do khuyến mãi mang lại giữa các ngày trong tuần (từ Thứ Hai đến Thứ Bảy), giúp định hình chiến lược phân bổ ngân sách marketing tối ưu.
 
@@ -305,6 +309,7 @@ ggsave(here("output", "figures", "p5_spc_boxplot.png"), BieuDo5,
 ```
 
 **Nhận xét:**
+
 - **Dữ liệu sử dụng:** `assortment`, `store_type`, `sales_per_customer`.
 - **Mục đích:** So sánh chi tiêu trung bình trên mỗi khách hàng giữa các loại danh mục sản phẩm (Basic vs Extended) ở các nhóm loại cửa hàng khác nhau nhằm đánh giá hiệu quả của chiến lược mở rộng danh mục hàng hóa.
 
@@ -350,8 +355,9 @@ MauCanhTranh <- c("Không có đối thủ" = "#4CAF50",
 
 BieuDo6 <- ggplot(ThongKeCanhTranh, aes(x = NhomCanhTranh, y = DoanhThuTB, fill = NhomCanhTranh)) +
   geom_col(alpha = 0.85, width = 0.65) +
+  geom_text(aes(label = comma(round(DoanhThuTB))), vjust = -0.5, size = 3.5, fontface = "bold") +
   scale_fill_manual(values = MauCanhTranh) +
-  scale_y_continuous(labels = comma) +
+  scale_y_continuous(labels = comma, expand = expansion(mult = c(0, 0.15))) +
   labs(
     title    = "Ảnh hưởng của Thời gian Đối thủ Cạnh tranh đến Doanh số",
     subtitle = "Doanh số trung bình theo thời gian hoạt động của đối thủ cạnh tranh",
@@ -367,6 +373,7 @@ ggsave(here("output", "figures", "p6_competition_duration.png"), BieuDo6, width 
 ```
 
 **Nhận xét:**
+
 - **Dữ liệu sử dụng:** `has_competition`, `competition_open_months`, `sales`.
 - **Mục đích:** Đánh giá mức độ ảnh hưởng của thời gian hoạt động của đối thủ cạnh tranh lên doanh thu trung bình hàng ngày của Rossmann để từ đó xây dựng chiến lược ứng phó phù hợp theo từng giai đoạn cạnh tranh.
 
@@ -449,6 +456,7 @@ ggsave(here("output", "figures", "p7_promo_interaction.png"), BieuDo7,
 ```
 
 **Nhận xét:**
+
 - **Dữ liệu sử dụng:** `promo`, `promo2`, `store_type`, `sales`.
 - **Mục đích:** Phân tích mối tương tác và hiệu quả cộng hưởng giữa chiến dịch khuyến mãi ngắn hạn và khuyến mãi dài hạn để định hình chiến lược marketing đa kênh hiệu quả.
 
@@ -488,6 +496,7 @@ ggsave(here("output", "figures", "p8a_outlier_distribution.png"), BieuDo8A,
 ```
 
 **Nhận xét Biểu đồ 8A:**
+
 - **Dữ liệu sử dụng:** `store_type`, `sales`, `is_outlier`.
 - **Mục đích:** Khảo sát và so sánh phân phối doanh thu giữa các ngày bình thường và ngày ngoại lệ theo từng loại hình cửa hàng nhằm nhận diện đặc thù hoạt động của từng nhóm.
 
@@ -533,6 +542,7 @@ ggsave(here("output", "figures", "p8b_outlier_month.png"), BieuDo8B,
 ```
 
 **Nhận xét Biểu đồ 8B:**
+
 - **Dữ liệu sử dụng:** `month`, `is_outlier`.
 - **Mục đích:** Theo dõi sự phân bố của các giao dịch ngoại lệ qua các tháng nhằm khẳng định tính chu kỳ mua sắm cao điểm trong năm của khách hàng.
 
@@ -574,6 +584,7 @@ ggsave(here("output", "figures", "p8c_outlier_promo.png"), BieuDo8C,
 ```
 
 **Nhận xét Biểu đồ 8C:**
+
 - **Dữ liệu sử dụng:** `promo`, `is_outlier`.
 - **Mục đích:** Xác minh vai trò của chiến dịch khuyến mãi định kỳ trong việc tạo ra các ngày có doanh số tăng vọt (outliers).
 
@@ -641,6 +652,7 @@ ggsave(here("output", "figures", "p9_bubble_store_performance.png"), BieuDo9,
 ```
 
 **Nhận xét:**
+
 - **Dữ liệu sử dụng:** `store`, `store_type`, `assortment`, `sales`, `customers`, `competition_distance`.
 - **Mục đích:** Trực quan hóa bức tranh toàn cảnh đa chiều về mối quan hệ giữa doanh số, lượng khách, khoảng cách đối thủ và cơ cấu sản phẩm của 50 cửa hàng Rossmann, hỗ trợ xác định các nhóm cửa hàng hoạt động xuất sắc.
 
@@ -680,6 +692,7 @@ ggsave(here("output", "figures", "p10_ridgeline.png"), BieuDo10,
 ```
 
 **Nhận xét:**
+
 - **Dữ liệu sử dụng:** `sales`, `month`.
 - **Mục đích:** Trực quan hóa sự thay đổi hình dạng phân phối doanh số qua từng tháng, phát hiện các giai đoạn mở rộng hoặc thu hẹp biên độ doanh thu.
 
@@ -729,6 +742,7 @@ ggsave(here("output", "figures", "p11_lollipop_ranking.png"), BieuDo11,
 ```
 
 **Nhận xét:**
+
 - **Dữ liệu sử dụng:** `store`, `store_type`, `sales`.
 - **Mục đích:** Xếp hạng và so sánh hiệu suất doanh thu của toàn bộ 50 cửa hàng so với mức trung bình hệ thống, đồng thời nhận diện mối liên hệ giữa loại hình cửa hàng và hiệu suất.
 
