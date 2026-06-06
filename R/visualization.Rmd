@@ -125,7 +125,7 @@ BieuDo2_gg <- ggplot(DuLieuNgayLe, aes(x = LoaiNgay, y = sales, fill = LoaiNgay,
   )) +
   scale_y_continuous(labels = comma) +
   labs(
-    title = "Tác động của Ngày lễ và Kỳ nghỉ học đến Doanh số",
+    title = "Tác động của ngày lễ và kỳ nghỉ học đến doanh số",
     x = "Loại hình ngày", 
     y = "Doanh số bán hàng ngày (EUR)"
   ) +
@@ -245,7 +245,7 @@ BieuDo4 <- ggplot(DoanhThuTheoNgayKhuyenMai) +
     name = "Chiến dịch"
   ) +
   labs(
-    title    = "Hiệu quả Khuyến mãi theo Ngày trong tuần",
+    title    = "Hiệu quả khuyến mãi theo ngày trong tuần",
     subtitle = "Khoảng cách biểu diễn chênh lệch doanh số trung bình giữa ngày thường và ngày khuyến mãi",
     x = "Doanh số trung bình hàng ngày (EUR)", y = NULL
   ) +
@@ -292,8 +292,8 @@ BieuDo5 <- ggplot(DuLieuChiTieu, aes(x = NhanCoCau, y = sales_per_customer, fill
   scale_fill_manual(values = c("Basic\n(Cơ bản)" = "#1E88E5", "Extended\n(Mở rộng)" = "#E53935")) +
   scale_y_continuous(labels = comma) +
   labs(
-    title    = "Chi tiêu Trung bình mỗi Khách hàng theo Cơ cấu Sản phẩm",
-    subtitle = "Phân phối chi tiêu trung bình trên mỗi khách hàng theo Loại hình Cửa hàng",
+    title    = "Chi tiêu trung bình mỗi khách hàng theo cơ cấu sản phẩm",
+    subtitle = "Phân phối chi tiêu trung bình trên mỗi khách hàng theo loại hình cửa hàng",
     x = "Cơ cấu sản phẩm (Assortment)", y = "Chi tiêu TB / Khách (EUR)",
     fill = "Cơ cấu sản phẩm"
   ) +
@@ -359,7 +359,7 @@ BieuDo6 <- ggplot(ThongKeCanhTranh, aes(x = NhomCanhTranh, y = DoanhThuTB, fill 
   scale_fill_manual(values = MauCanhTranh) +
   scale_y_continuous(labels = comma, expand = expansion(mult = c(0, 0.15))) +
   labs(
-    title    = "Ảnh hưởng của Thời gian Đối thủ Cạnh tranh đến Doanh số",
+    title    = "Ảnh hưởng của thời gian đối thủ cạnh tranh đến doanh số",
     subtitle = "Doanh số trung bình theo thời gian hoạt động của đối thủ cạnh tranh",
     x = "Thời gian đối thủ đã hoạt động", 
     y = "Doanh số trung bình (EUR/ngày)",
@@ -437,7 +437,7 @@ BieuDo7 <- ggplot(ThongKeKhuyenMai, aes(x = TrangThaiKM, y = DoanhThuTB, fill = 
   )) +
   scale_y_continuous(labels = comma) +
   labs(
-    title    = "Hiệu ứng Cộng hưởng giữa Khuyến mãi Định kỳ và Khuyến mãi Dài hạn",
+    title    = "Hiệu ứng cộng hưởng giữa khuyến mãi định kỳ và khuyến mãi dài hạn",
     subtitle = "Doanh số trung bình hàng ngày (±1 SE) theo loại hình cửa hàng",
     x = "Trạng thái chiến dịch khuyến mãi",
     y = "Doanh số trung bình hàng ngày (EUR)",
@@ -483,8 +483,8 @@ BieuDo8A <- ggplot(DuLieuGanNhanNgoaiLe, aes(x = store_type, y = sales, fill = N
   scale_x_discrete(labels = c("a" = "Type A", "b" = "Type B", "c" = "Type C", "d" = "Type D")) +
   scale_y_continuous(labels = comma) +
   labs(
-    title    = "Biểu đồ 8A: Phân phối Doanh số: Bình thường vs Ngoại lệ",
-    subtitle = "Outlier flag được tính bằng IQR theo từng cửa hàng (tập Train)",
+    title    = "Biểu đồ 8A: Phân phối doanh số giữa ngày bình thường và ngày ngoại lệ",
+    subtitle = "Outlier flag được tính bằng IQR theo từng cửa hàng (tập train)",
     x = "Loại cửa hàng", y = "Doanh số (EUR)", fill = NULL
   ) +
   GiaoDienRossmann +
@@ -546,7 +546,7 @@ BieuDo8B <- ggplot(TyLeNgoaiLeTheoThang, aes(x = NhanThang, y = PhanTramNgoaiLe,
   scale_fill_manual(values = c("FALSE" = "#64B5F6", "TRUE" = "#E53935"),
                     labels = c("Dưới TB", "Trên TB"), name = "So với trung bình") +
   labs(
-    title    = "Biểu đồ 8B: Tỷ lệ Outlier theo Tháng",
+    title    = "Biểu đồ 8B: Tỷ lệ outlier theo tháng",
     subtitle = "Tỷ lệ ngày có doanh số ngoại lệ theo từng tháng trong năm",
     x = "Tháng", y = "% Outlier"
   ) +
@@ -613,7 +613,7 @@ BieuDo9 <- ggplot(HoSoCuaHang, aes(x = KhoangCachDoiThu, y = DoanhThuTB)) +
   scale_x_continuous(labels = comma) +
   scale_y_continuous(labels = comma) +
   labs(
-    title    = "Toàn cảnh Hiệu suất 50 Cửa hàng Rossmann",
+    title    = "Toàn cảnh hiệu suất 50 cửa hàng Rossmann",
     subtitle = "Kích thước = Lượng khách trung bình | Màu = Cơ cấu sản phẩm",
     x = "Khoảng cách đến đối thủ gần nhất (m)",
     y = "Doanh số trung bình hàng ngày (EUR)"
@@ -667,7 +667,7 @@ BieuDo11 <- ggplot(HieuSuatCuaHang, aes(x = reorder(factor(store), ChenhLech), y
   coord_flip() +
   scale_color_manual(values = c("Trên trung bình" = "#4CAF50", "Dưới trung bình" = "#E53935"), name = "Hiệu suất") +
   labs(
-    title    = "Lollipop Chart: Xếp hạng 50 Cửa hàng theo Chênh lệch Doanh số",
+    title    = "Lollipop chart: xếp hạng 50 cửa hàng theo chênh lệch doanh số",
     subtitle = "So với trung bình hệ thống | Màu = Hiệu suất",
     x = "Mã cửa hàng (Store ID)", y = "Chênh lệch so với trung bình (EUR)"
   ) +
