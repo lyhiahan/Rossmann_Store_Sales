@@ -463,9 +463,9 @@ ggsave(here("output", "figures", "p7_promo_interaction.png"), BieuDo7,
 *Phân tích chi tiết:*
 Biểu đồ tương tác giữa khuyến mãi định kỳ (`promo`) và khuyến mãi dài hạn (`promo2`) cung cấp góc nhìn sâu sắc về hiệu quả thực tế của các chiến dịch marketing tại Rossmann:
 
-- **Khuyến mãi ngắn hạn định kỳ (Promo) đóng vai trò kích cầu chủ đạo**: Trên tất cả các loại hình cửa hàng, việc chỉ áp dụng khuyến mãi ngắn hạn (`Chỉ Promo (Ngắn hạn)`) luôn mang lại mức tăng trưởng doanh số vượt trội so với khi không chạy khuyến mãi hay chỉ chạy khuyến mãi dài hạn Promo2.
-- **Promo2 (Khuyến mãi dài hạn liên tục) có hiệu suất kém hơn**: Đáng chú ý, các cửa hàng chỉ chạy Promo2 (`Chỉ Promo2 (Dài hạn)`) ghi nhận mức doanh thu tăng trưởng rất thấp, thậm chí ở nhóm cửa hàng **Type A** và **Type D**, mức tăng này gần như không đáng kể so với nhóm ngày thường không có khuyến mãi. Điều này chỉ ra rằng các chương trình khách hàng thân thiết hay phát coupon dài hạn của Promo2 có thể đã bị bão hòa, kém hấp dẫn hoặc không tạo ra tính khẩn cấp để kích thích khách hàng mua sắm ngay lập tức.
-- **Có hiệu ứng cộng hưởng nhẹ nhưng không đột biến**: Khi kết hợp cả hai chiến dịch (`Cộng hưởng cả hai`), doanh số có xu hướng tăng nhẹ so với việc chỉ chạy Promo ở nhóm **Type A** và **Type D**. Tuy nhiên, mức tăng thêm này là tương đối nhỏ và không tạo ra cú hích lớn, cảnh báo rằng chi phí vận hành song song cả 2 chương trình cần được tối ưu hóa để tránh lãng phí ngân sách marketing.
+- **Khuyến mãi ngắn hạn định kỳ (Promo) đóng vai trò kích cầu chủ đạo**: Trên tất cả các loại hình cửa hàng, việc chỉ áp dụng khuyến mãi ngắn hạn luôn mang lại mức tăng trưởng doanh số vượt trội so với khi không chạy khuyến mãi hay chỉ chạy khuyến mãi dài hạn Promo2.
+- **Promo2 (Khuyến mãi dài hạn liên tục) có hiệu suất kém hơn**: Đáng chú ý, các cửa hàng chỉ chạy Promo2 ghi nhận mức doanh thu tăng trưởng rất thấp, thậm chí ở nhóm cửa hàng **Type A** và **Type D**, mức tăng này gần như không đáng kể so với nhóm ngày thường không có khuyến mãi. Điều này chỉ ra rằng các chương trình khách hàng thân thiết hay phát coupon dài hạn của Promo2 có thể đã bị bão hòa, kém hấp dẫn hoặc không tạo ra tính khẩn cấp để kích thích khách hàng mua sắm ngay lập tức.
+- **Có hiệu ứng cộng hưởng nhẹ nhưng không đột biến**: Khi kết hợp cả hai chiến dịch, doanh số có xu hướng tăng nhẹ so với việc chỉ chạy Promo ở nhóm **Type A** và **Type D**. Tuy nhiên, mức tăng thêm này là tương đối nhỏ và không tạo ra cú hích lớn, cảnh báo rằng chi phí vận hành song song cả 2 chương trình cần được tối ưu hóa để tránh lãng phí ngân sách marketing.
 
 ---
 
@@ -501,11 +501,27 @@ ggsave(here("output", "figures", "p8a_outlier_distribution.png"), BieuDo8A,
 - **Mục đích:** Khảo sát và so sánh phân phối doanh thu giữa các ngày bình thường và ngày ngoại lệ theo từng loại hình cửa hàng nhằm nhận diện đặc thù hoạt động của từng nhóm.
 
 *Phân tích chi tiết:*
-Biểu đồ hộp thể hiện khoảng doanh thu bình thường và khoảng doanh thu ngoại lệ của từng loại hình cửa hàng:
 
-- Cửa hàng **Type B** có doanh số trung vị cho cả hai nhóm (Bình thường & Ngoại lệ) cao nhất và dải phân phối rộng nhất. Tuy nhiên, số lượng cửa hàng Type B trong hệ thống rất ít và chủ yếu nằm ở vị trí đắc địa (nhà ga, sân bay), dẫn đến lượng khách vãng lai cực kỳ lớn và nhiều ngày doanh thu đột biến.
-- Các nhóm cửa hàng **Type A**, **Type C** và **Type D** có phân phối nhóm Bình thường rất tập trung và ổn định (dao động từ 3.000 đến 9.000 EUR), trong khi nhóm Ngoại lệ kéo dài lên rất cao (vượt ngưỡng 15.000 EUR đến 25.000 EUR), thể hiện sức mua tăng vọt đột biến vào các ngày đặc biệt.
+Cả ba loại cửa hàng đều cho thấy sự phân tách rõ rệt giữa hai nhóm.
 
+- **Type A (Phổ thông)** có doanh thu ngày thường ổn định nhất **~6.500 EUR** nhưng biên độ
+bùng nổ lớn nhất khi vào cao điểm **~13.500 EUR** cho thấy loại cửa hàng này rất nhạy cảm
+với các yếu tố kích cầu bên ngoài như khuyến mãi và mùa lễ.
+
+- **Type C (Nhỏ ngoại ô)** có nền doanh thu ngày thường cao nhất trong ba loại **~7.500 EUR**,
+phản ánh tập khách hàng trung thành mua sắm đều đặn. Mức bùng nổ khi ngoại lệ **~12.000 EUR**
+thấp hơn tương đối, cho thấy Type C tăng trưởng bền vững hơn là đột biến.
+
+- **Type D (Flagship)** có doanh thu ngày thường khiêm tốn **~6.500 EUR** nhưng đỉnh ngoại lệ
+cao nhất toàn hệ thống **hơn 20.000 EUR** cho thấy Type D không mạnh ở sự ổn định hàng ngày
+mà nổi bật ở khả năng xử lý lượng khách cực lớn trong các dịp đặc biệt nhờ quy mô và danh
+mục sản phẩm phong phú **vượt ngưỡng 15.000 EUR đến 25.000 EUR**, thể hiện sức mua tăng vọt đột biến vào các ngày đặc biệt.
+
+*Đề xuất:*
+
+**Type A:** Tăng cường khuyến mãi và dự trữ hàng vào các dịp cao điểm — đây là nhóm có phản ứng mạnh nhất với kích cầu bên ngoài.
+**Type C:** Đầu tư vào chương trình khách hàng thân thiết (tích điểm, thẻ thành viên) để duy trì nền doanh thu ổn định vốn là lợi thế cạnh tranh của nhóm này.
+**Type D:** Chuẩn bị năng lực vận hành (nhân sự, tồn kho) cho các ngày đỉnh để khai thác triệt để tiềm năng doanh thu cao nhất hệ thống.
 ---
 
 #### Biểu đồ 8B: Tỷ lệ Outlier theo Tháng
@@ -549,50 +565,13 @@ ggsave(here("output", "figures", "p8b_outlier_month.png"), BieuDo8B,
 *Phân tích chi tiết:*
 Tỷ lệ giao dịch ngoại lệ có sự chênh lệch rõ rệt qua các tháng trong năm, thể hiện tính chu kỳ mua sắm mạnh mẽ:
 
-- **Tháng 12** ghi nhận tỷ lệ ngoại lệ vượt trội cao nhất toàn năm (lên tới **14.2%**), vượt xa mức trung bình chung là **8.1%**. Nguyên nhân trực tiếp là do làn sóng mua sắm chuẩn bị cho kỳ nghỉ Lễ Giáng Sinh và đón năm mới thúc đẩy doanh số của hầu hết các cửa hàng tăng đột biến vượt khỏi giới hạn hoạt động bình thường.
-- **Tháng 11** cũng ghi nhận tỷ lệ ngoại lệ cao (**9.5%**) nhờ các chiến dịch kích cầu tiền Giáng sinh (Black Friday). Ngược lại, các tháng đầu năm (Tháng 1, 2) và mùa hè (Tháng 8, 9) có tỷ lệ ngoại lệ rất thấp (chỉ từ 5.5% đến 6.5%), phản ánh sức mua ổn định ở mức nền thấp và không có nhiều biến động bất thường.
+- **Tháng 12** ghi nhận tỷ lệ ngoại lệ vượt trội cao nhất toàn năm (lên tới **14.2%**),cao hơn gấp 3–4 lần so với phần lớn các tháng còn lại. Nguyên nhân trực tiếp là do làn sóng mua sắm chuẩn bị cho kỳ nghỉ Lễ Giáng Sinh và đón năm mới thúc đẩy doanh số của hầu hết các cửa hàng tăng đột biến vượt khỏi giới hạn hoạt động bình thường.
+- **Tháng 6 và Tháng 3** là hai tháng duy nhất khác cũng vượt mức trung bình, với tỷ lệ lần lượt khoảng **3% và 2%**. Tháng 3 tăng nhẹ nhờ hiệu ứng Lễ Phục Sinh, còn Tháng 6 có thể liên quan đến các đợt khuyến mãi hè và kỳ nghỉ học.
+- **Tháng 10** gần như không có outlier vì đây là tháng chuyển mùa không có sự kiện tiêu dùng lớn, đồng thời bị ảnh hưởng bởi Ngày Thống nhất Đất nước (03/10) khiến nhiều cửa hàng đóng cửa.
+- Các tháng còn lại đều dưới mức trung bình 
 
----
-
-#### Biểu đồ 8C: Tỷ lệ Outlier: Có vs Không Khuyến mãi
-
-```{r plot-8c}
-TyLeNgoaiLeTheoKhuyenMai <- DuLieu %>%
-  group_by(promo) %>%
-  summarise(
-    TongSoLuong   = n(),
-    SoLuongNgoaiLe = sum(is_outlier, na.rm = TRUE),
-    PhanTramNgoaiLe       = round(SoLuongNgoaiLe / TongSoLuong * 100, 1),
-    .groups   = "drop"
-  ) %>%
-  mutate(NhanKhuyenMai = ifelse(promo == 1, "Có khuyến mãi", "Không khuyến mãi"))
-
-BieuDo8C <- ggplot(TyLeNgoaiLeTheoKhuyenMai, aes(x = NhanKhuyenMai, y = PhanTramNgoaiLe, fill = NhanKhuyenMai)) +
-  geom_col(alpha = 0.85, width = 0.5) +
-  scale_fill_manual(values = c("Không khuyến mãi" = "#78909C", "Có khuyến mãi" = "#E53935")) +
-  labs(
-    title    = "Biểu đồ 8C: Tỷ lệ Outlier: Có vs Không Khuyến mãi",
-    subtitle = "Tỷ lệ ngày có doanh số ngoại lệ theo chiến dịch khuyến mãi",
-    x = NULL, y = "% Outlier"
-  ) +
-  GiaoDienRossmann +
-  theme(legend.position = "none")
-
-print(BieuDo8C)
-ggsave(here("output", "figures", "p8c_outlier_promo.png"), BieuDo8C,
-       width = 10, height = 5, dpi = 150)
-```
-
-**Nhận xét Biểu đồ 8C:**
-
-- **Dữ liệu sử dụng:** `promo`, `is_outlier`.
-- **Mục đích:** Xác minh vai trò của chiến dịch khuyến mãi định kỳ trong việc tạo ra các ngày có doanh số tăng vọt (outliers).
-
-*Phân tích chi tiết:*
-Chương trình khuyến mãi định kỳ (`promo`) là nhân tố chính kích hoạt các giao dịch doanh thu đột biến:
-
-- Trong những ngày **Có khuyến mãi**, tỷ lệ xuất hiện giá trị ngoại lệ lên tới **15.4%** (với hơn 11.000 ngày ghi nhận doanh thu vượt ngưỡng bình thường).
-- Ngược lại, trong những ngày **Không khuyến mãi**, tỷ lệ ngoại lệ chỉ ở mức **2.5%**. Điều này chứng minh rằng các ngày doanh số bùng nổ (outliers) phần lớn được dẫn dắt bởi hiệu ứng thu hút khách hàng từ các chương trình giảm giá và phát tờ rơi quảng cáo hàng tuần của Rossmann.
+*Đề xuất:*
+- Cần lập kế hoạch chuỗi cung ứng và nhân sự chủ động theo lịch, thay vì phản ứng bị động khi doanh số đột biến xảy ra.
 
 ---
 
@@ -657,55 +636,17 @@ ggsave(here("output", "figures", "p9_bubble_store_performance.png"), BieuDo9,
 - **Mục đích:** Trực quan hóa bức tranh toàn cảnh đa chiều về mối quan hệ giữa doanh số, lượng khách, khoảng cách đối thủ và cơ cấu sản phẩm của 50 cửa hàng Rossmann, hỗ trợ xác định các nhóm cửa hàng hoạt động xuất sắc.
 
 *Phân tích chi tiết:*
+
 Biểu đồ bong bóng đa chiều cung cấp cái nhìn toàn cảnh về hiệu suất kinh doanh của 50 cửa hàng Rossmann trên nhiều khía cạnh cùng lúc:
 
-- **Khoảng cách đối thủ không quyết định doanh số**: Các cửa hàng có đối thủ rất gần (dưới 500m) VÀ rất xa (trên 10.000m) đều có thể đạt doanh số cao hoặc thấp. Điều này xác nhận kết luận từ ma trận tương quan: vị trí địa lý không còn là lợi thế cạnh tranh trong thị trường drugstore bão hòa tại Đức.
+- **Khoảng cách đối thủ không quyết định doanh số**: Các cửa hàng có đối thủ rất gần (dưới 500m) và rất xa (trên 10.000m) đều có thể đạt doanh số cao hoặc thấp. Điều này xác nhận kết luận từ ma trận tương quan: vị trí địa lý không còn là lợi thế cạnh tranh trong thị trường drugstore bão hòa tại Đức.
 - **Cơ cấu sản phẩm Extended (đỏ) tạo lợi thế rõ rệt** ở nhóm cửa hàng **Type A** và **Type D**: Các cửa hàng có danh mục hàng hóa mở rộng thường nằm ở vùng doanh số cao hơn, cho thấy sự đa dạng sản phẩm giúp thu hút thêm khách hàng và tăng giá trị đơn hàng.
 - **Cửa hàng Type C (Nhỏ ngoại ô)** dù quy mô khách thấp (bong bóng nhỏ) nhưng đạt doanh số ổn định nhờ tập khách hàng trung thành mua sắm nhu yếu phẩm bắt buộc hàng ngày.
-- Các cửa hàng **"ngôi sao"** có bong bóng lớn (đông khách) VÀ nằm ở vùng doanh số cao (như Store 25, 4, 35) là những điểm bán hiệu quả nhất hệ thống, cần được nghiên cứu để nhân rộng mô hình kinh doanh.
+- Các cửa hàng **"ngôi sao"** có bong bóng lớn (đông khách) kết hợp vùng doanh số cao — xuất hiện ở cả ba nhóm và đều thuộc danh mục Extended, khẳng định đây là mô hình vận hành hiệu quả nhất cần được ưu tiên nhân rộng.
 
----
+*Đề xuất:*
 
-### 📍 Biểu đồ 10: Ridgeline Plot — Sự dịch chuyển Phân phối Doanh số qua các Tháng
-
-```{r plot-10}
-DuLieuRidgeline <- DuLieu %>%
-  mutate(
-    NhanThang = factor(month, levels = 12:1,
-                       labels = rev(c("T1","T2","T3","T4","T5","T6",
-                                      "T7","T8","T9","T10","T11","T12")))
-  )
-
-BieuDo10 <- ggplot(DuLieuRidgeline, aes(x = sales, y = NhanThang)) +
-  geom_density_ridges(fill = "#2196F3", color = "white", alpha = 0.7, scale = 1.5) +
-  scale_x_continuous(labels = comma, limits = c(0, 15000)) +
-  labs(
-    title    = "Ridgeline Plot: Phân phối Doanh số theo Tháng",
-    subtitle = "Sự dịch chuyển phân phối: T12 mở rộng đuôi phải (Giáng sinh) | T1-T2 co hẹp (hậu lễ) | T8-T9 đỉnh thấp (nghỉ hè)",
-    x = "Doanh số (EUR/ngày)", y = NULL
-  ) +
-  GiaoDienRossmann
-
-print(BieuDo10)
-ggsave(here("output", "figures", "p10_ridgeline.png"), BieuDo10,
-       width = 11, height = 8, dpi = 150)
-```
-
-**Nhận xét:**
-
-- **Dữ liệu sử dụng:** `sales`, `month`.
-- **Mục đích:** Trực quan hóa sự thay đổi hình dạng phân phối doanh số qua từng tháng, phát hiện các giai đoạn mở rộng hoặc thu hẹp biên độ doanh thu.
-
-*Phân tích chi tiết:*
-Ridgeline Plot cho phép so sánh trực tiếp hình dạng phân phối doanh số giữa 12 tháng trên cùng một biểu đồ:
-
-- **Tháng 12** nổi bật với đuôi phải kéo dài rất xa, cho thấy nhiều cửa hàng đạt doanh số đột biến trong mùa Giáng sinh. Phân phối "phình" rộng ở vùng doanh thu cao (trên 10.000 EUR) phản ánh nhu cầu mua sắm bùng nổ đồng loạt trên toàn hệ thống.
-- **Tháng 1–2** có phân phối co hẹp và đỉnh dịch sang trái, xác nhận hiệu ứng "kiệt quệ hậu lễ hội" khi người tiêu dùng thắt chặt chi tiêu.
-- **Tháng 8–9** có đỉnh phân phối thấp nhất, phản ánh lượng khách giảm do kỳ nghỉ hè Sommerferien khi 76% người Đức đi du lịch.
-- **Tháng 3–4** (Lễ Phục sinh) có sự mở rộng nhẹ ở đuôi phải, cho thấy hiệu ứng mùa mua sắm xuân nhưng ở mức độ nhỏ hơn so với tháng 12.
-
-Biểu đồ Ridgeline cung cấp góc nhìn chi tiết hơn so với biểu đồ xu hướng trung bình thông thường, vì nó cho thấy **toàn bộ cấu trúc phân phối** chứ không chỉ một con số đại diện.
-
+- Rossmann không nên ưu tiên chiến lược mở cửa hàng mới dựa trên việc tránh xa đối thủ, mà thay vào đó cần tập trung vào hai đòn bẩy có tác động thực sự hơn: nâng cấp danh mục từ Basic lên Extended và tìm cách tăng lưu lượng khách trung bình mỗi ngày.
 ---
 
 ### 📍 Biểu đồ 11: Lollipop Chart — Xếp hạng Hiệu suất 50 Cửa hàng
@@ -751,7 +692,7 @@ Lollipop Chart trực quan hóa khoảng cách hiệu suất giữa từng cửa
 
 - **Nhóm vượt trội (xanh lá):** Các cửa hàng nằm trên đường trung bình thường có đặc điểm chung là vị trí giao thông thuận lợi, danh mục sản phẩm mở rộng (Extended), hoặc ít chịu cạnh tranh trực tiếp. Đây là các "ngôi sao" cần được nghiên cứu để nhân rộng mô hình kinh doanh.
 - **Nhóm dưới trung bình (đỏ):** Các cửa hàng hoạt động kém thường là cửa hàng nhỏ ngoại ô (Type C) với danh mục Basic, hoặc cửa hàng mới chịu áp lực cạnh tranh lớn.
-- **Hình dạng điểm (shape)** cho thấy phân bố hiệu suất theo loại cửa hàng: cửa hàng Type D (Flagship) hầu hết nằm ở nhóm vượt trội, trong khi Type C có phân bố trải đều ở cả hai phía.
+- **Phân bố hiệu suất theo loại cửa hàng:** Các cửa hàng Type D (Flagship) hầu hết nằm ở nhóm vượt trội, trong khi Type C có phân bố trải đều ở cả hai phía.
 - **Khoảng cách lớn nhất** giữa cửa hàng tốt nhất và kém nhất có thể lên tới vài nghìn EUR/ngày, cho thấy tiềm năng tối ưu hóa rất lớn nếu Rossmann có thể nâng hiệu suất các cửa hàng dưới trung bình lên gần mức trung bình hệ thống.
 
 Phát hiện này gợi ý rằng Rossmann nên **phân loại cửa hàng thành các nhóm hiệu suất** và áp dụng chiến lược quản lý khác biệt: tập trung nguồn lực cải thiện nhóm dưới trung bình, đồng thời duy trì và nhân rộng mô hình từ nhóm vượt trội.
