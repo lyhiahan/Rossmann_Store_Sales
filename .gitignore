@@ -37,3 +37,7 @@ desktop.ini
 # --- Misc ---
 *.log
 *.tmp
+
+# --- Exceptions ---
+!slides/presentation.html
+
