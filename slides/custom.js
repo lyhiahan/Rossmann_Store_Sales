@@ -3,23 +3,7 @@
    File: slides/custom.js
    ============================================================================= */
 
-const speakerNotes = [
-  "Xin chào thầy/cô và các bạn. Hôm nay nhóm chúng em trình bày phần cơ sở lý thuyết thống kê được vận dụng trong đồ án phân tích dữ liệu Rossmann, bao gồm ba mảng chính: thống kê mô tả, thống kê suy diễn và hồi quy Logistic. Đây là nền tảng toán học đứng sau toàn bộ các phân tích mà nhóm đã thực hiện.",
-  "Thống kê được chia thành hai nhánh lớn. Thống kê mô tả giúp ta tóm tắt và hiểu dữ liệu đang có — doanh số trung bình là bao nhiêu, biến động ra sao. Thống kê suy diễn đi xa hơn: cho phép ta rút ra kết luận vượt ra ngoài mẫu quan sát — chẳng hạn, liệu khuyến mãi có thực sự làm tăng doanh số, hay chỉ là dao động ngẫu nhiên?",
-  "Trung bình cộng là đại lượng quen thuộc nhất: cộng tất cả giá trị rồi chia cho số quan sát. Trong đồ án, doanh số trung bình xấp xỉ 6.840 EUR mỗi ngày. Tuy nhiên, mean có nhược điểm: chỉ cần vài ngày Giáng sinh với doanh số đột biến là đủ kéo mean lên cao hơn giá trị điển hình thực sự.",
-  "Trung vị là giá trị nằm ở vị trí chính giữa khi sắp xếp dữ liệu từ nhỏ đến lớn. Median doanh số là 6.450 EUR — thấp hơn mean 390 EUR. Khoảng cách này là dấu hiệu của phân phối lệch phải. Đây cũng là lý do nhóm chọn median khi điền giá trị khuyết cho biến competition_distance.",
-  "Phương sai đo mức độ phân tán bằng cách tính trung bình bình phương khoảng cách từ mỗi điểm đến giá trị trung bình. Khi tính phương sai mẫu, ta chia cho n-1 — đây là hiệu chỉnh Bessel, giúp ước lượng không bị chệch. Tuy nhiên, phương sai có đơn vị EUR² nên rất khó diễn giải.",
-  "Độ lệch chuẩn đơn giản là căn bậc hai của phương sai. Ưu điểm: nó cùng đơn vị với dữ liệu gốc, nên ta có thể nói 'doanh số dao động ±2.632 EUR quanh mức trung bình.' Hệ số biến thiên CV khoảng 38%, cho thấy doanh số biến động khá mạnh giữa các cửa hàng và ngày trong tuần.",
-  "Slide này tổng hợp bốn đại lượng mô tả chính. Bài học thực tiễn: trong bất kỳ báo cáo nào, ta nên trình bày đồng thời cả mean, median và SD. Nếu mean và median chênh nhau nhiều, đó là tín hiệu cần kiểm tra kỹ phân phối và xử lý outlier trước khi mô hình hóa.",
-  "Bây giờ chúng ta chuyển sang thống kê suy diễn. Ta chỉ quan sát được 50 cửa hàng trong 12 tháng, nhưng muốn rút ra kết luận cho toàn bộ hơn 3.000 cửa hàng của Rossmann. Kiểm định giả thuyết sẽ giúp ta trả lời câu hỏi này một cách có căn cứ thống kê.",
-  "Kiểm định giả thuyết tuân theo quy trình năm bước nhất quán. Điểm quan trọng nhất: p-value là xác suất quan sát được kết quả cực đoan như hiện tại, giả thiết H0 đúng. Nếu p < 0,05, ta bác bỏ H0. Lưu ý: 'không bác bỏ H0' không có nghĩa là H0 đúng.",
-  "Điểm đặc trưng trong đồ án là mỗi giả thuyết đều được kiểm tra song song bằng cả phương pháp tham số lẫn phi tham số. Lý do: biến Sales có skewness ≈ 0,94 — vi phạm giả định phân phối chuẩn. Nếu cả hai nhóm phương pháp đều bác bỏ H0, kết luận có độ vững rất cao.",
-  "Hồi quy tuyến tính giả định biến mục tiêu là tổ hợp tuyến tính của các biến đầu vào. Phương pháp OLS tìm bộ hệ số beta sao cho tổng bình phương sai số là nhỏ nhất. Trong đồ án, mô hình đạt R² khoảng 0,87 — 87% sự biến động của doanh số được giải thích bởi các biến đầu vào.",
-  "Khi biến phụ thuộc là nhị phân — 'doanh số có vượt ngưỡng median không?' — hồi quy tuyến tính không phù hợp. Nếu cố ép dùng, mô hình có thể dự đoán ra xác suất âm hoặc lớn hơn 1, điều này hoàn toàn vô nghĩa về mặt xác suất.",
-  "Hàm sigmoid nhận đầu vào là tổ hợp tuyến tính z và biến đổi nó thành xác suất trong khoảng 0 đến 1. Hàm logit là chiều ngược lại: chuyển xác suất thành log-odds. Trên thang log-odds, mối quan hệ với X trở thành tuyến tính.",
-  "Hồi quy Logistic dùng MLE — tìm bộ hệ số beta sao cho xác suất sinh ra đúng tập dữ liệu quan sát được là lớn nhất. Để diễn giải kết quả, ta tính Odds Ratio bằng e mũ beta. Ví dụ: OR = 2.0 nghĩa là có khuyến mãi tăng gấp đôi tỷ lệ cược đạt doanh số cao.",
-  "Slide cuối tổng hợp toàn bộ hành trình lý thuyết. Từ bốn đại lượng mô tả cơ bản, đến kiểm định giả thuyết, đến hồi quy Logistic. Điểm thú vị: Linear và Logistic Regression đều là GLM — chúng chỉ khác nhau ở hàm liên kết. Nhóm xin chân thành cảm ơn thầy/cô và các bạn!"
-];
+
 
 const activeCharts = {};
 
@@ -262,23 +246,25 @@ function updateNavPill(idx) {
   if (el) el.textContent = String(idx + 1).padStart(2, '0');
 }
 
-function updateSpeakerNotesContent(idx) {
-  const body = document.getElementById('speaker-notes-body');
-  if (body && speakerNotes[idx] !== undefined) body.innerHTML = speakerNotes[idx];
-}
+
 
 function morphBackgroundOrb(idx) {
-  let color = '#0d9488';
-  if      (idx <= 6)  color = '#0d9488';  /* teal  */
-  else if (idx <= 10) color = '#b45309';  /* amber */
-  else                color = '#be123c';  /* rose  */
+  let color = '#3b82f6';
+  if      (idx <= 6)  color = '#3b82f6';  /* blue  */
+  else if (idx <= 10) color = '#f97316';  /* coral */
+  else                color = '#ef4444';  /* rose  */
   document.documentElement.style.setProperty('--orb-color', color);
 }
 
-function toggleSpeakerNotes() {
-  const panel = document.getElementById('speaker-notes-panel');
-  if (panel) panel.classList.toggle('expanded');
+function handleBackgroundTheme(idx) {
+  if (idx === 0) {
+    document.body.classList.add('cover-active');
+  } else {
+    document.body.classList.remove('cover-active');
+  }
 }
+
+
 
 function handleSlideEntryAnimations(slideEl) {
   /* Animate progress bars */
@@ -320,8 +306,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const total = Reveal.getTotalSlides();
       updateProgress(idx, total);
       updateNavPill(idx);
-      updateSpeakerNotesContent(idx);
       morphBackgroundOrb(idx);
+      handleBackgroundTheme(idx);
       handleSlideCharts(idx);
       if (event.currentSlide)  handleSlideEntryAnimations(event.currentSlide);
       if (event.previousSlide) handleSlideExitAnimations(event.previousSlide);
@@ -332,8 +318,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const total = Reveal.getTotalSlides();
       updateProgress(idx, total);
       updateNavPill(idx);
-      updateSpeakerNotesContent(idx);
       morphBackgroundOrb(idx);
+      handleBackgroundTheme(idx);
       handleSlideCharts(idx);
       if (event.currentSlide) handleSlideEntryAnimations(event.currentSlide);
     });
@@ -344,17 +330,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (next) next.addEventListener('click', () => Reveal.next());
   }
 
-  /* Speaker notes toggle */
-  ['speaker-notes-header', 'notes-trigger-btn'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('click', toggleSpeakerNotes);
-  });
+
 
   /* Keyboard shortcuts */
   document.addEventListener('keydown', e => {
-    if (e.key.toLowerCase() === 's') {
+    if (e.key === 'Escape') {
       e.preventDefault();
-      toggleSpeakerNotes();
+      window.location.href = '../presentation.html';
     }
   });
 });
