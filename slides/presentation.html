@@ -94,8 +94,12 @@
     }
 
     .slide--light {
-      background: var(--white);
+      background: var(--gray-200);
       color: var(--navy);
+    }
+
+    .slide--light table {
+      background: var(--white);
     }
 
     .slide--accent {
@@ -300,7 +304,7 @@
 
     .slide--light .card {
       background: var(--white);
-      border: 1px solid var(--gray-200);
+      border: 1px solid var(--gray-300);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     }
 
@@ -463,7 +467,7 @@
     }
 
     .slide--light .table-wrap {
-      border-color: var(--gray-200);
+      border-color: var(--gray-300);
     }
 
     table {
@@ -646,6 +650,14 @@
       background: var(--blue);
     }
 
+    ul.clean-list.emoji-list li {
+      padding-left: 0;
+    }
+
+    ul.clean-list.emoji-list li::before {
+      display: none;
+    }
+
     /* ============================== */
     /* FORMULA BOX (NEW)             */
     /* ============================== */
@@ -753,7 +765,7 @@
     }
 
     .slide--light .matrix-grid {
-      background: var(--gray-200);
+      background: var(--gray-300);
     }
 
     .slide--light .matrix-cell {
@@ -766,6 +778,7 @@
 
     .slide--light .matrix-cell--label {
       background: var(--gray-50);
+      color: var(--navy);
     }
 
     /* ============================== */
@@ -870,18 +883,18 @@
     <!-- ========== SLIDE 2: TỔNG QUAN HAI TRỤ CỘT ========== -->
     <div class="slide slide--light" data-index="1">
       <div class="label">Tổng quan</div>
-      <h2>Hai trụ cột của Thống kê</h2>
+      <h2>📊 Hai trụ cột của Thống kê</h2>
       <div class="grid-2 mt-24">
         <div class="card" style="border-left:4px solid var(--blue);">
           <div class="card-icon card-icon--blue">📋</div>
           <h3 style="color:var(--blue);">Thống kê Mô tả</h3>
           <p style="font-size:16px;font-weight:600;color:var(--gray-500);margin-bottom:12px;font-style:italic;">"Dữ liệu
             trông như thế nào?"</p>
-          <ul class="clean-list">
-            <li style="font-size:15px;">Tóm tắt dữ liệu hiện có</li>
-            <li style="font-size:15px;">Mean, Median, Mode</li>
-            <li style="font-size:15px;">Variance, SD, IQR</li>
-            <li style="font-size:15px;">Skewness, Kurtosis</li>
+          <ul class="clean-list emoji-list">
+            <li style="font-size:15px;">📋 Tóm tắt dữ liệu hiện có</li>
+            <li style="font-size:15px;">🧮 Mean, Median, Mode</li>
+            <li style="font-size:15px;">📐 Variance, SD, IQR</li>
+            <li style="font-size:15px;">📈 Skewness, Kurtosis</li>
           </ul>
         </div>
         <div class="card" style="border-left:4px solid var(--coral);">
@@ -889,11 +902,11 @@
           <h3 style="color:var(--coral);">Thống kê Suy diễn</h3>
           <p style="font-size:16px;font-weight:600;color:var(--gray-500);margin-bottom:12px;font-style:italic;">"Dữ liệu
             cho phép kết luận gì?"</p>
-          <ul class="clean-list">
-            <li style="font-size:15px;">Suy luận về tổng thể</li>
-            <li style="font-size:15px;">Kiểm định giả thuyết</li>
-            <li style="font-size:15px;">Hồi quy tuyến tính & Logistic</li>
-            <li style="font-size:15px;">p-value, khoảng tin cậy</li>
+          <ul class="clean-list emoji-list">
+            <li style="font-size:15px;">🌍 Suy luận về tổng thể</li>
+            <li style="font-size:15px;">🧪 Kiểm định giả thuyết</li>
+            <li style="font-size:15px;">📈 Hồi quy tuyến tính & Logistic</li>
+            <li style="font-size:15px;">🎯 p-value, khoảng tin cậy</li>
           </ul>
         </div>
       </div>
@@ -909,29 +922,29 @@
     <!-- ========== SLIDE 3: MEAN ========== -->
     <div class="slide slide--light" data-index="2">
       <div class="label">Thống kê Mô tả — 1/4</div>
-      <h2>Trung bình — <span style="color:var(--blue)">Mean</span></h2>
+      <h2>🧮 Trung bình — <span style="color:var(--blue)">Mean</span></h2>
       <div class="grid-2 mt-16">
         <div>
           <div class="formula-box">
             $$\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i$$
           </div>
-          <ul class="clean-list" style="margin-top:16px;">
-            <li>Sử dụng <span class="highlight">toàn bộ giá trị</span> trong tập dữ liệu</li>
-            <li><span class="highlight-coral">Nhạy cảm</span> với giá trị ngoại lai (outlier)</li>
-            <li>Phù hợp khi dữ liệu phân phối đối xứng</li>
+          <ul class="clean-list emoji-list" style="margin-top:16px;">
+            <li>🎯 Sử dụng <span class="highlight">toàn bộ giá trị</span> trong tập dữ liệu</li>
+            <li>⚡ <span class="highlight-coral">Nhạy cảm</span> với giá trị ngoại lai (outlier)</li>
+            <li>⚖️ Phù hợp khi dữ liệu phân phối đối xứng</li>
           </ul>
         </div>
         <div>
           <div class="example-box">
             <p
               style="font-size:13px;color:var(--coral);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
-              Ví dụ trong đồ án</p>
+              📊 Ví dụ trong đồ án</p>
             <p style="font-size:15px;"><strong>Mean(Sales) ≈ 6.840 EUR/ngày</strong></p>
             <p style="font-size:14px;margin-top:6px;">Bị kéo lên bởi các ngày lễ có doanh số đột biến 15.000–20.000 EUR
             </p>
           </div>
           <div class="card" style="margin-top:16px;padding:16px;">
-            <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">Code R:</p>
+            <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">💻 Code R:</p>
             <span class="code-r">mean(df_clean$sales)</span>
           </div>
           <div
@@ -947,30 +960,30 @@
     <!-- ========== SLIDE 4: MEDIAN ========== -->
     <div class="slide slide--light" data-index="3">
       <div class="label">Thống kê Mô tả — 2/4</div>
-      <h2>Trung vị — <span style="color:var(--blue)">Median</span></h2>
+      <h2>📌 Trung vị — <span style="color:var(--blue)">Median</span></h2>
       <div class="grid-2 mt-16">
         <div>
           <div class="formula-box">
             $$\text{Median} = \begin{cases} x_{\frac{n+1}{2}} & \text{nếu } n \text{ lẻ} \\ \frac{x_{\frac{n}{2}} +
             x_{\frac{n}{2}+1}}{2} & \text{nếu } n \text{ chẵn} \end{cases}$$
           </div>
-          <ul class="clean-list" style="margin-top:16px;">
-            <li><span class="highlight">Không bị ảnh hưởng</span> bởi outlier → bền vững (robust)</li>
-            <li>Mean > Median → phân phối <span class="highlight-coral">lệch phải</span> (right-skewed)</li>
-            <li>Mean ≈ Median → phân phối gần đối xứng</li>
+          <ul class="clean-list emoji-list" style="margin-top:16px;">
+            <li>🛡️ <span class="highlight">Không bị ảnh hưởng</span> bởi outlier → bền vững (robust)</li>
+            <li>📈 Mean &gt; Median → phân phối <span class="highlight-coral">lệch phải</span> (right-skewed)</li>
+            <li>🤝 Mean ≈ Median → phân phối gần đối xứng</li>
           </ul>
         </div>
         <div>
           <div class="example-box">
             <p
               style="font-size:13px;color:var(--coral);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
-              Ví dụ trong đồ án</p>
+              📊 Ví dụ trong đồ án</p>
             <p style="font-size:15px;"><strong>Mean = 6.840 EUR > Median = 6.450 EUR</strong></p>
             <p style="font-size:14px;margin-top:6px;">Chênh lệch 390 EUR → Xác nhận phân phối <strong>lệch phải</strong>
             </p>
           </div>
           <div class="card" style="margin-top:16px;padding:16px;">
-            <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">Code R:</p>
+            <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">💻 Code R:</p>
             <span class="code-r">median(df_clean$sales)</span>
           </div>
           <div
@@ -986,7 +999,7 @@
     <!-- ========== SLIDE 5: VARIANCE ========== -->
     <div class="slide slide--light" data-index="4">
       <div class="label">Thống kê Mô tả — 3/4</div>
-      <h2>Phương sai — <span style="color:var(--coral)">Variance</span></h2>
+      <h2>📐 Phương sai — <span style="color:var(--coral)">Variance</span></h2>
       <div class="grid-2 mt-16">
         <div>
           <div class="formula-box" style="margin-bottom:12px;">
@@ -997,14 +1010,14 @@
           </div>
         </div>
         <div>
-          <ul class="clean-list">
-            <li>Đo mức độ <span class="highlight">phân tán</span> quanh giá trị trung bình</li>
-            <li>Chia cho <span class="highlight-coral">(n−1)</span>: hiệu chỉnh Bessel — ước lượng không chệch</li>
-            <li>Hạn chế: đơn vị là <strong>bình phương gốc</strong> (EUR²) → khó diễn giải</li>
-            <li>→ Giải pháp: dùng <span class="highlight">Standard Deviation</span></li>
+          <ul class="clean-list emoji-list">
+            <li>📏 Đo mức độ <span class="highlight">phân tán</span> quanh giá trị trung bình</li>
+            <li>➗ Chia cho <span class="highlight-coral">(n−1)</span>: hiệu chỉnh Bessel — ước lượng không chệch</li>
+            <li>⚠️ Hạn chế: đơn vị là <strong>bình phương gốc</strong> (EUR²) → khó diễn giải</li>
+            <li>💡 Giải pháp: dùng <span class="highlight">Standard Deviation</span></li>
           </ul>
           <div class="card" style="margin-top:16px;padding:16px;">
-            <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">Code R:</p>
+            <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">💻 Code R:</p>
             <span class="code-r">var(df_clean$sales)</span>
           </div>
         </div>
@@ -1015,7 +1028,7 @@
     <!-- ========== SLIDE 6: STANDARD DEVIATION ========== -->
     <div class="slide slide--light" data-index="5">
       <div class="label">Thống kê Mô tả — 4/4</div>
-      <h2>Độ lệch chuẩn — <span style="color:var(--blue)">Standard Deviation</span></h2>
+      <h2>📈 Độ lệch chuẩn — <span style="color:var(--blue)">Standard Deviation</span></h2>
       <div class="grid-2 mt-16">
         <div>
           <div class="formula-box">
@@ -1043,12 +1056,12 @@
           <div class="example-box">
             <p
               style="font-size:13px;color:var(--coral);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
-              Ví dụ trong đồ án</p>
+              📊 Ví dụ trong đồ án</p>
             <p style="font-size:15px;"><strong>SD(Sales) ≈ 2.632 EUR</strong></p>
             <p style="font-size:14px;margin-top:6px;">Doanh số dao động khoảng ±2.632 EUR quanh mức trung bình</p>
           </div>
           <div class="card" style="margin-top:16px;">
-            <h3 style="font-size:15px;color:var(--coral);">Hệ số biến thiên (CV)</h3>
+            <h3 style="font-size:15px;color:var(--coral);">📊 Hệ số biến thiên (CV)</h3>
             <div style="display:flex;align-items:center;gap:16px;margin-top:8px;">
               <div style="font-size:40px;font-weight:800;color:var(--coral);">38%</div>
               <p style="font-size:14px;">CV = SD / Mean<br>→ Doanh số biến động <strong>khá mạnh</strong> giữa các cửa
@@ -1056,7 +1069,7 @@
             </div>
           </div>
           <div class="card" style="margin-top:12px;padding:16px;">
-            <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">Code R:</p>
+            <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">💻 Code R:</p>
             <span class="code-r">sd(df_clean$sales)</span>
           </div>
         </div>
@@ -1067,7 +1080,7 @@
     <!-- ========== SLIDE 7: TỔNG HỢP THỐNG KÊ MÔ TẢ ========== -->
     <div class="slide slide--light" data-index="6">
       <div class="label">Tổng kết</div>
-      <h2>Tổng hợp Thống kê Mô tả</h2>
+      <h2>📋 Tổng hợp Thống kê Mô tả</h2>
       <div class="table-wrap mt-24">
         <table>
           <thead>
@@ -1080,25 +1093,25 @@
           </thead>
           <tbody>
             <tr>
-              <td><strong style="color:var(--blue);">Mean</strong></td>
+              <td><strong style="color:var(--blue);">🧮 Mean</strong></td>
               <td>Σxᵢ / n</td>
               <td>Dùng toàn bộ dữ liệu</td>
               <td>Nhạy với outlier</td>
             </tr>
             <tr>
-              <td><strong style="color:var(--blue);">Median</strong></td>
+              <td><strong style="color:var(--blue);">📌 Median</strong></td>
               <td>Giá trị giữa</td>
               <td>Bền vững (robust)</td>
               <td>Bỏ qua giá trị cụ thể</td>
             </tr>
             <tr>
-              <td><strong style="color:var(--coral);">Variance</strong></td>
+              <td><strong style="color:var(--coral);">📐 Variance</strong></td>
               <td>Σ(x−x̄)² / (n−1)</td>
               <td>Nền tảng toán học chặt</td>
               <td>Đơn vị bình phương</td>
             </tr>
             <tr>
-              <td><strong style="color:var(--coral);">SD</strong></td>
+              <td><strong style="color:var(--coral);">📈 SD</strong></td>
               <td>√Variance</td>
               <td>Cùng đơn vị gốc</td>
               <td>Nhạy outlier (như mean)</td>
@@ -1118,7 +1131,7 @@
     <!-- ========== SLIDE 8: CHUYỂN SANG THỐNG KÊ SUY DIỄN ========== -->
     <div class="slide slide--light" data-index="7">
       <div class="label">Thống kê Suy diễn</div>
-      <h2>Từ <span style="color:var(--blue)">Mô tả</span> → <span style="color:var(--coral)">Suy diễn</span></h2>
+      <h2>🔄 Từ <span style="color:var(--blue)">Mô tả</span> &rarr; <span style="color:var(--coral)">Suy diễn</span></h2>
       <p class="subtitle" style="margin-bottom:24px;">"Từ mẫu (sample) → suy luận về tổng thể (population)"</p>
       <div class="table-wrap">
         <table>
@@ -1131,22 +1144,22 @@
           </thead>
           <tbody>
             <tr>
-              <td><strong>Tổng thể</strong></td>
+              <td><strong>🌍 Tổng thể</strong></td>
               <td>Toàn bộ đối tượng nghiên cứu</td>
               <td>3.000+ cửa hàng Rossmann</td>
             </tr>
             <tr>
-              <td><strong>Mẫu</strong></td>
+              <td><strong>🧪 Mẫu</strong></td>
               <td>Tập con được quan sát</td>
               <td>50 cửa hàng, 08/2014 – 07/2015</td>
             </tr>
             <tr>
-              <td><strong>Tham số</strong></td>
+              <td><strong>📐 Tham số</strong></td>
               <td>Đại lượng của tổng thể (μ, σ)</td>
               <td>Doanh số thực của toàn hệ thống</td>
             </tr>
             <tr>
-              <td><strong>Thống kê</strong></td>
+              <td><strong>📊 Thống kê</strong></td>
               <td>Đại lượng tính từ mẫu (x̄, s)</td>
               <td>Doanh số tính từ 50 cửa hàng</td>
             </tr>
@@ -1165,32 +1178,32 @@
     <!-- ========== SLIDE 9: KIỂM ĐỊNH GIẢ THUYẾT — 5 BƯỚC ========== -->
     <div class="slide slide--light" data-index="8">
       <div class="label">Kiểm định giả thuyết</div>
-      <h2>Quy trình <span style="color:var(--coral)">5 bước</span></h2>
+      <h2>⚙️ Quy trình <span style="color:var(--coral)">5 bước</span></h2>
       <div class="process-flow" style="margin-top:24px;">
         <div class="process-step">
           <div class="step-circle">1</div>
-          <h4>Đặt giả thuyết</h4>
+          <h4>📝 Đặt giả thuyết</h4>
           <p>H₀: Không có hiệu ứng<br>H₁: Có hiệu ứng</p>
         </div>
         <div class="process-step">
           <div class="step-circle">2</div>
-          <h4>Chọn α</h4>
+          <h4>🎯 Chọn α</h4>
           <p>α = 0,05<br>Sai lầm loại I</p>
         </div>
         <div class="process-step">
           <div class="step-circle step-circle--coral">3</div>
-          <h4>Thống kê kiểm định</h4>
+          <h4>📊 Thống kê kiểm định</h4>
           <p>t, F, χ², H, W<br>tùy phương pháp</p>
         </div>
         <div class="process-step">
           <div class="step-circle step-circle--coral">4</div>
-          <h4>Tính p-value</h4>
+          <h4>🧮 Tính p-value</h4>
           <p>P(kết quả cực đoan<br>| H₀ đúng)</p>
         </div>
         <div class="process-step">
           <div class="step-circle">5</div>
-          <h4>Ra quyết định</h4>
-          <p>p < α → Bác bỏ H₀<br>p ≥ α → Không bác bỏ</p>
+          <h4>⚖️ Ra quyết định</h4>
+          <p>p &lt; α → Bác bỏ H₀<br>p ≥ α → Không bác bỏ</p>
         </div>
       </div>
       <div class="grid-2 mt-32">
@@ -1208,7 +1221,7 @@
     <!-- ========== SLIDE 10: CÁC KIỂM ĐỊNH TRONG ĐỒ ÁN ========== -->
     <div class="slide slide--light" data-index="9">
       <div class="label">Kiểm định trong đồ án</div>
-      <h2>Thiết kế kiểm định <span style="color:var(--coral)">song song</span></h2>
+      <h2>🧪 Thiết kế kiểm định <span style="color:var(--coral)">song song</span></h2>
       <div class="table-wrap mt-24">
         <table>
           <thead>
@@ -1220,27 +1233,27 @@
           </thead>
           <tbody>
             <tr>
-              <td><strong>ANOVA</strong> + Tukey HSD</td>
+              <td>📊 <strong>ANOVA</strong> + Tukey HSD</td>
               <td><span class="tag tag--blue" style="font-size:10px;">Tham số</span></td>
               <td>So sánh doanh số trung bình theo Store Type</td>
             </tr>
             <tr>
-              <td><strong>Welch t-test</strong></td>
+              <td>🧪 <strong>Welch t-test</strong></td>
               <td><span class="tag tag--blue" style="font-size:10px;">Tham số</span></td>
               <td>So sánh doanh số giữa có/không có Promo</td>
             </tr>
             <tr>
-              <td><strong>Kruskal-Wallis</strong> + Dunn</td>
+              <td>📐 <strong>Kruskal-Wallis</strong> + Dunn</td>
               <td><span class="tag tag--coral" style="font-size:10px;">Phi tham số</span></td>
               <td>Đối chứng ANOVA, không cần phân phối chuẩn</td>
             </tr>
             <tr>
-              <td><strong>Wilcoxon Rank-Sum</strong></td>
+              <td>⚡ <strong>Wilcoxon Rank-Sum</strong></td>
               <td><span class="tag tag--coral" style="font-size:10px;">Phi tham số</span></td>
               <td>Đối chứng t-test, bền vững với outlier</td>
             </tr>
             <tr>
-              <td><strong>Spearman / Pearson</strong></td>
+              <td>📈 <strong>Spearman / Pearson</strong></td>
               <td><span class="tag tag--green" style="font-size:10px;">Cả hai</span></td>
               <td>Tương quan Sales ↔ Competition Distance</td>
             </tr>
@@ -1259,7 +1272,7 @@
     <!-- ========== SLIDE 11: HỒI QUY TUYẾN TÍNH ========== -->
     <div class="slide slide--light" data-index="10">
       <div class="label">Hồi quy</div>
-      <h2>Hồi quy Tuyến tính — <span style="color:var(--blue)">Nền tảng</span></h2>
+      <h2>📈 Hồi quy Tuyến tính — <span style="color:var(--blue)">Nền tảng</span></h2>
       <div class="formula-box" style="margin-top:16px;">
         $$Y = \beta_0 + \beta_1X_1 + \beta_2X_2 + \cdots + \beta_pX_p + \varepsilon, \quad \varepsilon \sim
         \mathcal{N}(0, \sigma^2)$$
@@ -1268,33 +1281,32 @@
         <div>
           <div class="card">
             <h3 style="font-size:16px;color:var(--blue);margin-bottom:12px;">📐 4 giả định cần kiểm tra</h3>
-            <ul class="clean-list">
-              <li style="font-size:15px;">Quan hệ <span class="highlight">tuyến tính</span> giữa X và Y</li>
-              <li style="font-size:15px;">Sai số phân phối chuẩn, trung bình = 0</li>
-              <li style="font-size:15px;">Phương sai đồng nhất (homoscedasticity)</li>
-              <li style="font-size:15px;">Các quan sát độc lập nhau</li>
+            <ul class="clean-list emoji-list">
+              <li style="font-size:15px;">🔗 Quan hệ <span class="highlight">tuyến tính</span> giữa X và Y</li>
+              <li style="font-size:15px;">🔔 Sai số phân phối chuẩn, trung bình = 0</li>
+              <li style="font-size:15px;">⚖️ Phương sai đồng nhất (homoscedasticity)</li>
+              <li style="font-size:15px;">🤝 Các quan sát độc lập nhau</li>
             </ul>
           </div>
           <div class="card" style="margin-top:12px;padding:16px;">
-            <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">Code R:</p>
+            <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">💻 Code R:</p>
             <span class="code-r">lm(sales ~ customers + promo + store_type + ..., data = train_data)</span>
           </div>
         </div>
         <div>
           <div class="card" style="border-left:4px solid var(--blue);">
-            <h3 style="font-size:16px;color:var(--blue);">OLS — Ordinary Least Squares</h3>
+            <h3 style="font-size:16px;color:var(--blue);">📐 OLS — Ordinary Least Squares</h3>
             <div class="formula-box" style="margin:12px 0;padding:16px;">
               $$\min \sum(y_i - \hat{y}_i)^2$$
             </div>
-            <p style="font-size:14px;">Tìm bộ hệ số β sao cho tổng bình phương sai số nhỏ nhất — có nghiệm giải tích
-              dạng đóng</p>
+            <p style="font-size:14px;">Tìm bộ hệ số β sao cho tổng bình phương sai số nhỏ nhất — có nghiệm giải tích dạng đóng</p>
           </div>
           <div class="card"
             style="margin-top:12px;padding:18px;background:rgba(59,130,246,0.05);border-color:rgba(59,130,246,0.15);">
             <div style="display:flex;align-items:center;gap:16px;">
               <div style="font-size:42px;font-weight:800;color:var(--blue);">0.87</div>
               <div>
-                <p style="font-size:14px;font-weight:600;color:var(--navy);">R² trên Validation</p>
+                <p style="font-size:14px;font-weight:600;color:var(--navy);">🎯 R² trên Validation</p>
                 <p style="font-size:13px;">87% biến động doanh số được giải thích</p>
               </div>
             </div>
@@ -1307,30 +1319,25 @@
     <!-- ========== SLIDE 12: TẠI SAO CẦN LOGISTIC ========== -->
     <div class="slide slide--light" data-index="11">
       <div class="label">Hồi quy Logistic</div>
-      <h2>Tại sao cần <span style="color:var(--coral)">Logistic Regression</span>?</h2>
+      <h2>❓ Tại sao cần <span style="color:var(--coral)">Logistic Regression</span>?</h2>
       <div class="grid-2 mt-24">
         <div>
           <div class="card" style="border-left:4px solid var(--coral);">
             <h3 style="font-size:16px;color:var(--coral);">⚠️ Vấn đề: Y là nhị phân (0/1)</h3>
-            <p style="margin-top:8px;font-size:15px;">Khi biến phụ thuộc là câu trả lời "Có/Không", hồi quy tuyến tính
-              <strong>thất bại</strong> vì:</p>
-            <ul class="clean-list" style="margin-top:12px;">
-              <li style="font-size:15px;">Dự đoán có thể <span class="highlight-coral">
-                  < 0 hoặc> 1
-                </span> → vô nghĩa cho xác suất</li>
-              <li style="font-size:15px;">Vi phạm giả định phương sai đồng nhất</li>
-              <li style="font-size:15px;">Quan hệ X → P(Y=1) thường <strong>không tuyến tính</strong></li>
+            <p style="margin-top:8px;font-size:15px;">Khi biến phụ thuộc là câu trả lời "Có/Không", hồi quy tuyến tính <strong>thất bại</strong> vì:</p>
+            <ul class="clean-list emoji-list" style="margin-top:12px;">
+              <li style="font-size:15px;">🚫 Dự đoán có thể <span class="highlight-coral">&lt; 0 hoặc &gt; 1</span> → vô nghĩa cho xác suất</li>
+              <li style="font-size:15px;">📉 Vi phạm giả định phương sai đồng nhất</li>
+              <li style="font-size:15px;">〰️ Quan hệ X → P(Y=1) thường <strong>không tuyến tính</strong></li>
             </ul>
           </div>
         </div>
         <div>
           <div class="card" style="border-left:4px solid var(--blue);margin-bottom:16px;">
             <h3 style="font-size:16px;color:var(--blue);">🎯 Ứng dụng trong đồ án</h3>
-            <ul class="clean-list" style="margin-top:8px;">
-              <li style="font-size:15px;">Doanh số có vượt <span class="highlight">median</span> không? → Y ∈ {0, 1}
-              </li>
-              <li style="font-size:15px;">Cửa hàng có <span class="highlight-coral">outlier</span> hay không? → Y ∈ {0,
-                1}</li>
+            <ul class="clean-list emoji-list" style="margin-top:8px;">
+              <li style="font-size:15px;">💵 Doanh số có vượt <span class="highlight">median</span> không? → Y ∈ {0, 1}</li>
+              <li style="font-size:15px;">🚨 Cửa hàng có <span class="highlight-coral">outlier</span> hay không? → Y ∈ {0, 1}</li>
             </ul>
           </div>
           <div
@@ -1346,18 +1353,18 @@
     <!-- ========== SLIDE 13: LOGISTIC — MÔ HÌNH TOÁN HỌC ========== -->
     <div class="slide slide--light" data-index="12">
       <div class="label">Mô hình toán học</div>
-      <h2>Sigmoid & <span style="color:var(--coral)">Logit</span></h2>
+      <h2>📐 Sigmoid & <span style="color:var(--coral)">Logit</span></h2>
       <div class="grid-2 mt-16">
         <div>
           <div class="card" style="border-left:4px solid var(--blue);margin-bottom:16px;">
-            <h3 style="font-size:16px;color:var(--blue);">Hàm Sigmoid — "ép" z về (0, 1)</h3>
+            <h3 style="font-size:16px;color:var(--blue);">📈 Hàm Sigmoid — "ép" z về (0, 1)</h3>
             <div class="formula-box" style="margin-top:12px;">
               $$P(Y=1|X) = \frac{1}{1 + e^{-z}}$$
             </div>
             <p style="font-size:13px;margin-top:8px;">trong đó $z = \beta_0 + \beta_1X_1 + \cdots + \beta_pX_p$</p>
           </div>
           <div class="card" style="border-left:4px solid var(--coral);">
-            <h3 style="font-size:16px;color:var(--coral);">Hàm Logit — tuyến tính hóa</h3>
+            <h3 style="font-size:16px;color:var(--coral);">🧮 Hàm Logit — tuyến tính hóa</h3>
             <div class="formula-box formula-box--coral" style="margin-top:12px;">
               $$\text{logit}(p) = \ln\!\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1X_1 + \cdots$$
             </div>
@@ -1394,24 +1401,24 @@
     <!-- ========== SLIDE 14: ƯỚC LƯỢNG & DIỄN GIẢI ========== -->
     <div class="slide slide--light" data-index="13">
       <div class="label">Ước lượng & Diễn giải</div>
-      <h2>MLE & <span style="color:var(--coral)">Odds Ratio</span></h2>
+      <h2>🔬 MLE & <span style="color:var(--coral)">Odds Ratio</span></h2>
       <div class="grid-2 mt-16">
         <div>
           <div class="card" style="border-left:4px solid var(--blue);margin-bottom:16px;">
-            <h3 style="font-size:16px;color:var(--blue);">MLE — Maximum Likelihood Estimation</h3>
+            <h3 style="font-size:16px;color:var(--blue);">🔍 MLE — Maximum Likelihood Estimation</h3>
             <div class="formula-box" style="margin-top:12px;padding:16px;">
               $$\hat{\beta} = \arg\max_\beta \prod_i P(y_i | x_i, \beta)$$
             </div>
             <p style="font-size:14px;margin-top:8px;">Tối ưu bằng thuật toán lặp Newton-Raphson / IRLS</p>
           </div>
           <div class="card" style="padding:16px;">
-            <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">Code R:</p>
+            <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">💻 Code R:</p>
             <span class="code-r">glm(high_sales ~ promo + store_type + ..., family = binomial)</span>
           </div>
         </div>
         <div>
           <div class="card" style="border-left:4px solid var(--coral);margin-bottom:16px;">
-            <h3 style="font-size:16px;color:var(--coral);">Odds Ratio: $OR = e^{\beta_j}$</h3>
+            <h3 style="font-size:16px;color:var(--coral);">📊 Odds Ratio: $OR = e^{\beta_j}$</h3>
             <div class="table-wrap" style="margin-top:12px;border-radius:8px;">
               <table>
                 <thead>
@@ -1422,7 +1429,7 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td><strong>OR > 1</strong></td>
+                    <td><strong>OR &gt; 1</strong></td>
                     <td>Tăng Xⱼ → <span class="highlight" style="color:var(--blue);">tăng</span> khả năng Y = 1</td>
                   </tr>
                   <tr>
@@ -1430,8 +1437,7 @@
                     <td>Xⱼ không ảnh hưởng</td>
                   </tr>
                   <tr>
-                    <td><strong>OR < 1</strong>
-                    </td>
+                    <td><strong>OR &lt; 1</strong></td>
                     <td>Tăng Xⱼ → <span class="highlight-coral">giảm</span> khả năng Y = 1</td>
                   </tr>
                 </tbody>
@@ -1441,14 +1447,21 @@
           <div class="example-box">
             <p
               style="font-size:13px;color:var(--coral);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">
-              Ví dụ cụ thể</p>
+              💡 Ví dụ cụ thể</p>
             <p style="font-size:15px;">β(promo) = 0,7 → <strong>OR = e⁰·⁷ ≈ 2,0</strong></p>
             <p style="font-size:14px;margin-top:4px;">→ Có khuyến mãi làm odds doanh số cao <span
                 class="highlight-coral">tăng gấp đôi</span></p>
           </div>
-          <div style="margin-top:12px;">
-            <p style="font-size:13px;color:var(--gray-500);">📊 Đánh giá: Accuracy · Precision · Recall · F1 · AUC-ROC ·
-              Confusion Matrix</p>
+          <div class="card" style="margin-top: 12px; padding: 16px;">
+            <p style="font-size:14px; font-weight:600; color:var(--gray-600); margin-bottom:8px;">📊 Chỉ số đánh giá mô hình phân loại:</p>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <span class="tag tag--blue" style="font-size: 11px;">Accuracy</span>
+              <span class="tag tag--blue" style="font-size: 11px;">Precision</span>
+              <span class="tag tag--blue" style="font-size: 11px;">Recall</span>
+              <span class="tag tag--blue" style="font-size: 11px;">F1-Score</span>
+              <span class="tag tag--coral" style="font-size: 11px;">AUC-ROC</span>
+              <span class="tag tag--green" style="font-size: 11px;">Confusion Matrix</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1458,13 +1471,13 @@
     <!-- ========== SLIDE 15: SO SÁNH TỔNG HỢP & KẾT LUẬN ========== -->
     <div class="slide slide--light" data-index="14">
       <div class="label">Tổng kết</div>
-      <h2 style="font-size:36px;">So sánh Linear vs Logistic & Kết luận</h2>
-      <div class="matrix-grid mt-16" style="grid-template-columns: 160px 1fr 1fr;">
-        <div class="matrix-cell matrix-cell--header">Tiêu chí</div>
+      <h2 style="font-size:36px;">⚖️ So sánh Linear vs Logistic & Kết luận</h2>
+      <div class="matrix-grid mt-16" style="grid-template-columns: 180px 1fr 1fr;">
+        <div class="matrix-cell matrix-cell--header">📋 Tiêu chí</div>
         <div class="matrix-cell matrix-cell--header">Linear Regression</div>
         <div class="matrix-cell matrix-cell--header">Logistic Regression</div>
 
-        <div class="matrix-cell matrix-cell--label">Biến Y</div>
+        <div class="matrix-cell matrix-cell--label">🎯 Biến Y</div>
         <div class="matrix-cell">
           <p>Liên tục (Y ∈ ℝ)</p>
         </div>
@@ -1472,7 +1485,7 @@
           <p>Nhị phân (Y ∈ {0, 1})</p>
         </div>
 
-        <div class="matrix-cell matrix-cell--label">Đầu ra</div>
+        <div class="matrix-cell matrix-cell--label">📤 Đầu ra</div>
         <div class="matrix-cell">
           <p>Giá trị dự đoán</p>
         </div>
@@ -1480,7 +1493,7 @@
           <p>Xác suất P(Y=1)</p>
         </div>
 
-        <div class="matrix-cell matrix-cell--label">Hàm liên kết</div>
+        <div class="matrix-cell matrix-cell--label">🔗 Hàm liên kết</div>
         <div class="matrix-cell">
           <p>Đồng nhất (Y = z)</p>
         </div>
@@ -1488,7 +1501,7 @@
           <p>Logit: ln(p / 1−p)</p>
         </div>
 
-        <div class="matrix-cell matrix-cell--label">Ước lượng</div>
+        <div class="matrix-cell matrix-cell--label">🔍 Ước lượng</div>
         <div class="matrix-cell">
           <p>OLS — nghiệm giải tích</p>
         </div>
@@ -1496,7 +1509,7 @@
           <p>MLE — thuật toán lặp</p>
         </div>
 
-        <div class="matrix-cell matrix-cell--label">Loss function</div>
+        <div class="matrix-cell matrix-cell--label">📉 Loss function</div>
         <div class="matrix-cell">
           <p>MSE / RSS</p>
         </div>
@@ -1504,7 +1517,7 @@
           <p>Log-Loss / Cross-Entropy</p>
         </div>
 
-        <div class="matrix-cell matrix-cell--label">Đánh giá</div>
+        <div class="matrix-cell matrix-cell--label">📊 Đánh giá</div>
         <div class="matrix-cell">
           <p>R², RMSE, MAE</p>
         </div>
@@ -1512,7 +1525,7 @@
           <p>Accuracy, AUC, F1</p>
         </div>
 
-        <div class="matrix-cell matrix-cell--label">Diễn giải β</div>
+        <div class="matrix-cell matrix-cell--label">💡 Diễn giải β</div>
         <div class="matrix-cell">
           <p>"Y tăng β đơn vị"</p>
         </div>
@@ -1522,10 +1535,8 @@
       </div>
       <div
         style="margin-top:24px;padding:16px 24px;border-radius:12px;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.15);text-align:center;">
-        <p style="font-size:16px;"><strong>Điểm chung:</strong> Cả hai đều là <strong>Mô hình Tuyến tính Tổng quát
-            (GLM)</strong>, chỉ khác ở hàm liên kết<br>
-          <span style="font-size:14px;color:var(--gray-500);">glm(..., family = gaussian) vs glm(..., family =
-            binomial)</span>
+        <p style="font-size:16px;">🤝 <strong>Điểm chung:</strong> Cả hai đều là <strong>Mô hình Tuyến tính Tổng quát (GLM)</strong>, chỉ khác ở hàm liên kết<br>
+          <span style="font-size:14px;color:var(--gray-500);">glm(..., family = gaussian) vs glm(..., family = binomial)</span>
         </p>
       </div>
       <div class="slide-number">15 / 15</div>
