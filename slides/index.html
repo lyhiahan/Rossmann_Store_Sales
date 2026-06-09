@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cơ Sở Lý Thuyết Thống Kê — Rossmann Sales</title>
+  
+  <!-- CDNs for CSS assets -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <link rel="stylesheet" href="custom.css">
+</head>
+<body>
+
+  <!-- 1. ETHEREAL BACKGROUND ORBS -->
+  <div class="mesh-bg">
+    <div id="bg-orb" class="mesh-orb"></div>
+    <div class="mesh-orb-secondary"></div>
+  </div>
+
+  <!-- 2. TOP VIEWPORT PROGRESS BAR -->
+  <div class="viewport-progress">
+    <div id="viewport-progress-fill" class="viewport-progress-fill"></div>
+  </div>
+
+  <!-- 3. MAIN REVEAL SLIDES CONTAINER -->
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- ==========================================
+           SLIDE 1 — TRANG BÌA
+           ========================================== -->
+      <section data-index="0">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow"><span class="dot"></span>LẬP TRÌNH R · PHÂN TÍCH DỮ LIỆU</span>
+          </div>
+          <div class="slide-content cover-layout">
+            <h1 class="cover-h1 anim-entry">Cơ Sở Lý Thuyết Thống Kê<br>trong Phân tích Dữ liệu</h1>
+            <p class="cover-subtitle anim-entry">Thống kê Mô tả — Thống kê Suy diễn — Hồi quy Logistic</p>
+            <div class="bezel-outer anim-entry" style="max-width: 500px; margin: 0 auto;">
+              <div class="bezel-inner" style="padding: 0.75rem 1.5rem;">
+                <span class="stat-note" style="color: var(--text-secondary);">Nhóm phụ trách đồ án Rossmann Store Sales</span>
+              </div>
+            </div>
+            <div class="scroll-indicator anim-entry">
+              <span>Trình Chiếu</span>
+              <svg class="scroll-arrow" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">Sử dụng phím mũi tên / spacebar để điều hướng</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SLIDE 2 — TỔNG QUAN: HAI TRỤ CỘT
+           ========================================== -->
+      <section data-index="1">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow"><span class="dot"></span>Tổng Quan · 02 / 15</span>
+            <h2 class="slide-subtitle">Hai trụ cột chính của Thống kê học</h2>
+          </div>
+          <div class="slide-content split-equal stagger-children">
+            <!-- Pillar 1 -->
+            <div class="bezel-outer">
+              <div class="bezel-inner">
+                <span class="eyebrow" style="color: var(--accent-teal); border-color: rgba(45,212,191,0.2);"><span class="dot" style="background:#2dd4bf; box-shadow: 0 0 8px #2dd4bf;"></span>Trụ cột 1</span>
+                <h3 class="slide-title" style="font-size: 1.8rem; margin: 0.75rem 0;">Thống Kê Mô Tả</h3>
+                <p class="stat-note" style="margin-bottom: 1.5rem;">"Dữ liệu trông như thế nào?" — Tóm tắt và hiểu phân phối dữ liệu hiện tại.</p>
+                <ul class="bullet-list">
+                  <li>Đại lượng trung tâm: <strong>Mean, Median, Mode</strong></li>
+                  <li>Độ phân tán: <strong>Variance, SD, IQR</strong></li>
+                  <li>Hình dạng phân phối: <strong>Skewness, Kurtosis</strong></li>
+                  <li>Trực quan: <strong>Histogram, Boxplot, Density</strong></li>
+                </ul>
+              </div>
+            </div>
+            <!-- Pillar 2 -->
+            <div class="bezel-outer">
+              <div class="bezel-inner">
+                <span class="eyebrow" style="color: var(--accent-amber); border-color: rgba(251,191,36,0.2);"><span class="dot" style="background:#fbbf24; box-shadow: 0 0 8px #fbbf24;"></span>Trụ cột 2</span>
+                <h3 class="slide-title" style="font-size: 1.8rem; margin: 0.75rem 0;">Thống Kê Suy Diễn</h3>
+                <p class="stat-note" style="margin-bottom: 1.5rem;">"Dữ liệu cho phép kết luận gì?" — Suy luận về tổng thể từ mẫu quan sát.</p>
+                <ul class="bullet-list" style="--orb-color: var(--orb-inference)">
+                  <li>Ước lượng tham số & Khoảng tin cậy (CI)</li>
+                  <li>Kiểm định giả thuyết (Hypothesis Testing)</li>
+                  <li>Mô hình hóa (Hồi quy tuyến tính & Logistic)</li>
+                  <li>Đánh giá mức ý nghĩa thực nghiệm qua <strong>p-value</strong></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">Mô tả tóm tắt mẫu ↔ Suy diễn rút ra kết luận rộng hơn</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SLIDE 3 — TRUNG BÌNH (MEAN)
+           ========================================== -->
+      <section data-index="2">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow"><span class="dot"></span>Thống Kê Mô Tả · 03 / 15</span>
+            <h2 class="slide-subtitle">Trung bình số học (Mean)</h2>
+          </div>
+          <div class="slide-content split-editorial">
+            <!-- Left Side Formula -->
+            <div class="bezel-outer anim-entry">
+              <div class="bezel-inner math-card">
+                <div style="text-align: center; width: 100%;">
+                  <span class="stat-label">CÔNG THỨC TOÁN HỌC</span>
+                  <div style="margin: 2rem 0;">
+                    \[ \bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i \]
+                  </div>
+                  <span class="stat-note">Cộng tất cả quan sát chia cho số lượng quan sát.</span>
+                </div>
+              </div>
+            </div>
+            <!-- Right Side Stats & R -->
+            <div class="bezel-outer anim-entry" style="transition-delay: 200ms;">
+              <div class="bezel-inner" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div class="stat-card">
+                  <span class="stat-label">TRUNG BÌNH DOANH SỐ ĐỒ ÁN</span>
+                  <span class="stat-val">6.840 EUR/ngày</span>
+                  <span class="stat-note">Tính từ 14.216 quan sát ngày mở của 50 cửa hàng.</span>
+                </div>
+                <div class="glass-alert">
+                  <div class="glass-alert-title">ĐẶC ĐIỂM QUAN TRỌNG</div>
+                  <div class="glass-alert-body">
+                    Sử dụng toàn bộ dữ liệu, nhưng <strong>rất nhạy cảm với outlier</strong> (giá trị ngoại lai). Ví dụ: Doanh số đột biến dịp Giáng sinh kéo Mean lên cao.
+                  </div>
+                </div>
+                <div style="margin-top: 1rem;">
+                  <span class="stat-label">CÚ PHÁP R</span>
+                  <pre class="code-wrapper"><code class="r">mean(df_clean$sales)</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">Phù hợp nhất khi dữ liệu phân phối đối xứng và ít outlier</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SLIDE 4 — TRUNG VỊ (MEDIAN)
+           ========================================== -->
+      <section data-index="3">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow"><span class="dot"></span>Thống Kê Mô Tả · 04 / 15</span>
+            <h2 class="slide-subtitle">Trung vị (Median) và Hiện tượng Phân phối Lệch</h2>
+          </div>
+          <div class="slide-content split-editorial">
+            <!-- Left Stats/Formula -->
+            <div class="bezel-outer anim-entry" style="align-self: center; width: 100%;">
+              <div class="bezel-inner" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="text-align: center; background: rgba(5,5,5,0.3); padding: 1rem; border-radius: 1rem;">
+                  \[ \text{Median} = \begin{cases} x_{\frac{n+1}{2}} & \text{nếu } n \text{ lẻ} \\ \frac{x_{\frac{n}{2}} + x_{\frac{n}{2}+1}}{2} & \text{nếu } n \text{ chẵn} \end{cases} \]
+                </div>
+                <div class="compare-container">
+                  <div class="compare-col">
+                    <span class="compare-label">MEAN</span>
+                    <span class="compare-val" style="color: var(--accent-rose);">6.840 EUR</span>
+                  </div>
+                  <div class="compare-col">
+                    <span class="compare-label">MEDIAN</span>
+                    <span class="compare-val" style="color: var(--accent-teal);">6.450 EUR</span>
+                  </div>
+                </div>
+                <div class="indicator-gap">
+                  <span>Chênh lệch: 390 EUR → Phân phối lệch phải</span>
+                </div>
+                <p class="stat-note"><strong>Bền vững (Robust)</strong>: Không bị ảnh hưởng bởi giá trị cực biên, phù hợp để điền khuyết cho biến CompetitionDistance.</p>
+                <div>
+                  <span class="stat-label">CÚ PHÁP R</span>
+                  <pre class="code-wrapper"><code class="r">median(df_clean$sales)</code></pre>
+                </div>
+              </div>
+            </div>
+            <!-- Right Chart.js visualization -->
+            <div class="bezel-outer anim-entry" style="transition-delay: 200ms; align-self: center; width: 100%;">
+              <div class="bezel-inner" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <span class="stat-label">TRỰC QUAN HÓA PHÂN PHỐI DOANH SỐ (SALES)</span>
+                <div style="height: 250px; position: relative; margin-top: 1rem;">
+                  <canvas id="salesDistChart"></canvas>
+                </div>
+                <div class="slide-footnote">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="2"/><line x1="12" y1="16" x2="12" y2="12" stroke-width="2"/><line x1="12" y1="8" x2="12.01" y2="8" stroke-width="2"/></svg>
+                  <span>Mean bị kéo sang phải bởi các ngày doanh số cực đại (>15.000 EUR)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">Khi Mean > Median: phân phối có đuôi dài lệch phải (skewness > 0)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SLIDE 5 — PHƯƠNG SAI (VARIANCE)
+           ========================================== -->
+      <section data-index="4">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow"><span class="dot"></span>Thống Kê Mô Tả · 05 / 15</span>
+            <h2 class="slide-subtitle">Phương sai (Variance) & Hiệu chỉnh Bessel</h2>
+          </div>
+          <div class="slide-content split-editorial">
+            <!-- Formulas Card -->
+            <div class="bezel-outer anim-entry">
+              <div class="bezel-inner" style="display: flex; flex-direction: column; justify-content: space-around; height: 100%;">
+                <div style="text-align: center;">
+                  <span class="stat-label">PHƯƠNG SAI TỔNG THỂ</span>
+                  <div style="margin: 0.75rem 0;">
+                    \[ \sigma^2 = \frac{1}{N}\sum_{i=1}^{N}(x_i - \mu)^2 \]
+                  </div>
+                </div>
+                <div style="border-top: 1px solid var(--border-glass); padding-top: 1rem; text-align: center;">
+                  <span class="stat-label">PHƯƠNG SAI MẪU (HIỆU CHỈNH BESSEL)</span>
+                  <div style="margin: 0.75rem 0;">
+                    \[ s^2 = \frac{1}{n-1}\sum_{i=1}^{n}(x_i - \bar{x})^2 \]
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Commentary & R -->
+            <div class="bezel-outer anim-entry" style="transition-delay: 200ms;">
+              <div class="bezel-inner" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div class="stat-card">
+                  <span class="stat-label">PHƯƠNG SAI DOANH SỐ MẪU</span>
+                  <span class="stat-val" style="font-size: 2.2rem; color: var(--accent-rose);">6.925.176 EUR²</span>
+                  <span class="stat-note">Đo lường trung bình bình phương khoảng cách lệch khỏi giá trị Mean.</span>
+                </div>
+                <div class="glass-alert">
+                  <div class="glass-alert-title">HIỆU CHỈNH BESSEL (MẪU CHIA n - 1)</div>
+                  <div class="glass-alert-body">
+                    Nếu dùng mẫu nhỏ mà chia cho n sẽ làm lệch hướng ước lượng (bị nhỏ hơn thực tế). Thay bằng <strong>n - 1</strong> giúp ước lượng phương sai mẫu không bị chệch.
+                  </div>
+                </div>
+                <div class="glass-alert danger">
+                  <div class="glass-alert-title">HẠN CHẾ</div>
+                  <div class="glass-alert-body">
+                    Đơn vị là <strong>EUR²</strong> (bình phương gốc) nên cực kỳ khó diễn giải trực tiếp.
+                  </div>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                  <span class="stat-label">CÚ PHÁP R</span>
+                  <pre class="code-wrapper"><code class="r">var(df_clean$sales)</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">Hiệu chỉnh Bessel giải quyết độ chệch khi ước lượng từ mẫu</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SLIDE 6 — ĐỘ LỆCH CHUẨN (STANDARD DEVIATION)
+           ========================================== -->
+      <section data-index="5">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow"><span class="dot"></span>Thống Kê Mô Tả · 06 / 15</span>
+            <h2 class="slide-subtitle">Độ lệch chuẩn (Standard Deviation - SD)</h2>
+          </div>
+          <div class="slide-content split-editorial">
+            <!-- Left Side Formula & Data -->
+            <div class="bezel-outer anim-entry">
+              <div class="bezel-inner" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="text-align: center; background: rgba(5,5,5,0.3); padding: 1.25rem 1rem; border-radius: 1rem;">
+                  \[ s = \sqrt{s^2} = \sqrt{\frac{1}{n-1}\sum_{i=1}^{n}(x_i - \bar{x})^2} \]
+                </div>
+                <div class="compare-container" style="margin-top: 1rem;">
+                  <div class="compare-col">
+                    <span class="compare-label">ĐỘ LỆCH CHUẨN (SD)</span>
+                    <span class="compare-val">2.632 EUR</span>
+                  </div>
+                  <div class="compare-col">
+                    <span class="compare-label">HỆ SỐ BIẾN THIÊN (CV)</span>
+                    <span class="compare-val" style="color: var(--accent-amber);">38,47%</span>
+                  </div>
+                </div>
+                <p class="stat-note"><strong>Ưu điểm</strong>: Cùng đơn vị gốc (EUR), cho biết doanh số biến động trung bình ±2.632 EUR quanh mức Mean.</p>
+                <div>
+                  <span class="stat-label">CÚ PHÁP R</span>
+                  <pre class="code-wrapper"><code class="r">sd(df_clean$sales)</code></pre>
+                </div>
+              </div>
+            </div>
+            <!-- Right Side Normality & Rules -->
+            <div class="bezel-outer anim-entry" style="transition-delay: 200ms;">
+              <div class="bezel-inner" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <span class="stat-label">QUY TẮC PHÂN PHỐI CHUẨN 68 - 95 - 99.7</span>
+                <!-- SVG normal curve illustration -->
+                <div style="height: 150px; text-align: center; margin: 1rem 0;">
+                  <svg width="100%" height="100%" viewBox="0 0 300 120" style="overflow: visible;">
+                    <!-- Normal curve area fills -->
+                    <path d="M 30,110 Q 110,110 150,15 T 270,110" class="dist-curve-area" />
+                    <!-- 1SD, 2SD lines -->
+                    <line x1="150" y1="15" x2="150" y2="110" stroke="rgba(255,255,255,0.2)" stroke-dasharray="2" />
+                    <line x1="110" y1="65" x2="110" y2="110" stroke="rgba(255,255,255,0.15)" stroke-dasharray="2" />
+                    <line x1="190" y1="65" x2="190" y2="110" stroke="rgba(255,255,255,0.15)" stroke-dasharray="2" />
+                    <!-- Normal curve line -->
+                    <path d="M 20,110 Q 110,110 150,15 T 280,110" class="dist-curve line-draw" />
+                    <!-- Labels -->
+                    <text x="150" y="118" fill="#a1a1aa" font-size="8" text-anchor="middle">Mean (x̄)</text>
+                    <text x="110" y="118" fill="#71717a" font-size="8" text-anchor="middle">x̄ - 1σ</text>
+                    <text x="190" y="118" fill="#71717a" font-size="8" text-anchor="middle">x̄ + 1σ</text>
+                    <!-- Shading text -->
+                    <rect x="120" y="45" width="60" height="15" rx="4" fill="rgba(8,8,8,0.8)" stroke="var(--border-glass)" stroke-width="1"/>
+                    <text x="150" y="55" fill="var(--accent-teal)" font-size="7" font-weight="bold" text-anchor="middle">~68.2% (±1σ)</text>
+                  </svg>
+                </div>
+                <ul class="bullet-list" style="font-size: 0.85rem; gap: 0.4rem;">
+                  <li><strong>x̄ ± 1σ</strong>: ~68% dữ liệu nằm trong khoảng (4.208 – 9.472 EUR)</li>
+                  <li><strong>x̄ ± 2σ</strong>: ~95% dữ liệu nằm trong khoảng (1.576 – 12.104 EUR)</li>
+                  <li><strong>x̄ ± 3σ</strong>: ~99.7% dữ liệu nằm trong khoảng (0 – 14.736 EUR)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">Độ lệch chuẩn cho thấy độ rộng biến thiên thực tế của dữ liệu</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SLIDE 7 — TỔNG HỢP THỐNG KÊ MÔ TẢ
+           ========================================== -->
+      <section data-index="6">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow"><span class="dot"></span>Thống Kê Mô Tả · 07 / 15</span>
+            <h2 class="slide-subtitle">So sánh tổng hợp các đại lượng mô tả</h2>
+          </div>
+          <div class="slide-content anim-entry">
+            <div class="bezel-outer">
+              <div class="bezel-inner" style="padding: 0.5rem 0.75rem;">
+                <table class="glass-table">
+                  <thead>
+                    <tr>
+                      <th>Đại lượng</th>
+                      <th>Công thức shorthand</th>
+                      <th>Ưu điểm nổi bật</th>
+                      <th>Hạn chế lớn nhất</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style="color: var(--accent-data); font-weight: 600;">Mean</td>
+                      <td><code>Σx / n</code></td>
+                      <td>Đầy đủ, đại diện tốt nhất cho tập đối xứng.</td>
+                      <td>Rất nhạy cảm với outlier và giá trị cực trị.</td>
+                    </tr>
+                    <tr class="highlighted">
+                      <td style="color: var(--accent-teal); font-weight: 600;">Median</td>
+                      <td><code>x[n/2]</code> (vị trí giữa)</td>
+                      <td>Bền vững (robust), không bị méo bởi outlier.</td>
+                      <td>Bỏ qua giá trị cụ thể, khó phân tích đại số.</td>
+                    </tr>
+                    <tr>
+                      <td style="color: var(--text-muted); font-weight: 600;">Variance</td>
+                      <td><code>Σ(x-x̄)² / (n-1)</code></td>
+                      <td>Nền tảng toán học cho các mô hình nâng cao.</td>
+                      <td>Đơn vị bình phương (EUR²), khó hình dung.</td>
+                    </tr>
+                    <tr class="highlighted">
+                      <td style="color: var(--accent-amber); font-weight: 600;">SD</td>
+                      <td><code>√Variance</code></td>
+                      <td>Cùng đơn vị với gốc, trực quan thực tế.</td>
+                      <td>Nhạy cảm với sai số bình phương lớn.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="glass-alert" style="margin-top: 1rem; border-color: var(--accent-teal); background: rgba(45,212,191,0.02)">
+              <div class="glass-alert-title" style="color: var(--accent-teal);">NGUYÊN TẮC VÀNG TRONG BÁO CÁO</div>
+              <div class="glass-alert-body" style="font-size: 13px;">
+                Luôn báo cáo đồng thời <strong>Mean + Median + SD</strong> để nắm giữ được toàn bộ bức tranh của phân phối. Sự chênh lệch lớn giữa Mean và Median là hồi chuông cảnh báo dữ liệu bị lệch cần xử lý (outlier/log-transform).
+              </div>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">Kéo slide tiếp theo để chuyển sang mảng Thống Kê Suy Diễn</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SLIDE 8 — CHUYỂN SANG THỐNG KÊ SUY DIỄN
+           ========================================== -->
+      <section data-index="7">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow" style="--orb-color: var(--orb-inference)"><span class="dot"></span>Thống Kê Suy Diễn · 08 / 15</span>
+            <h2 class="slide-subtitle">Chuyển đổi tư duy: Từ mẫu → Tổng thể</h2>
+          </div>
+          <div class="slide-content split-editorial">
+            <!-- Left Side Core Quote -->
+            <div class="bezel-outer anim-entry">
+              <div class="bezel-inner" style="display: flex; flex-direction: column; justify-content: center; height: 100%;">
+                <span class="stat-label">CÂU HỎI CỐT LÕI</span>
+                <h3 class="slide-title" style="font-size: 2.1rem; margin-top: 1rem; line-height: 1.3;">
+                  Kết quả quan sát mẫu là hiệu ứng thực tế hay chỉ do dao động ngẫu nhiên?
+                </h3>
+                <p class="stat-note" style="margin-top: 1rem;">
+                  Ta chỉ có số liệu 50 cửa hàng trong 12 tháng (mẫu), nhưng muốn suy luận cho toàn chuỗi hơn 3.000 cửa hàng (tổng thể).
+                </p>
+              </div>
+            </div>
+            <!-- Right Side Definitions Table -->
+            <div class="bezel-outer anim-entry" style="transition-delay: 200ms;">
+              <div class="bezel-inner" style="padding: 0.75rem 1rem;">
+                <table class="glass-table" style="font-size: 0.85rem;">
+                  <thead>
+                    <tr>
+                      <th>Khái niệm</th>
+                      <th>Định nghĩa cơ bản</th>
+                      <th>Ứng dụng trong đồ án</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style="color: var(--accent-amber); font-weight: 500;">Tổng thể</td>
+                      <td>Toàn bộ đối tượng cần nghiên cứu</td>
+                      <td>3000+ cửa hàng Rossmann</td>
+                    </tr>
+                    <tr>
+                      <td style="color: var(--accent-teal); font-weight: 500;">Mẫu</td>
+                      <td>Tập con được thu thập thực tế</td>
+                      <td>50 cửa hàng (08/14 - 07/15)</td>
+                    </tr>
+                    <tr>
+                      <td style="color: var(--accent-rose); font-weight: 500;">Tham số</td>
+                      <td>Đặc trưng thực tế của tổng thể (μ, σ)</td>
+                      <td>Doanh số trung bình toàn hệ thống</td>
+                    </tr>
+                    <tr>
+                      <td style="color: var(--accent-data); font-weight: 500;">Thống kê</td>
+                      <td>Đặc trưng tính từ mẫu (x̄, s)</td>
+                      <td>Mean (Sales) = 6.840 từ 50 cửa hàng</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">Kiểm định giả thuyết là công cụ để thực hiện bước nhảy mẫu → tổng thể</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SLIDE 9 — KIỂM ĐỊNH GIẢ THUYẾT: 5 BƯỚC
+           ========================================== -->
+      <section data-index="8">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow" style="--orb-color: var(--orb-inference)"><span class="dot"></span>Thống Kê Suy Diễn · 09 / 15</span>
+            <h2 class="slide-subtitle">Quy trình kiểm định giả thuyết thống kê (5 Bước)</h2>
+          </div>
+          <div class="slide-content anim-entry">
+            <div class="step-container">
+              <!-- Step 1 -->
+              <div class="step-row">
+                <div class="step-num">01</div>
+                <div class="bezel-outer step-card">
+                  <div class="bezel-inner" style="padding: 0.65rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; font-size: 0.95rem;">Thiết lập giả thuyết</span>
+                    <span class="stat-note">H₀ (Null): "Không có hiệu ứng / khác biệt" ↔ H₁ (Alternative): "Có hiệu ứng / khác biệt"</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Step 2 -->
+              <div class="step-row">
+                <div class="step-num">02</div>
+                <div class="bezel-outer step-card">
+                  <div class="bezel-inner" style="padding: 0.65rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; font-size: 0.95rem;">Chọn mức ý nghĩa α</span>
+                    <span class="stat-note">Thường α = 0.05. Là xác suất mắc sai lầm loại I (bác bỏ H₀ khi H₀ đúng).</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Step 3 -->
+              <div class="step-row">
+                <div class="step-num">03</div>
+                <div class="bezel-outer step-card">
+                  <div class="bezel-inner" style="padding: 0.65rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; font-size: 0.95rem;">Tính thống kê kiểm định</span>
+                    <span class="stat-note">Tính các giá trị thực nghiệm tùy phương pháp (t, F, χ², W, H...).</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Step 4 -->
+              <div class="step-row">
+                <div class="step-num">04</div>
+                <div class="bezel-outer step-card">
+                  <div class="bezel-inner" style="padding: 0.65rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; font-size: 0.95rem;">Tính toán giá trị p-value</span>
+                    <span class="stat-note">Xác suất quan sát được kết quả cực đoan như hiện tại, giả sử H₀ đúng.</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Step 5 -->
+              <div class="step-row">
+                <div class="step-num">05</div>
+                <div class="bezel-outer step-card">
+                  <div class="bezel-inner" style="padding: 0.65rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; font-size: 0.95rem;">Ra quyết định thống kê</span>
+                    <span class="stat-note">p &lt; α → Bác bỏ H₀ (có hiệu ứng thực sự). p ≥ α → Chưa đủ cơ sở bác bỏ H₀.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">Lưu ý: "Không bác bỏ H₀" không đồng nghĩa với việc khẳng định H₀ đúng</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SLIDE 10 — CÁC KIỂM ĐỊNH TRONG ĐỒ ÁN
+           ========================================== -->
+      <section data-index="9">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow" style="--orb-color: var(--orb-inference)"><span class="dot"></span>Thống Kê Suy Diễn · 10 / 15</span>
+            <h2 class="slide-subtitle">Các kiểm định thống kê được sử dụng trong đồ án</h2>
+          </div>
+          <div class="slide-content split-editorial">
+            <!-- Left side tables list -->
+            <div class="bezel-outer anim-entry" style="align-self: center; width: 100%;">
+              <div class="bezel-inner" style="padding: 0.75rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                <table class="glass-table" style="font-size: 0.8rem;">
+                  <thead>
+                    <tr>
+                      <th>Giả thuyết</th>
+                      <th>Tham số (chuẩn)</th>
+                      <th>Phi tham số (đối chứng)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Doanh số theo Store Type</td>
+                      <td style="color: var(--accent-amber);">ANOVA (p &lt; 2e-16)</td>
+                      <td style="color: var(--accent-teal);">Kruskal-Wallis (p &lt; 2e-16)</td>
+                    </tr>
+                    <tr>
+                      <td>Hiệu quả Khuyến mãi (Promo)</td>
+                      <td style="color: var(--accent-amber);">Welch t-test (p &lt; 2e-16)</td>
+                      <td style="color: var(--accent-teal);">Wilcoxon (p &lt; 2e-16)</td>
+                    </tr>
+                    <tr>
+                      <td>Doanh số vs Cạnh tranh</td>
+                      <td style="color: var(--accent-amber);">Pearson r (0.0002)</td>
+                      <td style="color: var(--accent-teal);">Spearman rho (0.049)</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="glass-alert" style="margin: 0.25rem 0.5rem 0.25rem 0.5rem; padding: 0.5rem 0.75rem;">
+                  <div class="glass-alert-title" style="font-size: 10px;">TẠI SAO DÙNG CẢ HAI?</div>
+                  <div class="glass-alert-body" style="font-size: 11px;">
+                    Biến Sales có Skewness ≈ 0.94 (lệch chuẩn). Bằng cách chạy phi tham số đối chứng, nếu cả hai đều bác bỏ H₀ → độ vững chắc kết luận cực kỳ cao.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Right side Chart.js visual -->
+            <div class="bezel-outer anim-entry" style="transition-delay: 200ms; align-self: center; width: 100%;">
+              <div class="bezel-inner" style="padding: 0.75rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                <span class="stat-label">SO SÁNH HIỆU QUẢ KHUYẾN MÃI (PROMO)</span>
+                <div style="height: 140px; position: relative; margin-top: 0.5rem;">
+                  <canvas id="promoCompareChart"></canvas>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                  <span class="stat-label" style="font-size: 9px;">KÍCH THƯỚC HIỆU ỨNG (EFFECT SIZE)</span>
+                  <div class="progress-track" style="margin-top: 0.25rem; height: 10px;">
+                    <div class="progress-fill" data-value="0.994" data-max="2.0"></div>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-secondary); margin-top: 0.25rem;">
+                    <span>Cohen's d = 0.994</span>
+                    <span style="color: var(--accent-teal); font-weight: bold;">Mức độ tác động: RẤT LỚN</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">p-value &lt; 2e-16 nghĩa là xác suất xảy ra ngẫu nhiên gần như bằng không</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SLIDE 11 — HỒI QUY TUYẾN TÍNH
+           ========================================== -->
+      <section data-index="10">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow" style="--orb-color: var(--orb-inference)"><span class="dot"></span>Thống Kê Suy Diễn · 11 / 15</span>
+            <h2 class="slide-subtitle">Nền tảng Hồi quy tuyến tính đa biến (Linear Regression)</h2>
+          </div>
+          <div class="slide-content split-editorial">
+            <!-- Left Side Formula & Assumptions -->
+            <div class="bezel-outer anim-entry">
+              <div class="bezel-inner" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                <div style="text-align: center; background: rgba(5,5,5,0.3); padding: 0.75rem; border-radius: 1rem;">
+                  \[ Y = \beta_0 + \beta_1X_1 + \beta_2X_2 + \cdots + \beta_pX_p + \varepsilon \]
+                  <span class="stat-note" style="font-size: 11px;">Phương pháp OLS: tối thiểu hóa tổng bình phương sai số RSS</span>
+                </div>
+                <div>
+                  <span class="stat-label">4 GIẢ ĐỊNH KINH ĐIỂN</span>
+                  <ul class="bullet-list" style="font-size: 0.8rem; gap: 0.35rem; margin-top: 0.25rem;">
+                    <li>Quan hệ tuyến tính giữa biến độc lập và phụ thuộc.</li>
+                    <li>Sai số ngẫu nhiên có phân phối chuẩn ε ~ N(0, σ²).</li>
+                    <li>Phương sai sai số đồng nhất (Homoscedasticity).</li>
+                    <li>Không có hiện tượng tự tương quan giữa các sai số.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <!-- Right Side Results -->
+            <div class="bezel-outer anim-entry" style="transition-delay: 200ms;">
+              <div class="bezel-inner" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div class="compare-container">
+                  <div class="compare-col">
+                    <span class="compare-label">HỆ SỐ R² VALIDATION</span>
+                    <span class="compare-val" style="color: var(--accent-data);">86,78%</span>
+                    <span class="stat-note">Mô hình giải thích tốt 86.8% biến động.</span>
+                  </div>
+                  <div class="compare-col">
+                    <span class="compare-label">RMSE VALIDATION</span>
+                    <span class="compare-val">960,5 EUR</span>
+                    <span class="stat-note">Sai số dự báo trung bình của mô hình.</span>
+                  </div>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                  <span class="stat-label">HỆ SỐ PHÍ TIÊU BIỂU (BẢNG HỆ SỐ)</span>
+                  <div style="font-size: 11px; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.25rem; color: var(--text-secondary);">
+                    <div>• Customers: <strong>+11,32 EUR/khách</strong></div>
+                    <div>• Promo=1: <strong>+976,5 EUR/ngày</strong></div>
+                    <div>• StoreType c: <strong>+350,2 EUR/ngày</strong></div>
+                    <div>• DayOfWeek 7: <strong>-2.215 EUR (đóng cửa)</strong></div>
+                  </div>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                  <span class="stat-label">CÚ PHÁP R</span>
+                  <pre class="code-wrapper"><code class="r">lm(sales ~ customers + promo + store_type + ..., data = train_data)</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">Linear Regression là chuẩn so sánh nền tảng đối với các mô hình Machine Learning</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SLIDE 12 — TẠI SAO CẦN HỒI QUY LOGISTIC?
+           ========================================== -->
+      <section data-index="11">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow" style="--orb-color: var(--orb-logistic)"><span class="dot"></span>Hồi Quy Logistic · 12 / 15</span>
+            <h2 class="slide-subtitle">Giới hạn của Hồi quy tuyến tính với biến nhị phân</h2>
+          </div>
+          <div class="slide-content split-editorial">
+            <!-- Left Side problem -->
+            <div class="bezel-outer anim-entry">
+              <div class="bezel-inner" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                <span class="stat-label" style="color: var(--accent-rose);">TẠI SAO OLS THẤT BẠI KHI Y ∈ {0, 1}?</span>
+                <ul class="bullet-list" style="--orb-color: var(--orb-logistic); gap: 1rem; margin-top: 0.5rem;">
+                  <li><strong>Dự báo vô nghĩa</strong>: Mô hình tuyến tính có thể cho ra các dự báo &lt; 0 hoặc &gt; 1, không thể dịch nghĩa làm xác suất.</li>
+                  <li><strong>Vi phạm giả định</strong>: Phương sai sai số không đồng nhất vì Y phụ thuộc nhị phân trực tiếp vào X.</li>
+                  <li><strong>Mối quan hệ phi tuyến</strong>: Mối quan hệ thực tế giữa X và Xác suất P(Y=1) thường cong hình chữ S, không phải đường thẳng.</li>
+                </ul>
+              </div>
+            </div>
+            <!-- Right Side Application -->
+            <div class="bezel-outer anim-entry" style="transition-delay: 200ms;">
+              <div class="bezel-inner" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <span class="stat-label">ỨNG DỤNG PHÂN LOẠI NHỊ PHÂN TRONG ĐỒ ÁN ROSSMANN</span>
+                <div class="compare-container" style="margin-top: 0.5rem;">
+                  <div class="compare-col">
+                    <span class="compare-label">DOANH SỐ VƯỢT MEDIAN?</span>
+                    <span class="compare-val" style="font-size: 1.4rem; color: var(--accent-rose);">Y ∈ {0, 1}</span>
+                    <span class="stat-note">Doanh số cao ↔ Doanh số thường</span>
+                  </div>
+                  <div class="compare-col">
+                    <span class="compare-label">CÓ PHẢI OUTLIER KHÔNG?</span>
+                    <span class="compare-val" style="font-size: 1.4rem; color: var(--accent-rose);">Y ∈ {0, 1}</span>
+                    <span class="stat-note">Outlier đột biến ↔ Ngày thường</span>
+                  </div>
+                </div>
+                <div class="glass-alert" style="border-color: var(--accent-rose); background: rgba(244,63,94,0.03);">
+                  <div class="glass-alert-title" style="color: var(--accent-rose);">GIẢI PHÁP LOGISTIC REGRESSION</div>
+                  <div class="glass-alert-body">
+                    Sử dụng phép biến đổi toán học <strong>Logit</strong> để ánh xạ dải xác suất (0, 1) sang dải số thực (-∞, +∞) rồi xây dựng mô hình tuyến tính trên đó.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">Kéo slide tiếp theo để xem chi tiết toán học đứng sau mô hình</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SLIDE 13 — HỒI QUY LOGISTIC: TOÁN HỌC
+           ========================================== -->
+      <section data-index="12">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow" style="--orb-color: var(--orb-logistic)"><span class="dot"></span>Hồi Quy Logistic · 13 / 15</span>
+            <h2 class="slide-subtitle">Mô hình toán học: Hàm Sigmoid & Hàm Logit</h2>
+          </div>
+          <div class="slide-content split-editorial">
+            <!-- Left side formula -->
+            <div class="bezel-outer anim-entry" style="align-self: center; width: 100%;">
+              <div class="bezel-inner" style="padding: 0.75rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                <div>
+                  <span class="stat-label">HÀM SIGMOID (NÉN GIÁ TRỊ VỀ 0 - 1)</span>
+                  <div style="text-align: center; margin: 0.5rem 0;">
+                    \[ P(Y=1|X) = \frac{1}{1 + e^{-z}} \]
+                    \[ z = \beta_0 + \beta_1X_1 + \cdots + \beta_pX_p \]
+                  </div>
+                </div>
+                <div style="border-top: 1px solid var(--border-glass); padding-top: 0.5rem;">
+                  <span class="stat-label">HÀM LOGIT (TUYẾN TÍNH HÓA ĐƯỜNG CONG)</span>
+                  <div style="text-align: center; margin: 0.5rem 0;">
+                    \[ \text{logit}(p) = \ln\left(\frac{p}{1-p}\right) = z \]
+                  </div>
+                </div>
+                <div class="pills-container">
+                  <span class="pill-badge">z → -∞ ⇒ P → 0</span>
+                  <span class="pill-badge">z = 0 ⇒ P = 0.5</span>
+                  <span class="pill-badge">z → +∞ ⇒ P → 1</span>
+                </div>
+              </div>
+            </div>
+            <!-- Right side Sigmoid chart -->
+            <div class="bezel-outer anim-entry" style="transition-delay: 200ms; align-self: center; width: 100%;">
+              <div class="bezel-inner" style="padding: 0.75rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                <span class="stat-label">BIỂU ĐỒ ĐƯỜNG CONG SIGMOID ĐẶC TRƯNG (HÌNH S)</span>
+                <div style="height: 200px; position: relative; margin-top: 0.5rem;">
+                  <canvas id="sigmoidChart"></canvas>
+                </div>
+                <div class="slide-footnote">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="2"/><line x1="12" y1="16" x2="12" y2="12" stroke-width="2"/><line x1="12" y1="8" x2="12.01" y2="8" stroke-width="2"/></svg>
+                  <span>Hãy thử di chuột qua biểu đồ để kiểm tra xác suất tương ứng.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">Logit chuyển đổi xác suất phi tuyến thành mô hình tuyến tính trên thang log-odds</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SLIDE 14 — ƯỚC LƯỢNG VÀ DIỄN GIẢI HỆ SỐ
+           ========================================== -->
+      <section data-index="13">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow" style="--orb-color: var(--orb-logistic)"><span class="dot"></span>Hồi Quy Logistic · 14 / 15</span>
+            <h2 class="slide-subtitle">Phương pháp ước lượng MLE & Diễn giải Odds Ratio</h2>
+          </div>
+          <div class="slide-content split-editorial">
+            <!-- Left MLE details -->
+            <div class="bezel-outer anim-entry">
+              <div class="bezel-inner" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                <div>
+                  <span class="stat-label">ƯỚC LƯỢNG KHẢ NĂNG CỰC ĐẠI (MLE)</span>
+                  <div style="text-align: center; margin: 0.5rem 0;">
+                    \[ \hat{\beta} = \arg\max_\beta \prod_{i=1}^{n} P(y_i | x_i, \beta) \]
+                  </div>
+                  <p class="stat-note" style="font-size: 11px;">MLE tìm bộ hệ số beta sao cho xác suất thu hoạch đúng tập dữ liệu quan sát được là lớn nhất. Giải bằng thuật toán lặp Newton-Raphson / IRLS.</p>
+                </div>
+                <div style="border-top: 1px solid var(--border-glass); padding-top: 0.5rem;">
+                  <span class="stat-label">CHỈ SỐ ĐÁNH GIÁ MÔ HÌNH PHÂN LOẠI</span>
+                  <div class="pills-container" style="margin-top: 0.25rem;">
+                    <span class="pill-badge active">Confusion Matrix</span>
+                    <span class="pill-badge">Accuracy</span>
+                    <span class="pill-badge">Precision</span>
+                    <span class="pill-badge">Recall (Sensitivity)</span>
+                    <span class="pill-badge">F1-Score</span>
+                    <span class="pill-badge">AUC - ROC</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Right interpretation details -->
+            <div class="bezel-outer anim-entry" style="transition-delay: 200ms;">
+              <div class="bezel-inner" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <span class="stat-label">DIỄN GIẢI HỆ SỐ QUA TỶ LỆ CƯỢC (ODDS RATIO)</span>
+                  <div class="indicator-gap" style="margin-top: 0.5rem; border-color: rgba(251,113,133,0.3); background: rgba(251,113,133,0.02)">
+                    <span style="color: var(--accent-rose); font-weight: 700;">Odds Ratio (OR) = e^βⱼ</span>
+                  </div>
+                  <table class="glass-table" style="font-size: 0.8rem; margin-top: 0.5rem;">
+                    <thead>
+                      <tr>
+                        <th>Giá trị OR</th>
+                        <th>Ý nghĩa thực tế</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style="color: var(--accent-teal); font-weight: 600;">OR &gt; 1 (βⱼ &gt; 0)</td>
+                        <td>Tăng Xⱼ làm tăng khả năng xảy ra biến cố (Y=1)</td>
+                      </tr>
+                      <tr>
+                        <td style="color: var(--text-muted); font-weight: 600;">OR = 1 (βⱼ = 0)</td>
+                        <td>Biến Xⱼ không có ảnh hưởng gì tới Y</td>
+                      </tr>
+                      <tr>
+                        <td style="color: var(--accent-rose); font-weight: 600;">OR &lt; 1 (βⱼ &lt; 0)</td>
+                        <td>Tăng Xⱼ làm giảm khả năng xảy ra biến cố (Y=1)</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="glass-alert" style="margin-top: 0.5rem; border-color: var(--accent-rose); background: rgba(244,63,94,0.02); padding: 0.5rem 0.75rem;">
+                  <div class="glass-alert-title" style="font-size: 9px; color: var(--accent-rose);">VÍ DỤ TRONG MÔ HÌNH DOANH SỐ CAO</div>
+                  <div class="glass-alert-body" style="font-size: 11px;">
+                    <strong>β(promo) = 0.693</strong> → <strong>OR = e^0.693 ≈ 2.0</strong>.<br>Có khuyến mãi giúp tăng gấp đôi tỷ lệ cược (odds) đạt mức doanh số cao so với ngày thường.
+                  </div>
+                </div>
+                <div>
+                  <span class="stat-label">CÚ PHÁP R</span>
+                  <pre class="code-wrapper"><code class="r">glm(high_sales ~ promo + store_type + ..., family = binomial)</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">MLE là phương pháp tối ưu hóa khả năng khớp dữ liệu phổ biến nhất</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SLIDE 15 — SO SÁNH TỔNG HỢP & KẾT LUẬN
+           ========================================== -->
+      <section data-index="14">
+        <div class="slide-shell">
+          <div class="slide-header">
+            <span class="eyebrow" style="--orb-color: var(--orb-logistic)"><span class="dot"></span>Kết Luận · 15 / 15</span>
+            <h2 class="slide-subtitle">So sánh tổng hợp và tổng kết cơ sở lý thuyết</h2>
+          </div>
+          <div class="slide-content split-editorial">
+            <!-- Left Side table comparison -->
+            <div class="bezel-outer anim-entry" style="align-self: center; width: 100%;">
+              <div class="bezel-inner" style="padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <table class="glass-table table-compact" style="width: 100%;">
+                  <thead>
+                    <tr>
+                      <th>Tiêu chí</th>
+                      <th>Hồi quy Tuyến tính</th>
+                      <th>Hồi quy Logistic</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style="font-weight: 600;">Biến \(Y\)</td>
+                      <td>Liên tục (\(Y \in \mathbb{R}\))</td>
+                      <td style="color: var(--accent-rose);">Nhị phân (\(Y \in \{0, 1\}\))</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600;">Đầu ra</td>
+                      <td>Giá trị dự báo trực tiếp</td>
+                      <td style="color: var(--accent-rose);">Xác suất \(P(Y=1)\)</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600;">Hàm liên kết</td>
+                      <td>Identity (\(z = Y\))</td>
+                      <td style="color: var(--accent-rose);">Logit: \(\ln\left(\frac{p}{1-p}\right)\)</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600;">Ước lượng</td>
+                      <td>OLS (Nghiệm giải tích)</td>
+                      <td style="color: var(--accent-rose);">MLE (Thuật toán lặp)</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600;">Hàm mất mát</td>
+                      <td>MSE / RSS</td>
+                      <td style="color: var(--accent-rose);">Log-Loss / Cross-Entropy</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600;">Diễn giải \(\beta\)</td>
+                      <td>Tăng thêm \(\beta\) đơn vị</td>
+                      <td style="color: var(--accent-rose);">Odds nhân thêm \(e^\beta\) lần</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="indicator-gap" style="margin: 0.25rem 0.5rem 0 0.5rem; padding: 0.3rem 0.5rem; font-size: 9px; border-color: rgba(13,148,136,0.25); background: rgba(13,148,136,0.03); color: var(--accent-teal);">
+                  <span>Đồng nhất: Cả hai đều thuộc họ Mô hình Tuyến tính Tổng quát (GLM)</span>
+                </div>
+              </div>
+            </div>
+            <!-- Right Side charts comparing all models -->
+            <div class="bezel-outer anim-entry" style="transition-delay: 200ms; align-self: center; width: 100%;">
+              <div class="bezel-inner" style="padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <span class="stat-label">BẢNG HIỆU SUẤT MÔ HÌNH TRONG ĐỒ ÁN (R² SCORES)</span>
+                <div style="height: 180px; position: relative;">
+                  <canvas id="modelCompareChart"></canvas>
+                </div>
+                <div class="glass-alert" style="margin-top: 0.25rem; padding: 0.4rem 0.75rem; border-color: var(--accent-teal); background: rgba(45,212,191,0.02)">
+                  <div class="glass-alert-title" style="font-size: 9px; color: var(--accent-teal);">KẾT LUẬN</div>
+                  <div class="glass-alert-body" style="font-size: 11px; line-height: 1.45;">
+                    Các mô hình phi tuyến tính phức tạp hơn (XGBoost, Random Forest) khắc phục tốt tính phân phối lệch của dữ liệu Rossmann và vượt trội so với Hồi quy Tuyến tính truyền thống.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chrome-footer">
+            <span class="shortcut-tips">Xin chân thành cảm ơn thầy/cô và các bạn đã theo dõi!</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- 4. SYSTEM NAVIGATION CHROMES (BOTTOM FIXED NAV) -->
+  <div class="notes-trigger-btn" id="notes-trigger-btn" title="Xem kịch bản thuyết trình (S)">
+    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+  </div>
+
+  <div class="speaker-script-panel" id="speaker-notes-panel">
+    <div class="notes-header" id="speaker-notes-header">
+      <div class="notes-title">KỊCH BẢN THUYẾT TRÌNH (SPEAKER SCRIPT)</div>
+      <div class="notes-toggle-icon">▲</div>
+    </div>
+    <div class="notes-body" id="speaker-notes-body">
+      Đang tải kịch bản...
+    </div>
+  </div>
+
+  <div style="position: fixed; bottom: 1.5rem; right: 2rem; z-index: 99;">
+    <div class="custom-nav-pill">
+      <span class="nav-arrow" id="nav-prev">←</span>
+      <span id="nav-current-num">01</span> / 15
+      <span class="nav-arrow" id="nav-next">→</span>
+    </div>
+  </div>
+
+  <!-- 5. SCRIPTS LOADING -->
+  <!-- Reveal.js base and plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/math/math.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/r.min.js"></script>
+  
+  <!-- MathJax and Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
+  
+  <!-- Custom scripts -->
+  <script src="custom.js"></script>
+  
+  <script>
+    // Initialize Reveal.js with native Markdown syntax highlighting plugins
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize highlight.js code highlighter directly
+      hljs.highlightAll();
+
+      Reveal.initialize({
+        controls: false, // hidden in favor of our custom nav pill
+        progress: false, // hidden in favor of our viewport top bar
+        hash: true,
+        keyboard: true,
+        overview: true,
+        center: false,
+        width: 1200,
+        height: 700,
+        margin: 0.05,
+        minScale: 0.2,
+        maxScale: 2.0,
+        plugins: [ RevealMath.MathJax3 ]
+      });
+    });
+  </script>
+</body>
+</html>
