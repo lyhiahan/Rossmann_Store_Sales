@@ -40,4 +40,5 @@ desktop.ini
 
 # --- Exceptions ---
 !slides/presentation.html
+!index.html
 
