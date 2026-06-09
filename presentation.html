@@ -1,0 +1,2645 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rossmann Analytics — Thống kê & Hồi quy</title>
+  
+  <!-- Fonts & Icon CDNs -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- KaTeX for Math Equations -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+
+  <style>
+    /* ==========================================================================
+       DESIGN SYSTEM & CORE STYLES — ROSSMANN SALES ANALYTICS
+       ========================================================================== */
+    :root {
+      /* Color Palette */
+      --navy: #0F172A;
+      --navy-900: #020617;
+      --navy-800: #1E293B;
+      --navy-700: #334155;
+      --blue: #3B82F6;
+      --blue-hover: #2563EB;
+      --blue-light: rgba(59, 130, 246, 0.1);
+      --coral: #F97316;
+      --coral-hover: #EA580C;
+      --coral-light: rgba(249, 115, 22, 0.1);
+      --green: #22C55E;
+      --green-light: rgba(34, 197, 94, 0.1);
+      --white: #FFFFFF;
+      
+      /* Neutral Grays */
+      --gray-50: #F8FAFC;
+      --gray-100: #F1F5F9;
+      --gray-200: #E2E8F0;
+      --gray-300: #CBD5E1;
+      --gray-400: #94A3B8;
+      --gray-500: #64748B;
+      --gray-600: #475569;
+
+      /* Typography */
+      --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-heading: 'Outfit', 'Inter', sans-serif;
+
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      
+      /* Transitions */
+      --transition-fast: 0.15s ease;
+      --transition-normal: 0.3s ease;
+      --transition-slow: 0.5s ease;
+
+      /* Border Radii */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+    }
+
+    /* --- 2. RESET & BASE ELEMENTS --- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: var(--font-primary);
+      background-color: var(--gray-50);
+      color: var(--navy-800);
+      line-height: 1.625;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: var(--navy); }
+    ::-webkit-scrollbar-thumb { background: var(--navy-700); border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--blue); }
+
+    /* Typography Base */
+    h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); color: var(--navy); font-weight: 700; line-height: 1.25; }
+    a { text-decoration: none; color: inherit; transition: color var(--transition-fast); }
+    ul { list-style: none; }
+
+    /* --- 3. GLOBAL COMPONENTS & UTILITIES --- */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; }
+
+    /* Grid Utilities */
+    .grid-2 { display: grid; grid-template-columns: 1fr; gap: 32px; }
+    @media (min-width: 768px) { .grid-2 { grid-template-columns: repeat(2, 1fr); } }
+
+    .grid-3 { display: grid; grid-template-columns: 1fr; gap: 24px; }
+    @media (min-width: 640px) { .grid-3 { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
+
+    .grid-4 { display: grid; grid-template-columns: 1fr; gap: 24px; }
+    @media (min-width: 640px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .grid-4 { grid-template-columns: repeat(4, 1fr); } }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 28px;
+      font-family: var(--font-heading);
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      border: none;
+      gap: 8px;
+    }
+    .btn-primary { background: var(--blue); color: var(--white); box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3); }
+    .btn-primary:hover { background: var(--blue-hover); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4); }
+    .btn-secondary { background: rgba(255, 255, 255, 0.1); color: var(--white); border: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.4); transform: translateY(-1px); }
+    .btn-outline { background: transparent; color: var(--blue); border: 1px solid var(--blue); }
+    .btn-outline:hover { background: var(--blue-light); transform: translateY(-1px); }
+
+    /* Sections Wrapper */
+    .section { padding: 80px 0; position: relative; }
+    .section-dark { background-color: var(--navy); color: var(--white); }
+    .section-dark h2 { color: var(--white); }
+    .section-dim { background-color: var(--gray-100); }
+
+    .section-title-wrap { text-align: center; max-width: 700px; margin: 0 auto 56px; }
+    .section-tag { font-family: var(--font-heading); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--blue); margin-bottom: 12px; display: block; }
+    .section-title { font-size: 36px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 16px; }
+    .section-subtitle { color: var(--gray-500); font-size: 16px; }
+    .section-dark .section-subtitle { color: var(--gray-400); }
+
+    /* Badge/Tags */
+    .tag { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; letter-spacing: 0.3px; }
+    .tag--blue { background-color: var(--blue-light); color: var(--blue); }
+    .tag--coral { background-color: var(--coral-light); color: var(--coral); }
+    .tag--green { background-color: var(--green-light); color: var(--green); }
+
+    /* --- 4. NAVIGATION BAR --- */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 72px;
+      background-color: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+    }
+    .nav-container { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    .nav-logo { font-family: var(--font-heading); font-size: 20px; font-weight: 800; color: var(--white); display: flex; align-items: center; gap: 10px; }
+    .nav-logo span { color: var(--blue); }
+    .nav-menu { display: none; gap: 32px; align-items: center; }
+    @media (min-width: 1024px) { .nav-menu { display: flex; } }
+    .nav-link { color: var(--gray-300); font-size: 14px; font-weight: 500; }
+    .nav-link:hover { color: var(--white); }
+
+    /* --- 5. HERO SECTION --- */
+    .hero {
+      padding-top: 152px;
+      padding-bottom: 96px;
+      background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy) 50%, #0d1e3a 100%);
+      color: var(--white);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 100px;
+      background: linear-gradient(to top, var(--gray-50), transparent);
+      pointer-events: none;
+    }
+    .hero-content { max-width: 800px; position: relative; z-index: 2; }
+    .hero-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 6px 16px;
+      border-radius: var(--radius-full);
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .hero-title { font-size: 44px; line-height: 1.15; letter-spacing: -1.5px; margin-bottom: 24px; }
+    @media (min-width: 640px) { .hero-title { font-size: 54px; } }
+    @media (min-width: 1024px) { .hero-title { font-size: 64px; } }
+    .hero-description { font-size: 18px; color: var(--gray-400); margin-bottom: 40px; max-width: 650px; line-height: 1.6; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 48px; }
+
+    /* Glowing Decorative Orbs */
+    .hero .glow-orb { position: absolute; border-radius: var(--radius-full); filter: blur(120px); pointer-events: none; opacity: 0.15; }
+    .orb-1 { width: 450px; height: 450px; background: var(--blue); top: -50px; right: -50px; }
+    .orb-2 { width: 350px; height: 350px; background: var(--coral); bottom: -50px; left: -100px; }
+
+    /* Hero Stats Bar */
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      backdrop-filter: blur(12px);
+    }
+    @media (min-width: 640px) { .hero-stats { grid-template-columns: repeat(4, 1fr); } }
+    .hero-stat-item { text-align: center; }
+    .hero-stat-value { font-size: 32px; font-weight: 800; color: var(--blue); font-family: var(--font-heading); }
+    .hero-stat-item:nth-child(even) .hero-stat-value { color: var(--coral); }
+    .hero-stat-label { font-size: 12px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+    /* --- 6. CARDS & GENERAL BLOCKS --- */
+    .card {
+      background-color: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      transition: transform var(--transition-normal), border-color var(--transition-normal), box-shadow var(--transition-normal);
+      position: relative;
+      box-shadow: var(--shadow-sm);
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(59, 130, 246, 0.2);
+      box-shadow: var(--shadow-xl);
+    }
+    .card-icon { width: 56px; height: 56px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 24px; }
+    .card-icon-blue { background-color: var(--blue-light); color: var(--blue); }
+    .card-icon-coral { background-color: var(--coral-light); color: var(--coral); }
+    .card-icon-green { background-color: var(--green-light); color: var(--green); }
+    .card-title { font-size: 20px; margin-bottom: 12px; }
+    .card-desc { font-size: 15px; color: var(--gray-500); line-height: 1.6; }
+
+    /* --- 7. DESCRIPTIVE STATISTICS SECTION --- */
+    .desc-section-wrap { display: grid; grid-template-columns: 1fr; gap: 40px; }
+    @media (min-width: 1024px) { .desc-section-wrap { grid-template-columns: 380px 1fr; } }
+    .desc-nav { display: flex; flex-direction: row; gap: 12px; overflow-x: auto; padding-bottom: 12px; }
+    @media (min-width: 1024px) { .desc-nav { flex-direction: column; overflow-x: visible; padding-bottom: 0; } }
+    .desc-nav-btn {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      padding: 16px 20px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 160px;
+      transition: all var(--transition-fast);
+    }
+    .desc-nav-btn i { font-size: 18px; color: var(--gray-400); }
+    .desc-nav-btn.active { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+    .desc-nav-btn.active i { color: var(--blue); }
+    .desc-nav-btn-title { font-family: var(--font-heading); font-weight: 700; font-size: 16px; }
+
+    .desc-content-panel { background-color: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 40px; box-shadow: var(--shadow-md); }
+    .panel-formula { background-color: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 24px; margin: 20px 0; text-align: center; }
+    .panel-formula .katex { font-size: 1.25em; }
+    .panel-grid { display: grid; grid-template-columns: 1fr; gap: 24px; margin-top: 24px; }
+    @media (min-width: 640px) { .panel-grid { grid-template-columns: 1fr 1fr; } }
+    .panel-example-box { background-color: var(--coral-light); border-left: 4px solid var(--coral); border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: 20px; }
+    .panel-code-box { background-color: var(--navy-900); color: var(--white); border-radius: var(--radius-md); padding: 20px; font-family: monospace; position: relative; }
+    .panel-code-box pre { margin-top: 8px; color: var(--blue); }
+    .panel-list { margin-top: 16px; }
+    .panel-list li { position: relative; padding-left: 24px; margin-bottom: 8px; font-size: 15px; }
+    .panel-list li::before { content: "✔"; color: var(--blue); position: absolute; left: 0; }
+
+    /* Descriptive Live Calculator */
+    .calc-container { background-color: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 40px; box-shadow: var(--shadow-lg); margin-top: 48px; }
+    .calc-input-wrap { display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px; }
+    @media (min-width: 768px) { .calc-input-wrap { flex-direction: row; align-items: flex-end; } }
+    .calc-input-field { flex: 1; }
+    .calc-input-field label { font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block; }
+    .calc-input-field input { width: 100%; padding: 12px 16px; border-radius: var(--radius-md); border: 1px solid var(--gray-300); font-family: var(--font-primary); font-size: 15px; outline: none; }
+    .calc-input-field input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+
+    .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    @media (min-width: 768px) { .calc-grid { grid-template-columns: repeat(4, 1fr); } }
+    .calc-card { background-color: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 20px; text-align: center; }
+    .calc-card-value { font-size: 24px; font-weight: 800; color: var(--blue); font-family: var(--font-heading); }
+    .calc-card-label { font-size: 12px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+    .calc-card.coral .calc-card-value { color: var(--coral); }
+
+    .bar-chart-container { margin-top: 32px; border-top: 1px solid var(--gray-200); padding-top: 32px; }
+    .bar-chart-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+    .bar-chart-row { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+    .bar-chart-label { width: 60px; font-size: 13px; font-weight: 600; text-align: right; }
+    .bar-chart-wrapper { flex: 1; height: 24px; background-color: var(--gray-100); border-radius: var(--radius-sm); overflow: hidden; position: relative; }
+    .bar-chart-fill { height: 100%; background-color: var(--blue); width: 0%; transition: width 0.5s ease; }
+    .bar-chart-row.special .bar-chart-fill { background-color: var(--coral); }
+    .bar-chart-value { width: 80px; font-size: 13px; color: var(--gray-600); }
+
+    /* --- 8. INFERENTIAL STATISTICS SECTION --- */
+    .stepper-container { max-width: 900px; margin: 0 auto 56px; position: relative; }
+    .stepper-progress-line { position: absolute; top: 24px; left: 48px; right: 48px; height: 4px; background-color: var(--gray-200); z-index: 1; }
+    .stepper-progress-fill { height: 100%; background-color: var(--blue); width: 0%; transition: width var(--transition-normal); }
+    .stepper-steps { display: flex; justify-content: space-between; position: relative; z-index: 2; }
+    .step-node { width: 52px; height: 52px; border-radius: var(--radius-full); background-color: var(--white); border: 4px solid var(--gray-200); display: flex; align-items: center; justify-content: center; font-weight: 800; font-family: var(--font-heading); font-size: 18px; color: var(--gray-400); cursor: pointer; transition: all var(--transition-normal); }
+    .step-node.active { border-color: var(--blue); color: var(--blue); }
+    .step-node.completed { border-color: var(--blue); background-color: var(--blue); color: var(--white); }
+
+    .step-content-box { background-color: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 40px; max-width: 900px; margin: 0 auto; box-shadow: var(--shadow-md); min-height: 220px; }
+    .step-title { font-size: 24px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+    .step-title span { font-size: 14px; background: var(--blue-light); color: var(--blue); padding: 4px 10px; border-radius: var(--radius-sm); }
+    .step-details { font-size: 16px; color: var(--gray-600); margin-bottom: 20px; }
+    .step-rossmann-use { background-color: var(--gray-50); border-left: 4px solid var(--blue); border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: 16px 20px; }
+    .step-rossmann-use h5 { font-size: 14px; color: var(--navy-700); margin-bottom: 4px; }
+    .step-rossmann-use p { font-size: 14px; color: var(--gray-600); }
+
+    .parallel-testing-wrap { margin-top: 80px; }
+    .parallel-title { text-align: center; font-size: 24px; margin-bottom: 16px; }
+    .parallel-subtitle { text-align: center; color: var(--gray-500); max-width: 600px; margin: 0 auto 40px; font-size: 15px; }
+
+    /* --- 9. LOGISTIC REGRESSION DEEP DIVE --- */
+    .regression-intro-grid { display: grid; grid-template-columns: 1fr; gap: 40px; margin-bottom: 56px; }
+    @media (min-width: 1024px) { .regression-intro-grid { grid-template-columns: 1.2fr 0.8fr; } }
+    .limitations-list { margin-top: 16px; }
+    .limitations-list li { position: relative; padding-left: 28px; margin-bottom: 16px; }
+    .limitations-list li i { position: absolute; left: 0; top: 4px; color: var(--coral); }
+    .limitations-list li strong { color: var(--white); }
+    #landingPageContent .limitations-list li strong { color: var(--navy); }
+
+    .model-math-grid { display: grid; grid-template-columns: 1fr; gap: 32px; margin-bottom: 56px; }
+    @media (min-width: 768px) { .model-math-grid { grid-template-columns: 1fr 1fr; } }
+    .math-card { background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-lg); padding: 32px; backdrop-filter: blur(12px); }
+    #landingPageContent .math-card { background-color: var(--white); border: 1px solid var(--gray-200); box-shadow: var(--shadow-sm); }
+    .math-card-title { font-size: 20px; color: var(--white); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+    #landingPageContent .math-card-title { color: var(--navy); }
+    .math-card-title i { color: var(--blue); }
+    .math-card-title.coral i { color: var(--coral); }
+    .math-card-formula { background-color: rgba(0, 0, 0, 0.2); border-radius: var(--radius-md); padding: 20px; margin: 16px 0; }
+    #landingPageContent .math-card-formula { background-color: var(--gray-50); border: 1px solid var(--gray-200); }
+    .math-card-formula .katex { font-size: 1.15em; }
+    #landingPageContent .math-card-formula .katex { color: var(--navy); }
+
+    .sigmoid-visualizer { background-color: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 40px; color: var(--navy); box-shadow: var(--shadow-lg); }
+    .sigmoid-visualizer-title { font-size: 22px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+    .sigmoid-visualizer-title i { color: var(--blue); }
+    .visualizer-wrapper { display: grid; grid-template-columns: 1fr; gap: 32px; }
+    @media (min-width: 1024px) { .visualizer-wrapper { grid-template-columns: 1.2fr 0.8fr; } }
+    .plot-area { background-color: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 16px; position: relative; display: flex; align-items: center; justify-content: center; }
+    .plot-area svg { width: 100%; height: 280px; max-width: 500px; }
+
+    .control-area { display: flex; flex-direction: column; gap: 20px; }
+    .control-group { display: flex; flex-direction: column; gap: 8px; }
+    .control-header { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; }
+    .control-group input[type="range"] { width: 100%; accent-color: var(--blue); cursor: pointer; }
+    .calc-step-box { background-color: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 20px; margin-top: 12px; }
+    .calc-step-title { font-size: 14px; font-weight: 700; color: var(--navy-700); margin-bottom: 8px; }
+    .calc-step-line { font-family: monospace; font-size: 14px; margin-bottom: 4px; }
+
+    .or-calculator { background-color: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 40px; color: var(--navy); box-shadow: var(--shadow-lg); margin-top: 48px; }
+    .or-calculator-title { font-size: 22px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+    .or-calculator-title i { color: var(--coral); }
+    .or-wrapper { display: grid; grid-template-columns: 1fr; gap: 32px; }
+    @media (min-width: 768px) { .or-wrapper { grid-template-columns: 1fr 1.2fr; } }
+    .or-controls { display: flex; flex-direction: column; gap: 20px; }
+    .or-result-panel { background-color: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 28px; display: flex; flex-direction: column; justify-content: center; }
+    .or-value-display { text-align: center; margin-bottom: 16px; }
+    .or-value-number { font-size: 56px; font-weight: 800; color: var(--coral); font-family: var(--font-heading); line-height: 1; }
+    .or-value-label { font-size: 12px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 1px; }
+    .or-explanation { font-size: 15px; color: var(--gray-700); line-height: 1.6; }
+
+    .metric-grid { margin-top: 80px; }
+    .metric-title { text-align: center; font-size: 24px; margin-bottom: 40px; }
+
+    /* --- 10. COMPARISON MATRIX --- */
+    #landingPageContent .table-wrap { background-color: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); overflow-x: auto; box-shadow: var(--shadow-lg); margin-bottom: 40px; }
+    #landingPageContent table { width: 100%; border-collapse: collapse; text-align: left; font-size: 15px; }
+    #landingPageContent th { background-color: var(--gray-100); padding: 18px 24px; font-weight: 700; font-family: var(--font-heading); color: var(--navy); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--gray-200); }
+    #landingPageContent td { padding: 16px 24px; border-bottom: 1px solid var(--gray-200); color: var(--gray-600); vertical-align: middle; }
+    #landingPageContent tr:last-child td { border-bottom: none; }
+    #landingPageContent tr:hover td { background-color: var(--gray-50); }
+    #landingPageContent .td-header { font-weight: 700; color: var(--navy); background-color: var(--gray-50); }
+    .table-footnote { background-color: var(--blue-light); border-left: 4px solid var(--blue); border-radius: var(--radius-md); padding: 20px 28px; display: flex; align-items: center; gap: 20px; }
+    .table-footnote-icon { font-size: 24px; color: var(--blue); }
+    .table-footnote-text { font-size: 15px; color: var(--navy-700); }
+
+    /* --- 11. FOOTER --- */
+    .footer { background-color: var(--navy-900); color: var(--gray-400); padding: 64px 0 32px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+    .footer-grid { display: grid; grid-template-columns: 1fr; gap: 40px; margin-bottom: 48px; }
+    @media (min-width: 768px) { .footer-grid { grid-template-columns: 1.5fr 1fr 1fr; } }
+    .footer-logo { font-family: var(--font-heading); font-size: 24px; font-weight: 800; color: var(--white); margin-bottom: 16px; }
+    .footer-logo span { color: var(--blue); }
+    .footer-col-title { color: var(--white); font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+    .footer-links { display: flex; flex-direction: column; gap: 12px; }
+    .footer-link:hover { color: var(--white); }
+    .footer-bottom { border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 32px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; gap: 16px; }
+    @media (min-width: 768px) { .footer-bottom { flex-direction: row; } }
+    .copyright { font-size: 14px; }
+    .social-links { display: flex; gap: 16px; }
+    .social-icon { width: 40px; height: 40px; border-radius: var(--radius-full); background: rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; color: var(--white); transition: background var(--transition-fast); }
+    .social-icon:hover { background: var(--blue); }
+
+
+    /* ==========================================================================
+       SLIDE-SPECIFIC PRESENTATION CSS
+       ========================================================================== */
+    #slideDeckContainer {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 9999;
+      background: var(--navy);
+      color: var(--white);
+      overflow: hidden;
+    }
+    
+    .slide-mode-active {
+      overflow: hidden !important;
+      height: 100vh !important;
+      width: 100vw !important;
+      background-color: var(--navy) !important;
+    }
+    
+    .slide-deck {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+    
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px 80px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      transform: translateX(30px);
+      overflow-y: auto;
+    }
+    
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+    }
+    
+    .slide--dark {
+      background: var(--navy);
+    }
+    
+    .slide--gradient {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-800) 50%, #1a2744 100%);
+    }
+    
+    .slide--light {
+      background: var(--gray-200);
+      color: var(--navy);
+    }
+    
+    .slide--light table {
+      background: var(--white);
+    }
+    
+    .slide--accent {
+      background: linear-gradient(135deg, var(--blue) 0%, #2563EB 100%);
+    }
+    
+    .slide--coral {
+      background: linear-gradient(135deg, var(--coral) 0%, #EA580C 100%);
+    }
+    
+    .slide h1 {
+      font-size: 56px;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 24px;
+      color: var(--white);
+    }
+    .slide--light h1 {
+      color: var(--navy);
+    }
+    
+    .slide h2 {
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      margin-bottom: 20px;
+      color: var(--white);
+    }
+    .slide--light h2 {
+      color: var(--navy);
+    }
+    
+    .slide h3 {
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 1.3;
+      margin-bottom: 16px;
+      color: var(--white);
+    }
+    .slide--light h3 {
+      color: var(--navy);
+    }
+    
+    .slide p,
+    .slide li {
+      font-size: 18px;
+      line-height: 1.7;
+      color: var(--gray-300);
+    }
+    .slide--light p,
+    .slide--light li {
+      color: var(--gray-600);
+    }
+    
+    .slide .slide-number {
+      position: absolute;
+      bottom: 28px;
+      right: 40px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-400);
+      letter-spacing: 1px;
+    }
+    
+    .slide .label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 16px;
+    }
+    
+    .slide--light .label {
+      color: var(--blue);
+    }
+    
+    .slide--accent .label,
+    .slide--coral .label {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .slide .subtitle {
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--gray-400);
+      line-height: 1.5;
+      max-width: 700px;
+    }
+    
+    .slide--light .subtitle {
+      color: var(--gray-500);
+    }
+    
+    .slide--accent .subtitle,
+    .slide--coral .subtitle {
+      color: rgba(255, 255, 255, 0.75);
+    }
+    
+    .slide .highlight {
+      color: var(--blue);
+      font-weight: 600;
+    }
+    
+    .slide .highlight-coral {
+      color: var(--coral);
+      font-weight: 600;
+    }
+    
+    .slide--accent .highlight {
+      color: var(--white);
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+    
+    .slide .card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 28px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    
+    .slide .card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+    
+    .slide--light .card {
+      background: var(--white);
+      border: 1px solid var(--gray-300);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+    
+    .slide--light .card:hover {
+      border-color: var(--blue);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    }
+    
+    .slide .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+    
+    .slide .card-icon--blue {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--blue);
+    }
+    
+    .slide .card-icon--coral {
+      background: rgba(249, 115, 22, 0.15);
+      color: var(--coral);
+    }
+    
+    .slide .card-icon--navy {
+      background: rgba(15, 23, 42, 0.1);
+      color: var(--navy);
+    }
+    
+    .slide--light .card-icon--blue {
+      background: rgba(59, 130, 246, 0.1);
+    }
+    
+    .slide .card h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+    
+    .slide .card p {
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    
+    .slide .stat-box {
+      text-align: center;
+      padding: 24px 16px;
+    }
+    
+    .slide .stat-value {
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--blue);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    
+    .slide .stat-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .slide--light .stat-value {
+      color: var(--blue);
+    }
+    
+    .slide--light .stat-label {
+      color: var(--gray-500);
+    }
+    
+    .slide .process-flow {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      width: 100%;
+      margin-top: 32px;
+    }
+    
+    .slide .process-step {
+      flex: 1;
+      text-align: center;
+      position: relative;
+      padding: 0 12px;
+    }
+    
+    .slide .process-step::after {
+      content: '→';
+      position: absolute;
+      right: -10px;
+      top: 22px;
+      font-size: 20px;
+      color: var(--gray-500);
+    }
+    
+    .slide .process-step:last-child::after {
+      display: none;
+    }
+    
+    .slide .step-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+      margin: 0 auto 12px;
+    }
+    
+    .slide .step-circle--coral {
+      background: var(--coral);
+    }
+    
+    .slide .process-step h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 6px;
+    }
+    
+    .slide .process-step p {
+      font-size: 12px;
+      color: var(--gray-400);
+      line-height: 1.5;
+    }
+    
+    .slide--light .process-step h4 {
+      color: var(--navy);
+    }
+    
+    .slide--light .process-step p {
+      color: var(--gray-500);
+    }
+    
+    .slide .table-wrap {
+      overflow: hidden;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      margin-top: 24px;
+    }
+    
+    .slide--light .table-wrap {
+      border-color: var(--gray-300);
+    }
+    
+    .slide table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+    }
+    
+    .slide thead th {
+      background: rgba(59, 130, 246, 0.12);
+      padding: 14px 20px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--blue);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .slide--light thead th {
+      background: rgba(59, 130, 246, 0.06);
+      color: var(--blue);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .slide td {
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--gray-300);
+    }
+    
+    .slide--light td {
+      border-color: var(--gray-100);
+      color: var(--gray-600);
+    }
+    
+    .slide tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .slide tr:hover td {
+      background: rgba(59, 130, 246, 0.04);
+    }
+    
+    .slide .tag {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    
+    .slide .tag--blue {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--blue);
+    }
+    
+    .slide .tag--coral {
+      background: rgba(249, 115, 22, 0.15);
+      color: var(--coral);
+    }
+    
+    .slide .tag--green {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22C55E;
+    }
+    
+    .slide .nav-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 56px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      z-index: 1000;
+    }
+    
+    .slide .nav-btn {
+      background: none;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--white);
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .slide .nav-btn:hover {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: var(--blue);
+    }
+    
+    .slide .nav-progress {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    
+    .slide .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--gray-600);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .slide .nav-dot.active {
+      background: var(--blue);
+      width: 24px;
+      border-radius: 4px;
+    }
+    
+    .slide .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    
+    .slide .glow-orb--blue { background: var(--blue); }
+    .slide .glow-orb--coral { background: var(--coral); }
+    
+    .slide .divider {
+      width: 64px;
+      height: 3px;
+      background: var(--blue);
+      border-radius: 2px;
+      margin: 16px 0;
+    }
+    
+    .slide ul.clean-list { list-style: none; padding: 0; }
+    .slide ul.clean-list li {
+      padding: 8px 0 8px 24px;
+      position: relative;
+      font-size: 17px;
+    }
+    .slide ul.clean-list li::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 16px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+    
+    .slide ul.clean-list.emoji-list li { padding-left: 0; }
+    .slide ul.clean-list.emoji-list li::before { display: none; }
+    
+    .slide .formula-box {
+      background: rgba(59, 130, 246, 0.06);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 14px;
+      padding: 24px 32px;
+      text-align: center;
+      margin: 16px 0;
+      font-size: 22px;
+    }
+    .slide--light .formula-box {
+      background: rgba(59, 130, 246, 0.04);
+      border-color: rgba(59, 130, 246, 0.15);
+    }
+    .slide .formula-box .katex { font-size: 1.3em; }
+    .slide .formula-box--coral {
+      background: rgba(249, 115, 22, 0.06);
+      border-color: rgba(249, 115, 22, 0.2);
+    }
+    
+    .slide .code-r {
+      display: inline-block;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: 14px;
+      color: var(--blue);
+      letter-spacing: 0.3px;
+    }
+    .slide--light .code-r {
+      background: rgba(59, 130, 246, 0.06);
+    }
+    
+    .slide .example-box {
+      background: rgba(249, 115, 22, 0.06);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-top: 12px;
+    }
+    .slide .example-box p { font-size: 15px; }
+    .slide--light .example-box {
+      background: rgba(249, 115, 22, 0.04);
+      border-color: rgba(249, 115, 22, 0.15);
+    }
+    
+    .slide .matrix-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 2px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 24px;
+    }
+    .slide .matrix-cell { background: var(--navy); padding: 20px; text-align: center; }
+    .slide .matrix-cell--header {
+      background: rgba(59, 130, 246, 0.1);
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .slide .matrix-cell--label {
+      background: rgba(255, 255, 255, 0.03);
+      text-align: left;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--gray-300);
+    }
+    .slide .matrix-cell p { font-size: 13px; }
+    
+    .slide--light .matrix-grid { background: var(--gray-300); }
+    .slide--light .matrix-cell { background: var(--white); }
+    .slide--light .matrix-cell--header { background: rgba(59, 130, 246, 0.06); }
+    .slide--light .matrix-cell--label { background: var(--gray-50); color: var(--navy); }
+    
+    @media print {
+      body.slide-mode-active {
+        overflow: visible !important;
+        height: auto !important;
+        width: auto !important;
+      }
+      #slideDeckContainer {
+        position: relative !important;
+        z-index: auto !important;
+        overflow: visible !important;
+        height: auto !important;
+        width: auto !important;
+      }
+      .back-to-landing-btn,
+      .slide .nav-bar {
+        display: none !important;
+      }
+      .slide {
+        position: relative !important;
+        break-after: page !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        min-height: 100vh !important;
+        height: 100vh !important;
+        page-break-after: always !important;
+      }
+    }
+  </style>
+</head>
+
+<body class="landing-mode">
+
+  <!-- ==========================================
+       PART A. LANDING PAGE CONTENT
+       ========================================== -->
+  <div id="landingPageContent">
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+      <div class="container nav-container">
+        <a href="#" class="nav-logo">
+          <i class="fa-solid fa-chart-line"></i> Rossmann<span>Analytics</span>
+        </a>
+        <ul class="nav-menu">
+          <li><a href="#hero" class="nav-link">Giới thiệu</a></li>
+          <li><a href="#descriptive" class="nav-link">Thống kê Mô tả</a></li>
+          <li><a href="#inferential" class="nav-link">Thống kê Suy diễn</a></li>
+          <li><a href="#logistic" class="nav-link">Hồi quy Logistic</a></li>
+          <li><a href="#comparison" class="nav-link">So sánh & Kết luận</a></li>
+          <li><button onclick="toggleMode('slide')" class="btn btn-primary" style="padding: 8px 18px; font-size: 13px;"><i class="fa-solid fa-play"></i> Trình chiếu Slide</button></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+      <div class="glow-orb orb-1"></div>
+      <div class="glow-orb orb-2"></div>
+      
+      <div class="container">
+        <div class="hero-content">
+          <div class="hero-label">
+            <i class="fa-solid fa-graduation-cap"></i> Cơ sở Lý thuyết Thống kê · Rossmann Store Sales
+          </div>
+          <h1 class="hero-title">
+            Nền tảng Toán học đứng sau Phân tích Doanh số <span style="color:var(--blue)">Rossmann</span>
+          </h1>
+          <p class="hero-description">
+            Khám phá trực quan cách các lý thuyết Thống kê Mô tả, Thống kê Suy diễn, và Hồi quy Logistic được áp dụng thực tế để làm sáng tỏ dữ liệu kinh doanh của chuỗi dược phẩm Rossmann với hơn 3.000 cửa hàng tại châu Âu.
+          </p>
+          
+          <div class="hero-actions">
+            <a href="#descriptive" class="btn btn-primary"><i class="fa-solid fa-calculator"></i> Thống kê Mô tả</a>
+            <a href="#inferential" class="btn btn-secondary"><i class="fa-solid fa-vial"></i> Kiểm định Suy diễn</a>
+            <a href="#logistic" class="btn btn-secondary"><i class="fa-solid fa-chart-simple"></i> Hồi quy Logistic</a>
+          </div>
+        </div>
+
+        <div class="hero-stats">
+          <div class="hero-stat-item">
+            <div class="hero-stat-value">50</div>
+            <div class="hero-stat-label">Cửa hàng chọn mẫu</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="hero-stat-value">12</div>
+            <div class="hero-stat-label">Tháng quan sát</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="hero-stat-value">~14K</div>
+            <div class="hero-stat-label">Bản ghi giao dịch</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="hero-stat-value">22</div>
+            <div class="hero-stat-label">Biến số phân tích</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Thống kê Mô tả Section -->
+    <section class="section" id="descriptive">
+      <div class="container">
+        <div class="section-title-wrap">
+          <span class="section-tag">Nhánh 1</span>
+          <h2 class="section-title">📊 Thống kê Mô tả</h2>
+          <p class="section-subtitle">
+            "Dữ liệu trông như thế nào?" — Tóm tắt các đặc trưng trọng tâm của mẫu dữ liệu để hiểu hành vi phân phối doanh số của Rossmann.
+          </p>
+        </div>
+
+        <div class="desc-section-wrap">
+          <div class="desc-nav">
+            <button class="desc-nav-btn active" onclick="switchDescTab('mean', this)">
+              <i class="fa-solid fa-divide"></i>
+              <span class="desc-nav-btn-title">Mean (Trung bình)</span>
+            </button>
+            <button class="desc-nav-btn" onclick="switchDescTab('median', this)">
+              <i class="fa-solid fa-align-center"></i>
+              <span class="desc-nav-btn-title">Median (Trung vị)</span>
+            </button>
+            <button class="desc-nav-btn" onclick="switchDescTab('variance', this)">
+              <i class="fa-solid fa-square-root-variable"></i>
+              <span class="desc-nav-btn-title">Variance (Phương sai)</span>
+            </button>
+            <button class="desc-nav-btn" onclick="switchDescTab('sd', this)">
+              <i class="fa-solid fa-chart-area"></i>
+              <span class="desc-nav-btn-title">Standard Deviation</span>
+            </button>
+          </div>
+
+          <div class="desc-content-panel" id="descPanel">
+            <h3 id="panelTitle" style="font-size: 22px; color: var(--navy);">Trung bình cộng — Mean</h3>
+            <p id="panelSubtitle" style="color: var(--gray-500); font-style: italic; margin-top: 4px; font-size: 14px;">"Đại diện cho kỳ vọng toán học của dữ liệu"</p>
+            
+            <div class="panel-formula" id="panelFormula">
+              $$\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i$$
+            </div>
+
+            <div style="margin: 20px 0;">
+              <h4 style="font-size: 15px; margin-bottom: 8px;"><i class="fa-solid fa-circle-info" style="color: var(--blue);"></i> Khái niệm & Đặc tính</h4>
+              <ul class="panel-list" id="panelProsCons">
+                <li>Sử dụng thông tin của toàn bộ các quan sát trong tập dữ liệu.</li>
+                <li>Cực kỳ nhạy cảm với các giá trị ngoại lai (outliers) hoặc các giá trị cực đoan.</li>
+                <li>Là đại lượng trung tâm tốt nhất khi dữ liệu phân phối đối xứng và không có nhiễu lớn.</li>
+              </ul>
+            </div>
+
+            <div class="panel-grid">
+              <div class="panel-example-box">
+                <h4 style="font-size: 14px; color: var(--coral); margin-bottom: 6px;"><i class="fa-solid fa-basket-shopping"></i> Trong đồ án Rossmann</h4>
+                <p id="panelExample" style="font-size: 14px; line-height: 1.5;">
+                  <strong>Mean(Sales) ≈ 6,840 EUR/ngày</strong>. Giá trị này phản ánh mức doanh thu trung bình, tuy nhiên nó bị kéo lệch lên cao do những ngày lễ, Giáng sinh hoặc đợt khuyến mãi lớn có doanh số tăng vọt (15,000–20,000 EUR).
+                </p>
+              </div>
+              <div class="panel-code-box">
+                <span style="font-size: 11px; color: var(--gray-400); text-transform: uppercase; font-weight: 600;">Hàm trong R:</span>
+                <pre id="panelCode">mean(df_clean$sales, na.rm = TRUE)</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-Time Interactive Calculator -->
+        <div class="calc-container">
+          <h3 style="font-size: 20px; margin-bottom: 8px;"><i class="fa-solid fa-gears" style="color: var(--blue);"></i> Trình Tính toán & Mô phỏng Thống kê Thực tế</h3>
+          <p style="color: var(--gray-500); font-size: 14px; margin-bottom: 24px;">Nhập một dãy số đại diện cho doanh số hàng ngày (cách nhau bằng dấu phẩy) để tính toán tự động và xem biểu đồ phân phối trực quan.</p>
+          
+          <div class="calc-input-wrap">
+            <div class="calc-input-field">
+              <label for="calcInput">Dãy số doanh số (EUR):</label>
+              <input type="text" id="calcInput" value="5400, 6800, 6200, 15000, 6450, 7100, 5900">
+            </div>
+            <button class="btn btn-primary" style="height: 48px;" onclick="calculateLiveStats()">Tính toán Live</button>
+          </div>
+
+          <div class="calc-grid">
+            <div class="calc-card">
+              <div class="calc-card-value" id="calcN">7</div>
+              <div class="calc-card-label">Số mẫu (n)</div>
+            </div>
+            <div class="calc-card">
+              <div class="calc-card-value" id="calcMean">7,550</div>
+              <div class="calc-card-label">Mean (Trung bình)</div>
+            </div>
+            <div class="calc-card coral">
+              <div class="calc-card-value" id="calcMedian">6,450</div>
+              <div class="calc-card-label">Median (Trung vị)</div>
+            </div>
+            <div class="calc-card">
+              <div class="calc-card-value" id="calcSD">3,371</div>
+              <div class="calc-card-label">Độ lệch chuẩn (SD)</div>
+            </div>
+          </div>
+
+          <div class="bar-chart-container" id="barChartContainer">
+            <h4 class="bar-chart-title"><i class="fa-solid fa-chart-column"></i> Biểu đồ Trực quan hóa Phân bố và Outlier</h4>
+            <div id="chartRows"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Thống kê Suy diễn Section -->
+    <section class="section section-dim" id="inferential">
+      <div class="container">
+        <div class="section-title-wrap">
+          <span class="section-tag">Nhánh 2</span>
+          <h2 class="section-title">🔬 Thống kê Suy diễn</h2>
+          <p class="section-subtitle">
+            "Dữ liệu cho phép kết luận gì?" — Suy luận về các tham số thực tế của tổng thể dựa trên kết quả mẫu và kiểm chứng các giả thuyết kinh doanh một cách có căn cứ.
+          </p>
+        </div>
+
+        <div class="stepper-container">
+          <div class="stepper-progress-line">
+            <div class="stepper-progress-fill" id="stepperProgress" style="width: 0%;"></div>
+          </div>
+          <div class="stepper-steps">
+            <div class="step-node completed" onclick="goToStep(1)">1</div>
+            <div class="step-node active" onclick="goToStep(2)">2</div>
+            <div class="step-node" onclick="goToStep(3)">3</div>
+            <div class="step-node" onclick="goToStep(4)">4</div>
+            <div class="step-node" onclick="goToStep(5)">5</div>
+          </div>
+        </div>
+
+        <div class="step-content-box" id="stepContentBox">
+          <h3 class="step-title" id="stepTitle">📝 Đặt giả thuyết <span>Bước 1</span></h3>
+          <p class="step-details" id="stepDetails">
+            Thiết lập giả thuyết không $H_0$ ("Không có sự khác biệt / không có hiệu ứng") và giả thuyết đối H₁ ("Có sự khác biệt / có hiệu ứng thực tế"). Đây là gốc rễ của mọi kiểm định thống kê.
+          </p>
+          <div class="step-rossmann-use">
+            <h5 id="stepUseCaseHeader"><i class="fa-solid fa-code-branch" style="color:var(--blue);"></i> Sử dụng trong dự án Rossmann</h5>
+            <p id="stepUseCaseText">
+              <strong>Giả thuyết:</strong> So sánh doanh thu khi có chạy khuyến mãi (`Promo = 1`) và khi không chạy khuyến mãi (`Promo = 0`). <br>
+              $H_0$: Doanh số trung bình của hai nhóm bằng nhau ($\mu_1 = \mu_2$). <br>
+              $H_1$: Doanh số trung bình của nhóm chạy khuyến mãi cao hơn ($\mu_1 > \mu_2$).
+            </p>
+          </div>
+        </div>
+
+        <div class="parallel-testing-wrap">
+          <h3 class="parallel-title">🧪 Thiết Kế Kiểm Định Song Song (Tham số vs Phi tham số)</h3>
+          <p class="parallel-subtitle">
+            Do dữ liệu doanh số lệch phải (skewness ≈ 0.94) vi phạm phân phối chuẩn, Rossmann Analytics sử dụng mô hình kiểm định kép để đối chứng chéo kết quả nhằm đảm bảo độ tin cậy tối đa.
+          </p>
+
+          <div class="grid-3">
+            <div class="card" style="border-top: 4px solid var(--blue);">
+              <div class="card-icon card-icon-blue"><i class="fa-solid fa-code"></i></div>
+              <h3 class="card-title">So sánh 2 Nhóm (Promo)</h3>
+              <p class="card-desc" style="margin-bottom: 12px;">So sánh hiệu quả doanh thu giữa có và không chạy chương trình khuyến mãi.</p>
+              <div style="display:flex; justify-content: space-between; border-top: 1px solid var(--gray-200); padding-top: 12px; font-size: 13px;">
+                <span><strong>Tham số:</strong> Welch t-test</span>
+                <span><strong>Phi tham số:</strong> Wilcoxon Test</span>
+              </div>
+            </div>
+            
+            <div class="card" style="border-top: 4px solid var(--coral);">
+              <div class="card-icon card-icon-coral"><i class="fa-solid fa-diagram-project"></i></div>
+              <h3 class="card-title">So sánh Nhiều Nhóm (StoreType)</h3>
+              <p class="card-desc" style="margin-bottom: 12px;">So sánh doanh số trung bình giữa các mô hình cửa hàng khác nhau (a, b, c, d).</p>
+              <div style="display:flex; justify-content: space-between; border-top: 1px solid var(--gray-200); padding-top: 12px; font-size: 13px;">
+                <span><strong>Tham số:</strong> ANOVA + Tukey</span>
+                <span><strong>Phi tham số:</strong> Kruskal-Wallis</span>
+              </div>
+            </div>
+
+            <div class="card" style="border-top: 4px solid var(--green);">
+              <div class="card-icon card-icon-green"><i class="fa-solid fa-circle-nodes"></i></div>
+              <h3 class="card-title">Kiểm định Tương quan</h3>
+              <p class="card-desc" style="margin-bottom: 12px;">Đánh giá mối tương quan giữa khoảng cách đối thủ và doanh số bán hàng ngày.</p>
+              <div style="display:flex; justify-content: space-between; border-top: 1px solid var(--gray-200); padding-top: 12px; font-size: 13px;">
+                <span><strong>Tuyến tính:</strong> Pearson Correlation</span>
+                <span><strong>Phi tuyến:</strong> Spearman Rank</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hồi quy Logistic Section -->
+    <section class="section section-dark" id="logistic">
+      <div class="container">
+        <div class="section-title-wrap">
+          <span class="section-tag">Trọng tâm nghiên cứu</span>
+          <h2 class="section-title">📈 Hồi quy Logistic (Logistic Regression)</h2>
+          <p class="section-subtitle" style="color: var(--gray-400);">
+            Giải pháp phân loại nhị phân tối ưu và diễn giải xác suất kinh doanh.
+          </p>
+        </div>
+
+        <div class="regression-intro-grid">
+          <div>
+            <h3 style="font-size: 24px; color: var(--white); margin-bottom: 16px;"><i class="fa-solid fa-circle-exclamation" style="color:var(--coral);"></i> Tại sao Hồi quy Tuyến tính thất bại khi Y nhị phân?</h3>
+            <p style="color: var(--gray-300); font-size: 15px;">
+              Khi biến phụ thuộc $Y$ chỉ nhận hai giá trị $\{0, 1\}$ (ví dụ: Doanh số đạt mức cao / thấp), việc ép mô hình hồi quy tuyến tính (OLS) sẽ gây ra các hệ quả nghiêm trọng:
+            </p>
+            <ul class="limitations-list">
+              <li>
+                <i class="fa-solid fa-ban"></i>
+                <strong>Giá trị dự đoán vô nghĩa:</strong> Hồi quy tuyến tính có thể cho ra giá trị dự đoán nhỏ hơn 0 hoặc lớn hơn 1, điều này hoàn toàn bất khả thi cho xác suất.
+              </li>
+              <li>
+                <i class="fa-solid fa-chart-line"></i>
+                <strong>Vi phạm giả định sai số:</strong> Sai số $\varepsilon$ không còn tuân theo phân phối chuẩn và phương sai sai số thay đổi theo giá trị của $X$ (Heteroscedasticity).
+              </li>
+              <li>
+                <i class="fa-solid fa-wave-square"></i>
+                <strong>Mối quan hệ phi tuyến tính:</strong> Thực tế, xác suất của một sự kiện nhị phân thường phản ứng với biến độc lập theo đường cong chữ S, chứ không tăng trưởng vô hạn theo đường thẳng.
+              </li>
+            </ul>
+          </div>
+          
+          <div class="card" style="color: var(--navy); background-color: var(--white); display: flex; flex-direction: column; justify-content: center;">
+            <h3 style="font-size: 18px; color: var(--navy); margin-bottom: 12px;"><i class="fa-solid fa-circle-check" style="color: var(--green);"></i> Ứng dụng trong Đồ án</h3>
+            <p style="font-size: 14px; color: var(--gray-600); margin-bottom: 12px;">
+              Trong bài toán Rossmann, nhóm đã áp dụng Hồi quy Logistic để giải quyết bài toán:
+            </p>
+            <div style="background-color: var(--gray-50); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 10px; font-size: 13px;">
+              <strong>💵 Phân loại Doanh số Cao:</strong> Dự đoán khả năng một ngày bán hàng của cửa hàng vượt ngưỡng Median ($Y = 1$) dựa trên biến Promo, StateHoliday, StoreType.
+            </div>
+            <div style="background-color: var(--gray-50); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px;">
+              <strong>🚨 Nhận diện Ngày Outlier:</strong> Xác định xác suất một ngày có số lượng khách hàng biến động đột biến vượt quá giới hạn thông thường ($Y = 1$).
+            </div>
+          </div>
+        </div>
+
+        <div class="model-math-grid">
+          <div class="math-card">
+            <h3 class="math-card-title"><i class="fa-solid fa-chart-area"></i> Hàm Sigmoid (Logistic Function)</h3>
+            <p style="color: var(--gray-300); font-size: 14px;">Hàm phi tuyến có tác dụng ép toàn bộ thang giá trị vô hạn của tổ hợp tuyến tính $z$ về miền xác suất hợp lệ $(0, 1)$:</p>
+            <div class="math-card-formula">
+              $$P(Y=1|X) = \sigma(z) = \frac{1}{1 + e^{-z}}$$
+            </div>
+            <p style="color: var(--gray-400); font-size: 13px;">Với $z = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots$</p>
+          </div>
+
+          <div class="math-card">
+            <h3 class="math-card-title coral"><i class="fa-solid fa-link"></i> Hàm liên kết Logit</h3>
+            <p style="color: var(--gray-300); font-size: 14px;">Chuyển đổi xác suất phi tuyến $p$ trở lại dạng phương trình tuyến tính dựa trên lô-ga-rít tự nhiên của tỷ lệ cược (log-odds):</p>
+            <div class="math-card-formula">
+              $$\text{logit}(p) = \ln\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 X_1 + \cdots$$
+            </div>
+            <p style="color: var(--gray-400); font-size: 13px;">Với $p / (1-p)$ là tỷ lệ cược xảy ra sự kiện (Odds).</p>
+          </div>
+        </div>
+
+        <!-- Interactive Sigmoid Plot -->
+        <div class="sigmoid-visualizer">
+          <h3 class="sigmoid-visualizer-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Trình trực quan hóa hàm Sigmoid tương tác</h3>
+          <p style="color: var(--gray-500); font-size: 14px; margin-bottom: 24px;">Điều chỉnh hệ số tự do $\beta_0$, độ dốc $\beta_1$ và giá trị của biến độc lập $X_1$ để thấy điểm xác suất thay đổi động trên đồ thị sigmoid.</p>
+          
+          <div class="visualizer-wrapper">
+            <div class="plot-area">
+              <svg id="sigmoidSvg" viewBox="0 0 500 280">
+                <line x1="0" y1="140" x2="500" y2="140" stroke="#CBD5E1" stroke-dasharray="4" />
+                <line x1="250" y1="0" x2="250" y2="280" stroke="#CBD5E1" stroke-dasharray="4" />
+                <line x1="0" y1="270" x2="500" y2="270" stroke="#475569" stroke-width="1.5" />
+                <line x1="10" y1="0" x2="10" y2="280" stroke="#475569" stroke-width="1.5" />
+                <path id="sigmoidCurve" d="" fill="none" stroke="#3B82F6" stroke-width="3" />
+                <circle id="activePoint" cx="250" cy="140" r="7" fill="#F97316" stroke="#FFFFFF" stroke-width="2.5" />
+              </svg>
+              <div style="position: absolute; bottom: 8px; right: 16px; font-size: 11px; color: var(--gray-500);">Trục X: Biến X₁</div>
+              <div style="position: absolute; top: 16px; left: 16px; font-size: 11px; color: var(--gray-500);">Trục Y: Xác suất P(Y=1)</div>
+            </div>
+            
+            <div class="control-area">
+              <div class="control-group">
+                <div class="control-header">
+                  <span>Hệ số tự do ($\beta_0$ - Cắt):</span>
+                  <span id="valB0" style="color: var(--blue); font-weight: 700;">0.00</span>
+                </div>
+                <input type="range" id="inputB0" min="-5" max="5" step="0.1" value="0" oninput="updateSigmoidPlot()">
+              </div>
+              
+              <div class="control-group">
+                <div class="control-header">
+                  <span>Hệ số góc ($\beta_1$ - Độ dốc):</span>
+                  <span id="valB1" style="color: var(--blue); font-weight: 700;">1.00</span>
+                </div>
+                <input type="range" id="inputB1" min="-3" max="3" step="0.1" value="1" oninput="updateSigmoidPlot()">
+              </div>
+
+              <div class="control-group">
+                <div class="control-header">
+                  <span>Giá trị quan sát ($X_1$):</span>
+                  <span id="valX" style="color: var(--coral); font-weight: 700;">0.00</span>
+                </div>
+                <input type="range" id="inputX" min="-8" max="8" step="0.1" value="0" oninput="updateSigmoidPlot()">
+              </div>
+
+              <div class="calc-step-box">
+                <div class="calc-step-title"><i class="fa-solid fa-square-root-variable"></i> Kết quả tính toán thời gian thực:</div>
+                <div class="calc-step-line" id="stepZ">z = 0.00 * 0.00 + 0.00 = 0.00</div>
+                <div class="calc-step-line" id="stepP" style="font-weight: 700; color: var(--blue);">P(Y=1 | X₁) = 50.00%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Odds Ratio Calculator -->
+        <div class="or-calculator">
+          <h3 class="or-calculator-title"><i class="fa-solid fa-calculator"></i> Máy tính tỷ lệ cược tương tác — Odds Ratio (OR)</h3>
+          <p style="color: var(--gray-500); font-size: 14px; margin-bottom: 24px;">Do hồi quy Logistic ước lượng trên thang log-odds, ta lũy thừa cơ số tự nhiên $e$ của hệ số hồi quy $\beta_j$ để tính Odds Ratio ($OR = e^{\beta_j}$) giúp diễn giải hiệu ứng kinh doanh trực quan.</p>
+          
+          <div class="or-wrapper">
+            <div class="or-controls">
+              <div class="control-group">
+                <div class="control-header">
+                  <span>Hệ số hồi quy ($\beta_j$):</span>
+                  <span id="valBeta" style="color: var(--coral); font-weight: 700;">0.70</span>
+                </div>
+                <input type="range" id="inputBeta" min="-2.0" max="2.0" step="0.05" value="0.70" oninput="updateORCalc()">
+              </div>
+              
+              <div style="background-color: var(--gray-50); border-radius: var(--radius-md); padding: 16px 20px; font-size: 13px; color: var(--gray-600);">
+                <i class="fa-solid fa-lightbulb" style="color: var(--coral);"></i> <strong>Lưu ý:</strong> $\beta_j > 0 \Rightarrow OR > 1$ (tăng khả năng Y=1); $\beta_j < 0 \Rightarrow OR < 1$ (giảm khả năng Y=1).
+              </div>
+            </div>
+
+            <div class="or-result-panel">
+              <div class="or-value-display">
+                <div class="or-value-number" id="orResult">2.01</div>
+                <div class="or-value-label">Odds Ratio (OR)</div>
+              </div>
+              <div class="or-explanation" id="orExplanation">
+                Khi chạy chương trình khuyến mãi (Promo = 1), cơ hội (odds) để cửa hàng có doanh số vượt ngưỡng trung bình sẽ <strong>tăng gấp 2.01 lần</strong> (tương ứng tăng <strong>101.4%</strong>) so với ngày bình thường không có khuyến mãi.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-grid">
+          <h3 class="metric-title"><i class="fa-solid fa-gauge"></i> Chỉ số đánh giá mô hình phân loại Logistic</h3>
+          <div class="grid-4">
+            <div class="card" style="color: var(--navy); border-top: 4px solid var(--blue); padding: 24px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <span class="tag tag--blue">Accuracy</span>
+                <i class="fa-solid fa-bullseye" style="color: var(--blue); font-size: 18px;"></i>
+              </div>
+              <h4 style="font-size: 16px; margin-bottom: 6px;">Độ chính xác toàn cục</h4>
+              <p style="font-size: 13px; color: var(--gray-500);">Tỷ lệ dự đoán đúng (doanh số cao/thấp) trên toàn bộ tập dữ liệu mẫu.</p>
+            </div>
+
+            <div class="card" style="color: var(--navy); border-top: 4px solid var(--coral); padding: 24px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <span class="tag tag--coral">Precision</span>
+                <i class="fa-solid fa-filter" style="color: var(--coral); font-size: 18px;"></i>
+              </div>
+              <h4 style="font-size: 16px; margin-bottom: 6px;">Độ chính xác dự báo</h4>
+              <p style="font-size: 13px; color: var(--gray-500);">Trong số các ngày mô hình dự báo doanh số cao, tỷ lệ bao nhiêu ngày thực tế đạt doanh số cao.</p>
+            </div>
+
+            <div class="card" style="color: var(--navy); border-top: 4px solid var(--green); padding: 24px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <span class="tag tag--green">Recall / Sensitivity</span>
+                <i class="fa-solid fa-binoculars" style="color: var(--green); font-size: 18px;"></i>
+              </div>
+              <h4 style="font-size: 16px; margin-bottom: 6px;">Độ phủ / Nhạy</h4>
+              <p style="font-size: 13px; color: var(--gray-500);">Tỷ lệ ngày doanh số cao thực tế được mô hình phát hiện ra thành công.</p>
+            </div>
+
+            <div class="card" style="color: var(--navy); border-top: 4px solid var(--navy-700); padding: 24px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <span class="tag tag--blue" style="background-color: var(--gray-200); color: var(--navy-700);">AUC-ROC</span>
+                <i class="fa-solid fa-chart-line" style="color: var(--navy-700); font-size: 18px;"></i>
+              </div>
+              <h4 style="font-size: 16px; margin-bottom: 6px;">Chỉ số phân loại tốt</h4>
+              <p style="font-size: 13px; color: var(--gray-500);">Đo lường năng lực phân loại của mô hình ở mọi ngưỡng quyết định (threshold), trị số từ 0.5 đến 1.0.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison Matrix Section -->
+    <section class="section" id="comparison">
+      <div class="container">
+        <div class="section-title-wrap">
+          <span class="section-tag">Tổng hợp lý thuyết</span>
+          <h2 class="section-title">⚖️ So sánh Hồi quy Tuyến tính vs Hồi quy Logistic</h2>
+          <p class="section-subtitle">
+            Cái nhìn tổng quát về hai mô hình hồi quy nền tảng và cách lựa chọn phù hợp theo tính chất của dữ liệu đầu ra.
+          </p>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 200px;">Tiêu chí</th>
+                <th>Hồi quy Tuyến tính (Linear)</th>
+                <th>Hồi quy Logistic (Logistic)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td-header">🎯 Biến phụ thuộc (Y)</td>
+                <td>Biến liên tục ($Y \in \mathbb{R}$), ví dụ: doanh số cụ thể (EUR).</td>
+                <td>Biến nhị phân ($Y \in \{0, 1\}$), ví dụ: Doanh số cao (1) / thấp (0).</td>
+              </tr>
+              <tr>
+                <td class="td-header">📤 Đầu ra dự báo</td>
+                <td>Giá trị dự đoán trực tiếp (đại số liên tục).</td>
+                <td>Xác suất xảy ra sự kiện $P(Y=1)$ trong miền $(0, 1)$.</td>
+              </tr>
+              <tr>
+                <td class="td-header">🔗 Hàm liên kết (Link)</td>
+                <td>Hàm đồng nhất (Identity): $Y = z$.</td>
+                <td>Hàm liên kết Logit: $\ln(p / (1-p)) = z$.</td>
+              </tr>
+              <tr>
+                <td class="td-header">🔍 Thuật toán ước lượng</td>
+                <td>Bình phương tối thiểu (OLS) — có nghiệm giải tích dạng đóng.</td>
+                <td>Ước lượng hợp lý cực đại (MLE) — giải bằng thuật toán lặp Newton-Raphson.</td>
+              </tr>
+              <tr>
+                <td class="td-header">📉 Hàm mất mát (Loss)</td>
+                <td>Tổng bình phương sai số (MSE / RSS).</td>
+                <td>Entropy chéo / Log-loss.</td>
+              </tr>
+              <tr>
+                <td class="td-header">📊 Chỉ số đánh giá</td>
+                <td>Hệ số xác định $R^2$, Adjusted $R^2$, RMSE, MAE.</td>
+                <td>Accuracy, AUC-ROC, F1-Score, Confusion Matrix.</td>
+              </tr>
+              <tr>
+                <td class="td-header">💡 Diễn giải hệ số $\beta$</td>
+                <td>"Khi X tăng 1 đơn vị, Y thay đổi đúng $\beta$ đơn vị".</td>
+                <td>"Khi X tăng 1 đơn vị, tỷ lệ cược (odds) tăng gấp $e^\beta$ lần".</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-footnote">
+          <div class="table-footnote-icon"><i class="fa-solid fa-circle-nodes"></i></div>
+          <div class="table-footnote-text">
+            <strong>Bản chất thống kê:</strong> Cả hai mô hình thực tế đều thuộc họ **Mô hình Tuyến tính Tổng quát (Generalized Linear Models — GLM)**. Chúng chỉ khác nhau ở hàm liên kết được chọn để giải quyết phân phối của biến đầu ra ($gaussian$ cho tuyến tính và $binomial$ cho logistic).
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div>
+            <div class="footer-logo">
+              <i class="fa-solid fa-chart-line"></i> Rossmann<span>Analytics</span>
+            </div>
+            <p style="font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+              Đồ án môn học Lập trình R cho Phân tích Dữ liệu. Khám phá toán học và thống kê suy diễn trên tập dữ liệu Rossmann Store Sales.
+            </p>
+          </div>
+          
+          <div>
+            <h4 class="footer-col-title">Liên kết nhanh</h4>
+            <div class="footer-links">
+              <a href="#hero" class="footer-link">Giới thiệu</a>
+              <a href="#descriptive" class="footer-link">Thống kê Mô tả</a>
+              <a href="#inferential" class="footer-link">Thống kê Suy diễn</a>
+              <a href="#logistic" class="footer-link">Hồi quy Logistic</a>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="footer-col-title">Tài nguyên dự án</h4>
+            <div class="footer-links">
+              <button onclick="toggleMode('slide')" class="footer-link" style="background:none; border:none; text-align:left; cursor:pointer;"><i class="fa-solid fa-file-powerpoint"></i> Chạy Slide thuyết trình</button>
+              <a href="R/visualization.Rmd" class="footer-link" target="_blank"><i class="fa-solid fa-code"></i> Mã nguồn Phân tích R</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div class="copyright">
+            © 2026 Rossmann Analytics Project. Nhóm Nghiên cứu Khoa học Thống kê.
+          </div>
+          <div class="social-links">
+            <a href="https://github.com/lyhiahan/Rossmann_Store_Sales" class="social-icon" target="_blank"><i class="fa-brands fa-github"></i></a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+
+  <!-- ==========================================
+       PART B. SLIDE PRESENTATION CONTENT (Hidden by default)
+       ========================================== -->
+  <div id="slideDeckContainer" style="display: none;">
+    <!-- Back to Landing Page button in Slide Mode -->
+    <button class="back-to-landing-btn" onclick="toggleMode('landing')">
+      <i class="fa-solid fa-arrow-left"></i> Quay lại Landing Page
+    </button>
+
+    <div class="slide-deck" id="deck">
+
+      <!-- ========== SLIDE 1: GIỚI THIỆU TẬP DỮ LIỆU ========== -->
+      <div class="slide slide--gradient active" data-index="0">
+        <div class="glow-orb glow-orb--blue" style="width:400px;height:400px;top:-100px;right:-80px;"></div>
+        <div class="glow-orb glow-orb--coral" style="width:300px;height:300px;bottom:-50px;left:-50px;"></div>
+        <div class="label">Đồ án cuối kỳ — Lập trình R cho Phân tích Dữ liệu</div>
+        <h1>Cơ sở Lý thuyết Thống kê<br>trong Phân tích <span style="color:var(--blue)">Rossmann</span></h1>
+        <div class="divider"></div>
+        <p class="subtitle" style="margin-bottom:24px;">Thống kê Mô tả — Thống kê Suy diễn — Hồi quy Logistic</p>
+        <div class="grid-2 mt-24">
+          <div>
+            <div class="card" style="background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.2);">
+              <h3 style="color:var(--blue);font-size:16px;">📊 Tập dữ liệu Rossmann</h3>
+              <ul class="clean-list" style="margin-top:8px;">
+                <li style="font-size:15px;"><span class="highlight">Rossmann</span> — chuỗi dược phẩm lớn nhất Đức, 3.000+ cửa hàng tại 7 quốc gia</li>
+                <li style="font-size:15px;">Nguồn: <span class="highlight-coral">Kaggle Competition</span> — bài toán dự đoán doanh số bán lẻ</li>
+                <li style="font-size:15px;">Gồm 2 file: <strong>train.csv</strong> (giao dịch hàng ngày) + <strong>store.csv</strong> (thông tin cửa hàng)</li>
+              </ul>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="background:rgba(249,115,22,0.06);border-color:rgba(249,115,22,0.2);">
+              <h3 style="color:var(--coral);font-size:16px;">📐 Phạm vi phân tích</h3>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+                <div class="stat-box" style="padding:12px;">
+                  <div class="stat-value" style="font-size:32px;">50</div>
+                  <div class="stat-label" style="font-size:11px;">Cửa hàng</div>
+                </div>
+                <div class="stat-box" style="padding:12px;">
+                  <div class="stat-value" style="font-size:32px;">12</div>
+                  <div class="stat-label" style="font-size:11px;">Tháng (08/2014–07/2015)</div>
+                </div>
+                <div class="stat-box" style="padding:12px;">
+                  <div class="stat-value" style="font-size:32px;">~14K</div>
+                  <div class="stat-label" style="font-size:11px;">Bản ghi</div>
+                </div>
+                <div class="stat-box" style="padding:12px;">
+                  <div class="stat-value" style="font-size:32px;color:var(--coral);">22</div>
+                  <div class="stat-label" style="font-size:11px;">Biến số</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex-row mt-24" style="gap:16px;">
+          <span class="tag tag--blue">Sales · Customers · Promo</span>
+          <span class="tag tag--coral">StoreType · Assortment</span>
+          <span class="tag tag--green">CompetitionDistance · StateHoliday</span>
+        </div>
+        <div class="slide-number">01 / 15</div>
+      </div>
+
+      <!-- ========== SLIDE 2: TỔNG QUAN HAI TRỤ CỘT ========== -->
+      <div class="slide slide--light" data-index="1">
+        <div class="label">Tổng quan</div>
+        <h2>📊 Hai trụ cột của Thống kê</h2>
+        <div class="grid-2 mt-24">
+          <div class="card" style="border-left:4px solid var(--blue);">
+            <div class="card-icon card-icon--blue">📋</div>
+            <h3 style="color:var(--blue);">Thống kê Mô tả</h3>
+            <p style="font-size:16px;font-weight:600;color:var(--gray-500);margin-bottom:12px;font-style:italic;">"Dữ liệu trông như thế nào?"</p>
+            <ul class="clean-list emoji-list">
+              <li style="font-size:15px;">📋 Tóm tắt dữ liệu hiện có</li>
+              <li style="font-size:15px;">🧮 Mean, Median, Mode</li>
+              <li style="font-size:15px;">📐 Variance, SD, IQR</li>
+              <li style="font-size:15px;">📈 Skewness, Kurtosis</li>
+            </ul>
+          </div>
+          <div class="card" style="border-left:4px solid var(--coral);">
+            <div class="card-icon card-icon--coral">🔬</div>
+            <h3 style="color:var(--coral);">Thống kê Suy diễn</h3>
+            <p style="font-size:16px;font-weight:600;color:var(--gray-500);margin-bottom:12px;font-style:italic;">"Dữ liệu cho phép kết luận gì?"</p>
+            <ul class="clean-list emoji-list">
+              <li style="font-size:15px;">🌍 Suy luận về tổng thể</li>
+              <li style="font-size:15px;">🧪 Kiểm định giả thuyết</li>
+              <li style="font-size:15px;">📈 Hồi quy tuyến tính & Logistic</li>
+              <li style="font-size:15px;">🎯 p-value, khoảng tin cậy</li>
+            </ul>
+          </div>
+        </div>
+        <div style="margin-top:24px;padding:16px 24px;border-radius:12px;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.12);">
+          <p style="font-size:15px;text-align:center;color:var(--gray-600);">Trong đồ án Rossmann, nhóm sử dụng <strong>cả hai nhánh</strong> một cách có hệ thống: mô tả để hiểu phân phối, suy diễn để kiểm chứng giả thuyết kinh doanh.</p>
+        </div>
+        <div class="slide-number">02 / 15</div>
+      </div>
+
+      <!-- ========== SLIDE 3: MEAN ========== -->
+      <div class="slide slide--light" data-index="2">
+        <div class="label">Thống kê Mô tả — 1/4</div>
+        <h2>🧮 Trung bình — <span style="color:var(--blue)">Mean</span></h2>
+        <div class="grid-2 mt-16">
+          <div>
+            <div class="formula-box">
+              $$\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i$$
+            </div>
+            <ul class="clean-list emoji-list" style="margin-top:16px;">
+              <li>🎯 Sử dụng <span class="highlight">toàn bộ giá trị</span> trong tập dữ liệu</li>
+              <li>⚡ <span class="highlight-coral">Nhạy cảm</span> với giá trị ngoại lai (outlier)</li>
+              <li>⚖️ Phù hợp khi dữ liệu phân phối đối xứng</li>
+            </ul>
+          </div>
+          <div>
+            <div class="example-box">
+              <p style="font-size:13px;color:var(--coral);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📊 Ví dụ trong đồ án</p>
+              <p style="font-size:15px;"><strong>Mean(Sales) ≈ 6.840 EUR/ngày</strong></p>
+              <p style="font-size:14px;margin-top:6px;">Bị kéo lên bởi các ngày lễ có doanh số đột biến 15.000–20.000 EUR</p>
+            </div>
+            <div class="card" style="margin-top:16px;padding:16px;">
+              <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">💻 Code R:</p>
+              <span class="code-r">mean(df_clean$sales)</span>
+            </div>
+            <div style="margin-top:16px;padding:14px 18px;border-radius:10px;background:rgba(249,115,22,0.05);border:1px solid rgba(249,115,22,0.15);">
+              <p style="font-size:14px;">⚠️ Chỉ cần vài ngày Giáng sinh doanh số đột biến → Mean cao hơn giá trị "điển hình" → Cần thêm <span class="highlight">Median</span></p>
+            </div>
+          </div>
+        </div>
+        <div class="slide-number">03 / 15</div>
+      </div>
+
+      <!-- ========== SLIDE 4: MEDIAN ========== -->
+      <div class="slide slide--light" data-index="3">
+        <div class="label">Thống kê Mô tả — 2/4</div>
+        <h2>📌 Trung vị — <span style="color:var(--blue)">Median</span></h2>
+        <div class="grid-2 mt-16">
+          <div>
+            <div class="formula-box">
+              $$\text{Median} = \begin{cases} x_{\frac{n+1}{2}} & \text{nếu } n \text{ lẻ} \\ \frac{x_{\frac{n}{2}} + x_{\frac{n}{2}+1}}{2} & \text{nếu } n \text{ chẵn} \end{cases}$$
+            </div>
+            <ul class="clean-list emoji-list" style="margin-top:16px;">
+              <li>🛡️ <span class="highlight">Không bị ảnh hưởng</span> bởi outlier → bền vững (robust)</li>
+              <li>📈 Mean &gt; Median → phân phối <span class="highlight-coral">lệch phải</span> (right-skewed)</li>
+              <li>🤝 Mean ≈ Median → phân phối gần đối xứng</li>
+            </ul>
+          </div>
+          <div>
+            <div class="example-box">
+              <p style="font-size:13px;color:var(--coral);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📊 Ví dụ trong đồ án</p>
+              <p style="font-size:15px;"><strong>Mean = 6.840 EUR > Median = 6.450 EUR</strong></p>
+              <p style="font-size:14px;margin-top:6px;">Chênh lệch 390 EUR → Xác nhận phân phối <strong>lệch phải</strong></p>
+            </div>
+            <div class="card" style="margin-top:16px;padding:16px;">
+              <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">💻 Code R:</p>
+              <span class="code-r">median(df_clean$sales)</span>
+            </div>
+            <div style="margin-top:16px;padding:14px 18px;border-radius:10px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);">
+              <p style="font-size:14px;">💡 Nhóm chọn <span class="highlight">median thay vì mean</span> khi điền giá trị khuyết cho biến <strong>competition_distance</strong></p>
+            </div>
+          </div>
+        </div>
+        <div class="slide-number">04 / 15</div>
+      </div>
+
+      <!-- ========== SLIDE 5: VARIANCE ========== -->
+      <div class="slide slide--light" data-index="4">
+        <div class="label">Thống kê Mô tả — 3/4</div>
+        <h2>📐 Phương sai — <span style="color:var(--coral)">Variance</span></h2>
+        <div class="grid-2 mt-16">
+          <div>
+            <div class="formula-box" style="margin-bottom:12px;">
+              $$\sigma^2 = \frac{1}{N}\sum(x_i - \mu)^2 \quad \text{(tổng thể)}$$
+            </div>
+            <div class="formula-box formula-box--coral">
+              $$s^2 = \frac{1}{n-1}\sum(x_i - \bar{x})^2 \quad \text{(mẫu)}$$
+            </div>
+          </div>
+          <div>
+            <ul class="clean-list emoji-list">
+              <li>📏 Đo mức độ <span class="highlight">phân tán</span> quanh giá trị trung bình</li>
+              <li>➗ Chia cho <span class="highlight-coral">(n−1)</span>: hiệu chỉnh Bessel — ước lượng không chệch</li>
+              <li>⚠️ Hạn chế: đơn vị là <strong>bình phương gốc</strong> (EUR²) → khó diễn giải</li>
+              <li>💡 Giải pháp: dùng <span class="highlight">Standard Deviation</span></li>
+            </ul>
+            <div class="card" style="margin-top:16px;padding:16px;">
+              <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">💻 Code R:</p>
+              <span class="code-r">var(df_clean$sales)</span>
+            </div>
+          </div>
+        </div>
+        <div class="slide-number">05 / 15</div>
+      </div>
+
+      <!-- ========== SLIDE 6: STANDARD DEVIATION ========== -->
+      <div class="slide slide--light" data-index="5">
+        <div class="label">Thống kê Mô tả — 4/4</div>
+        <h2>📈 Độ lệch chuẩn — <span style="color:var(--blue)">Standard Deviation</span></h2>
+        <div class="grid-2 mt-16">
+          <div>
+            <div class="formula-box">
+              $$s = \sqrt{s^2} = \sqrt{\frac{1}{n-1}\sum(x_i - \bar{x})^2}$$
+            </div>
+            <div class="card" style="margin-top:16px;">
+              <h3 style="font-size:16px;color:var(--blue);margin-bottom:12px;">📐 Quy tắc 68–95–99.7</h3>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                <div style="text-align:center;padding:12px;background:rgba(59,130,246,0.06);border-radius:10px;">
+                  <div style="font-size:28px;font-weight:800;color:var(--blue);">68%</div>
+                  <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">x̄ ± 1σ</div>
+                </div>
+                <div style="text-align:center;padding:12px;background:rgba(59,130,246,0.1);border-radius:10px;">
+                  <div style="font-size:28px;font-weight:800;color:var(--blue);">95%</div>
+                  <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">x̄ ± 2σ</div>
+                </div>
+                <div style="text-align:center;padding:12px;background:rgba(59,130,246,0.15);border-radius:10px;">
+                  <div style="font-size:28px;font-weight:800;color:var(--blue);">99.7%</div>
+                  <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">x̄ ± 3σ</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="example-box">
+              <p style="font-size:13px;color:var(--coral);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📊 Ví dụ trong đồ án</p>
+              <p style="font-size:15px;"><strong>SD(Sales) ≈ 2.632 EUR</strong></p>
+              <p style="font-size:14px;margin-top:6px;">Doanh số dao động khoảng ±2.632 EUR quanh mức trung bình</p>
+            </div>
+            <div class="card" style="margin-top:16px;">
+              <h3 style="font-size:15px;color:var(--coral);">📊 Hệ số biến thiên (CV)</h3>
+              <div style="display:flex;align-items:center;gap:16px;margin-top:8px;">
+                <div style="font-size:40px;font-weight:800;color:var(--coral);">38%</div>
+                <p style="font-size:14px;">CV = SD / Mean<br>→ Doanh số biến động <strong>khá mạnh</strong> giữa các cửa hàng và ngày trong tuần</p>
+              </div>
+            </div>
+            <div class="card" style="margin-top:12px;padding:16px;">
+              <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">💻 Code R:</p>
+              <span class="code-r">sd(df_clean$sales)</span>
+            </div>
+          </div>
+        </div>
+        <div class="slide-number">06 / 15</div>
+      </div>
+
+      <!-- ========== SLIDE 7: TỔNG HỢP THỐNG KÊ MÔ TẢ ========== -->
+      <div class="slide slide--light" data-index="6">
+        <div class="label">Tổng kết</div>
+        <h2>📋 Tổng hợp Thống kê Mô tả</h2>
+        <div class="table-wrap mt-24">
+          <table>
+            <thead>
+              <tr>
+                <th>Đại lượng</th>
+                <th>Công thức</th>
+                <th>Ưu điểm</th>
+                <th>Nhược điểm</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong style="color:var(--blue);">🧮 Mean</strong></td>
+                <td>Σxᵢ / n</td>
+                <td>Dùng toàn bộ dữ liệu</td>
+                <td>Nhạy với outlier</td>
+              </tr>
+              <tr>
+                <td><strong style="color:var(--blue);">📌 Median</strong></td>
+                <td>Giá trị giữa</td>
+                <td>Bền vững (robust)</td>
+                <td>Bỏ qua giá trị cụ thể</td>
+              </tr>
+              <tr>
+                <td><strong style="color:var(--coral);">📐 Variance</strong></td>
+                <td>Σ(x−x̄)² / (n−1)</td>
+                <td>Nền tảng toán học chặt</td>
+                <td>Đơn vị bình phương</td>
+              </tr>
+              <tr>
+                <td><strong style="color:var(--coral);">📈 SD</strong></td>
+                <td>√Variance</td>
+                <td>Cùng đơn vị gốc</td>
+                <td>Nhạy outlier (như mean)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:24px;padding:18px 24px;border-radius:12px;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.15);">
+          <p style="font-size:16px;text-align:center;">📌 <strong>Nguyên tắc:</strong> Luôn báo cáo đồng thời <span class="highlight">Mean + Median + SD</span> để có bức tranh toàn diện. Không dùng một đại lượng duy nhất.</p>
+        </div>
+        <div class="slide-number">07 / 15</div>
+      </div>
+
+      <!-- ========== SLIDE 8: CHUYỂN SANG THỐNG KÊ SUY DIỄN ========== -->
+      <div class="slide slide--light" data-index="7">
+        <div class="label">Thống kê Suy diễn</div>
+        <h2>🔄 Từ <span style="color:var(--blue)">Mô tả</span> &rarr; <span style="color:var(--coral)">Suy diễn</span></h2>
+        <p class="subtitle" style="margin-bottom:24px;">"Từ mẫu (sample) → suy luận về tổng thể (population)"</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Khái niệm</th>
+                <th>Định nghĩa</th>
+                <th>Trong đồ án Rossmann</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>🌍 Tổng thể</strong></td>
+                <td>Toàn bộ đối tượng nghiên cứu</td>
+                <td>3.000+ cửa hàng Rossmann</td>
+              </tr>
+              <tr>
+                <td><strong>🧪 Mẫu</strong></td>
+                <td>Tập con được quan sát</td>
+                <td>50 cửa hàng, 08/2014 – 07/2015</td>
+              </tr>
+              <tr>
+                <td><strong>📐 Tham số</strong></td>
+                <td>Đại lượng của tổng thể (μ, σ)</td>
+                <td>Doanh số thực của toàn hệ thống</td>
+              </tr>
+              <tr>
+                <td><strong>📊 Thống kê</strong></td>
+                <td>Đại lượng tính từ mẫu (x̄, s)</td>
+                <td>Doanh số tính từ 50 cửa hàng</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:24px;padding:18px 24px;border-radius:12px;background:rgba(249,115,22,0.05);border:1px solid rgba(249,115,22,0.15);">
+          <p style="font-size:16px;text-align:center;color:var(--gray-600);">❓ <strong>Câu hỏi cốt lõi:</strong> Kết quả quan sát trên mẫu có đủ mạnh để kết luận về tổng thể, hay chỉ là <span class="highlight-coral">dao động ngẫu nhiên</span>?</p>
+        </div>
+        <div class="slide-number">08 / 15</div>
+      </div>
+
+      <!-- ========== SLIDE 9: KIỂM ĐỊNH GIẢ THUYẾT — 5 BƯỚC ========== -->
+      <div class="slide slide--light" data-index="8">
+        <div class="label">Kiểm định giả thuyết</div>
+        <h2>⚙️ Quy trình <span style="color:var(--coral)">5 bước</span></h2>
+        <div class="process-flow" style="margin-top:24px;">
+          <div class="process-step">
+            <div class="step-circle">1</div>
+            <h4>📝 Đặt giả thuyết</h4>
+            <p>H₀: Không có hiệu ứng<br>H₁: Có hiệu ứng</p>
+          </div>
+          <div class="process-step">
+            <div class="step-circle">2</div>
+            <h4>🎯 Chọn α</h4>
+            <p>α = 0,05<br>Sai lầm loại I</p>
+          </div>
+          <div class="process-step">
+            <div class="step-circle step-circle--coral">3</div>
+            <h4>📊 Thống kê kiểm định</h4>
+            <p>t, F, χ², H, W<br>tùy phương pháp</p>
+          </div>
+          <div class="process-step">
+            <div class="step-circle step-circle--coral">4</div>
+            <h4>🧮 Tính p-value</h4>
+            <p>P(kết quả cực đoan<br>| H₀ đúng)</p>
+          </div>
+          <div class="process-step">
+            <div class="step-circle">5</div>
+            <h4>⚖️ Ra quyết định</h4>
+            <p>p &lt; α → Bác bỏ H₀<br>p ≥ α → Không bác bỏ</p>
+          </div>
+        </div>
+        <div class="grid-2 mt-32">
+          <div class="card" style="padding:18px;border-left:4px solid var(--blue);">
+            <p style="font-size:14px;">✅ <strong>p < 0,05</strong> → Bác bỏ H₀ → Có bằng chứng về hiệu ứng thực sự</p>
+          </div>
+          <div class="card" style="padding:18px;border-left:4px solid var(--coral);">
+            <p style="font-size:14px;">⚠️ <strong>p ≥ 0,05</strong> → Không bác bỏ H₀ → Chưa đủ bằng chứng (không có nghĩa H₀ đúng)</p>
+          </div>
+        </div>
+        <div class="slide-number">09 / 15</div>
+      </div>
+
+      <!-- ========== SLIDE 10: CÁC KIỂM ĐỊNH TRONG ĐỒ ÁN ========== -->
+      <div class="slide slide--light" data-index="9">
+        <div class="label">Kiểm định trong đồ án</div>
+        <h2>🧪 Thiết kế kiểm định <span style="color:var(--coral)">song song</span></h2>
+        <div class="table-wrap mt-24">
+          <table>
+            <thead>
+              <tr>
+                <th>Kiểm định</th>
+                <th>Loại</th>
+                <th>Mục đích trong đồ án</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>📊 <strong>ANOVA</strong> + Tukey HSD</td>
+                <td><span class="tag tag--blue" style="font-size:10px;">Tham số</span></td>
+                <td>So sánh doanh số trung bình theo Store Type</td>
+              </tr>
+              <tr>
+                <td>🧪 <strong>Welch t-test</strong></td>
+                <td><span class="tag tag--blue" style="font-size:10px;">Tham số</span></td>
+                <td>So sánh doanh số giữa có/không có Promo</td>
+              </tr>
+              <tr>
+                <td>📐 <strong>Kruskal-Wallis</strong> + Dunn</td>
+                <td><span class="tag tag--coral" style="font-size:10px;">Phi tham số</span></td>
+                <td>Đối chứng ANOVA, không cần phân phối chuẩn</td>
+              </tr>
+              <tr>
+                <td>⚡ <strong>Wilcoxon Rank-Sum</strong></td>
+                <td><span class="tag tag--coral" style="font-size:10px;">Phi tham số</span></td>
+                <td>Đối chứng t-test, bền vững với outlier</td>
+              </tr>
+              <tr>
+                <td>📈 <strong>Spearman / Pearson</strong></td>
+                <td><span class="tag tag--green" style="font-size:10px;">Cả hai</span></td>
+                <td>Tương quan Sales ↔ Competition Distance</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:20px;padding:16px 24px;border-radius:12px;background:rgba(249,115,22,0.05);border:1px solid rgba(249,115,22,0.15);">
+          <p style="font-size:15px;color:var(--gray-600);">🔑 <strong>Tại sao dùng cả tham số lẫn phi tham số?</strong> → Sales có <span class="highlight-coral">skewness ≈ 0,94</span> → vi phạm giả định phân phối chuẩn → Nếu cả hai loại kiểm định đều bác bỏ H₀ → kết luận <strong>đáng tin cậy</strong></p>
+        </div>
+        <div class="slide-number">10 / 15</div>
+      </div>
+
+      <!-- ========== SLIDE 11: HỒI QUY TUYẾN TÍNH ========== -->
+      <div class="slide slide--light" data-index="10">
+        <div class="label">Hồi quy</div>
+        <h2>📈 Hồi quy Tuyến tính — <span style="color:var(--blue)">Nền tảng</span></h2>
+        <div class="formula-box" style="margin-top:16px;">
+          $$Y = \beta_0 + \beta_1X_1 + \beta_2X_2 + \cdots + \beta_pX_p + \varepsilon, \quad \varepsilon \sim \mathcal{N}(0, \sigma^2)$$
+        </div>
+        <div class="grid-2 mt-24">
+          <div>
+            <div class="card">
+              <h3 style="font-size:16px;color:var(--blue);margin-bottom:12px;">📐 4 giả định cần kiểm tra</h3>
+              <ul class="clean-list emoji-list">
+                <li style="font-size:15px;">🔗 Quan hệ <span class="highlight">tuyến tính</span> giữa X và Y</li>
+                <li style="font-size:15px;">🔔 Sai số phân phối chuẩn, trung bình = 0</li>
+                <li style="font-size:15px;">⚖️ Phương sai đồng nhất (homoscedasticity)</li>
+                <li style="font-size:15px;">🤝 Các quan sát độc lập nhau</li>
+              </ul>
+            </div>
+            <div class="card" style="margin-top:12px;padding:16px;">
+              <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">💻 Code R:</p>
+              <span class="code-r">lm(sales ~ customers + promo + store_type + ..., data = train_data)</span>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="border-left:4px solid var(--blue);">
+              <h3 style="font-size:16px;color:var(--blue);">📐 OLS — Ordinary Least Squares</h3>
+              <div class="formula-box" style="margin:12px 0;padding:16px;">
+                $$\min \sum(y_i - \hat{y}_i)^2$$
+              </div>
+              <p style="font-size:14px;">Tìm bộ hệ số β sao cho tổng bình phương sai số nhỏ nhất — có nghiệm giải tích dạng đóng</p>
+            </div>
+            <div class="card" style="margin-top:12px;padding:18px;background:rgba(59,130,246,0.05);border-color:rgba(59,130,246,0.15);">
+              <div style="display:flex;align-items:center;gap:16px;">
+                <div style="font-size:42px;font-weight:800;color:var(--blue);">0.87</div>
+                <div>
+                  <p style="font-size:14px;font-weight:600;color:var(--navy);">🎯 R² trên Validation</p>
+                  <p style="font-size:13px;">87% biến động doanh số được giải thích</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-number">11 / 15</div>
+      </div>
+
+      <!-- ========== SLIDE 12: TẠI SAO CẦN LOGISTIC ========== -->
+      <div class="slide slide--light" data-index="11">
+        <div class="label">Hồi quy Logistic</div>
+        <h2>❓ Tại sao cần <span style="color:var(--coral)">Logistic Regression</span>?</h2>
+        <div class="grid-2 mt-24">
+          <div>
+            <div class="card" style="border-left:4px solid var(--coral);">
+              <h3 style="font-size:16px;color:var(--coral);">⚠️ Vấn đề: Y là nhị phân (0/1)</h3>
+              <p style="margin-top:8px;font-size:15px;">Khi biến phụ thuộc là câu trả lời "Có/Không", hồi quy tuyến tính <strong>thất bại</strong> vì:</p>
+              <ul class="clean-list emoji-list" style="margin-top:12px;">
+                <li style="font-size:15px;">🚫 Dự đoán có thể <span class="highlight-coral">&lt; 0 hoặc &gt; 1</span> → vô nghĩa cho xác suất</li>
+                <li style="font-size:15px;">📉 Vi phạm giả định phương sai đồng nhất</li>
+                <li style="font-size:15px;">〰️ Quan hệ X → P(Y=1) thường <strong>không tuyến tính</strong></li>
+              </ul>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="border-left:4px solid var(--blue);margin-bottom:16px;">
+              <h3 style="font-size:16px;color:var(--blue);">🎯 Ứng dụng trong đồ án</h3>
+              <ul class="clean-list emoji-list" style="margin-top:8px;">
+                <li style="font-size:15px;">💵 Doanh số có vượt <span class="highlight">median</span> không? → Y ∈ {0, 1}</li>
+                <li style="font-size:15px;">🚨 Cửa hàng có <span class="highlight-coral">outlier</span> hay không? → Y ∈ {0, 1}</li>
+              </ul>
+            </div>
+            <div style="padding:18px 24px;border-radius:12px;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.12);">
+              <p style="font-size:15px;color:var(--gray-600);">💡 <strong>Giải pháp:</strong> Biến đổi xác suất p thành <span class="highlight">log-odds</span> rồi mô hình hóa tuyến tính trên thang đo đó</p>
+            </div>
+          </div>
+        </div>
+        <div class="slide-number">12 / 15</div>
+      </div>
+
+      <!-- ========== SLIDE 13: LOGISTIC — MÔ HÌNH TOÁN HỌC ========== -->
+      <div class="slide slide--light" data-index="12">
+        <div class="label">Mô hình toán học</div>
+        <h2>📐 Sigmoid & <span style="color:var(--coral)">Logit</span></h2>
+        <div class="grid-2 mt-16">
+          <div>
+            <div class="card" style="border-left:4px solid var(--blue);margin-bottom:16px;">
+              <h3 style="font-size:16px;color:var(--blue);">📈 Hàm Sigmoid — "ép" z về (0, 1)</h3>
+              <div class="formula-box" style="margin-top:12px;">
+                $$P(Y=1|X) = \frac{1}{1 + e^{-z}}$$
+              </div>
+              <p style="font-size:13px;margin-top:8px;">trong đó $z = \beta_0 + \beta_1X_1 + \cdots + \beta_pX_p$</p>
+            </div>
+            <div class="card" style="border-left:4px solid var(--coral);">
+              <h3 style="font-size:16px;color:var(--coral);">🧮 Hàm Logit — tuyến tính hóa</h3>
+              <div class="formula-box formula-box--coral" style="margin-top:12px;">
+                $$\text{logit}(p) = \ln\!\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1X_1 + \cdots$$
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <h3 style="font-size:16px;color:var(--blue);margin-bottom:16px;">📈 Ba điểm neo của Sigmoid</h3>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+                <div style="padding:16px;background:rgba(59,130,246,0.08);border-radius:10px;">
+                  <div style="font-size:14px;color:var(--gray-400);">z → −∞</div>
+                  <div style="font-size:28px;font-weight:800;color:var(--blue);margin-top:8px;">P → 0</div>
+                </div>
+                <div style="padding:16px;background:rgba(249,115,22,0.08);border-radius:10px;">
+                  <div style="font-size:14px;color:var(--gray-400);">z = 0</div>
+                  <div style="font-size:28px;font-weight:800;color:var(--coral);margin-top:8px;">P = 0.5</div>
+                </div>
+                <div style="padding:16px;background:rgba(34,197,94,0.08);border-radius:10px;">
+                  <div style="font-size:14px;color:var(--gray-400);">z → +∞</div>
+                  <div style="font-size:28px;font-weight:800;color:#22C55E;margin-top:8px;">P → 1</div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:16px;padding:14px 18px;border-radius:10px;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.15);">
+              <p style="font-size:14px;">🔑 Dù z có nhận giá trị nào, sigmoid luôn cho ra <span class="highlight">xác suất hợp lệ</span> trong khoảng (0, 1)</p>
+            </div>
+          </div>
+        </div>
+        <div class="slide-number">13 / 15</div>
+      </div>
+
+      <!-- ========== SLIDE 14: ƯỚC LƯỢNG & DIỄN GIẢI ========== -->
+      <div class="slide slide--light" data-index="13">
+        <div class="label">Ước lượng & Diễn giải</div>
+        <h2>🔬 MLE & <span style="color:var(--coral)">Odds Ratio</span></h2>
+        <div class="grid-2 mt-16">
+          <div>
+            <div class="card" style="border-left:4px solid var(--blue);margin-bottom:16px;">
+              <h3 style="font-size:16px;color:var(--blue);">🔍 MLE — Maximum Likelihood Estimation</h3>
+              <div class="formula-box" style="margin-top:12px;padding:16px;">
+                $$\hat{\beta} = \arg\max_\beta \prod_i P(y_i | x_i, \beta)$$
+              </div>
+              <p style="font-size:14px;margin-top:8px;">Tối ưu bằng thuật toán lặp Newton-Raphson / IRLS</p>
+            </div>
+            <div class="card" style="padding:16px;">
+              <p style="font-size:13px;color:var(--gray-400);margin-bottom:6px;">💻 Code R:</p>
+              <span class="code-r">glm(high_sales ~ promo + store_type + ..., family = binomial)</span>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="border-left:4px solid var(--coral);margin-bottom:16px;">
+              <h3 style="font-size:16px;color:var(--coral);">📊 Odds Ratio: $OR = e^{\beta_j}$</h3>
+              <div class="table-wrap" style="margin-top:12px;border-radius:8px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>OR</th>
+                      <th>Ý nghĩa</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>OR &gt; 1</strong></td>
+                      <td>Tăng Xⱼ → <span class="highlight" style="color:var(--blue);">tăng</span> khả năng Y = 1</td>
+                    </tr>
+                    <tr>
+                      <td><strong>OR = 1</strong></td>
+                      <td>Xⱼ không ảnh hưởng</td>
+                    </tr>
+                    <tr>
+                      <td><strong>OR &lt; 1</strong></td>
+                      <td>Tăng Xⱼ → <span class="highlight-coral">giảm</span> khả năng Y = 1</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="example-box">
+              <p style="font-size:13px;color:var(--coral);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">💡 Ví dụ cụ thể</p>
+              <p style="font-size:15px;">β(promo) = 0,7 → <strong>OR = e⁰·⁷ ≈ 2,0</strong></p>
+              <p style="font-size:14px;margin-top:4px;">→ Có khuyến mãi làm odds doanh số cao <span class="highlight-coral">tăng gấp đôi</span></p>
+            </div>
+            <div class="card" style="margin-top: 12px; padding: 16px;">
+              <p style="font-size:14px; font-weight:600; color:var(--gray-600); margin-bottom:8px;">📊 Chỉ số đánh giá mô hình phân loại:</p>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <span class="tag tag--blue" style="font-size: 11px;">Accuracy</span>
+                <span class="tag tag--blue" style="font-size: 11px;">Precision</span>
+                <span class="tag tag--blue" style="font-size: 11px;">Recall</span>
+                <span class="tag tag--blue" style="font-size: 11px;">F1-Score</span>
+                <span class="tag tag--coral" style="font-size: 11px;">AUC-ROC</span>
+                <span class="tag tag--green" style="font-size: 11px;">Confusion Matrix</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-number">14 / 15</div>
+      </div>
+
+      <!-- ========== SLIDE 15: SO SÁNH TỔNG HỢP & KẾT LUẬN ========== -->
+      <div class="slide slide--light" data-index="14">
+        <div class="label">Tổng kết</div>
+        <h2 style="font-size:36px;">⚖️ So sánh Linear vs Logistic & Kết luận</h2>
+        <div class="matrix-grid mt-16" style="grid-template-columns: 180px 1fr 1fr;">
+          <div class="matrix-cell matrix-cell--header">📋 Tiêu chí</div>
+          <div class="matrix-cell matrix-cell--header">Linear Regression</div>
+          <div class="matrix-cell matrix-cell--header">Logistic Regression</div>
+
+          <div class="matrix-cell matrix-cell--label">🎯 Biến Y</div>
+          <div class="matrix-cell"><p>Liên tục (Y ∈ ℝ)</p></div>
+          <div class="matrix-cell"><p>Nhị phân (Y ∈ {0, 1})</p></div>
+
+          <div class="matrix-cell matrix-cell--label">📤 Đầu ra</div>
+          <div class="matrix-cell"><p>Giá trị dự đoán</p></div>
+          <div class="matrix-cell"><p>Xác suất P(Y=1)</p></div>
+
+          <div class="matrix-cell matrix-cell--label">🔗 Hàm liên kết</div>
+          <div class="matrix-cell"><p>Đồng nhất (Y = z)</p></div>
+          <div class="matrix-cell"><p>Logit: ln(p / 1−p)</p></div>
+
+          <div class="matrix-cell matrix-cell--label">🔍 Ước lượng</div>
+          <div class="matrix-cell"><p>OLS — nghiệm giải tích</p></div>
+          <div class="matrix-cell"><p>MLE — thuật toán lặp</p></div>
+
+          <div class="matrix-cell matrix-cell--label">📉 Loss function</div>
+          <div class="matrix-cell"><p>MSE / RSS</p></div>
+          <div class="matrix-cell"><p>Log-Loss / Cross-Entropy</p></div>
+
+          <div class="matrix-cell matrix-cell--label">📊 Đánh giá</div>
+          <div class="matrix-cell"><p>R², RMSE, MAE</p></div>
+          <div class="matrix-cell"><p>Accuracy, AUC, F1</p></div>
+
+          <div class="matrix-cell matrix-cell--label">💡 Diễn giải β</div>
+          <div class="matrix-cell"><p>"Y tăng β đơn vị"</p></div>
+          <div class="matrix-cell"><p>"Odds nhân e^β lần"</p></div>
+        </div>
+        <div style="margin-top:24px;padding:16px 24px;border-radius:12px;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.15);text-align:center;">
+          <p style="font-size:16px;">🤝 <strong>Điểm chung:</strong> Cả hai đều là <strong>Mô hình Tuyến tính Tổng quát (GLM)</strong>, chỉ khác ở hàm liên kết<br>
+            <span style="font-size:14px;color:var(--gray-500);">glm(..., family = gaussian) vs glm(..., family = binomial)</span>
+          </p>
+        </div>
+        <div class="slide-number">15 / 15</div>
+      </div>
+
+    </div>
+
+    <!-- Slides Navigation Bar -->
+    <div class="nav-bar">
+      <button class="nav-btn" id="prevBtn" onclick="navigateSlide(-1)">← Trước</button>
+      <div class="nav-progress" id="navDots"></div>
+      <button class="nav-btn" id="nextBtn" onclick="navigateSlide(1)">Tiếp →</button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       PART C. JAVASCRIPT LOGIC
+       ========================================== -->
+  <script>
+    // ==========================================
+    // 1. Landing Mode vs Slide Mode Toggle
+    // ==========================================
+    function toggleMode(mode) {
+      if (mode === 'slide') {
+        document.body.classList.add('slide-mode-active');
+        document.getElementById('slideDeckContainer').style.display = 'block';
+        document.getElementById('landingPageContent').style.display = 'none';
+        goToSlide(0); // Reset to first slide on start
+      } else {
+        document.body.classList.remove('slide-mode-active');
+        document.getElementById('slideDeckContainer').style.display = 'none';
+        document.getElementById('landingPageContent').style.display = 'block';
+        window.scrollTo(0, 0); // Scroll to top of Landing Page
+      }
+    }
+
+    // ==========================================
+    // 2. Landing Page: Descriptive Tab Selector
+    // ==========================================
+    const descData = {
+      mean: {
+        title: "Trung bình cộng — Mean",
+        subtitle: '"Đại diện cho kỳ vọng toán học của dữ liệu"',
+        formula: "$$\\bar{x} = \\frac{1}{n}\\sum_{i=1}^{n} x_i$$",
+        proscons: [
+          "Sử dụng thông tin của toàn bộ các quan sát trong tập dữ liệu.",
+          "Cực kỳ nhạy cảm với các giá trị ngoại lai (outliers) hoặc các giá trị cực đoan.",
+          "Là đại lượng trung tâm tốt nhất khi dữ liệu phân phối đối xứng và không có nhiễu lớn."
+        ],
+        example: "<strong>Mean(Sales) ≈ 6,840 EUR/ngày</strong>. Giá trị này phản ánh mức doanh thu trung bình, tuy nhiên nó bị kéo lệch lên cao do những ngày lễ, Giáng sinh hoặc đợt khuyến mãi lớn có doanh số tăng vọt (15,000–20,000 EUR).",
+        code: "mean(df_clean$sales, na.rm = TRUE)"
+      },
+      median: {
+        title: "Trung vị — Median",
+        subtitle: '"Giá trị ở giữa phân phối dữ liệu mẫu"',
+        formula: "$$\\text{Median} = \\begin{cases} x_{\\frac{n+1}{2}} & \\text{nếu } n \\text{ lẻ} \\\\ \\frac{x_{\\frac{n}{2}} + x_{\\frac{n}{2}+1}}{2} & \\text{nếu } n \\text{ chẵn} \\end{cases}$$",
+        proscons: [
+          "Hoàn toàn bền vững (robust), không bị bóp méo bởi các giá trị ngoại lai cực đoan.",
+          "Nếu Mean > Median: dữ liệu có phân phối lệch phải (right-skewed).",
+          "Nếu Mean ≈ Median: dữ liệu có phân phối đối xứng hoàn hảo."
+        ],
+        example: "<strong>Median(Sales) ≈ 6,450 EUR/ngày</strong>. Do thấp hơn Mean khoảng 390 EUR, ta xác nhận phân phối lệch phải. Nhóm đã sử dụng Median thay vì Mean để điền khuyết (imputation) an toàn cho biến <em>competition_distance</em> nhằm chống lại outlier nhiễu.",
+        code: "median(df_clean$sales, na.rm = TRUE)"
+      },
+      variance: {
+        title: "Phương sai mẫu — Variance",
+        subtitle: '"Mức độ phân tán bình phương của phân phối quanh trung vị"',
+        formula: "$$s^2 = \\frac{1}{n-1}\\sum_{i=1}^{n} (x_i - \\bar{x})^2$$",
+        proscons: [
+          "Mô tả khoảng cách bình phương trung bình của các điểm dữ liệu so với tâm.",
+          "Chia cho (n - 1) thay vì n để áp dụng hiệu chỉnh Bessel, đảm bảo ước lượng không bị chệch.",
+          "Nhược điểm: Đơn vị đo là bình phương đơn vị gốc (ví dụ: EUR²), gây khó khăn khi diễn giải trực tiếp."
+        ],
+        example: "<strong>Var(Sales) ≈ 6,927,424 EUR²</strong>. Giá trị này đại diện cho sự biến động tuyệt đối, tuy nhiên do đơn vị đo là bình phương gốc, ta cần lấy căn bậc hai để đưa về dạng hữu ích hơn đó là Độ lệch chuẩn.",
+        code: "var(df_clean$sales, na.rm = TRUE)"
+      },
+      sd: {
+        title: "Độ lệch chuẩn — Standard Deviation",
+        subtitle: '"Thước đo chuẩn cho sự dao động của dữ liệu thực tế"',
+        formula: "$$s = \\sqrt{s^2} = \\sqrt{\\frac{1}{n-1}\\sum_{i=1}^{n} (x_i - \\bar{x})^2}$$",
+        proscons: [
+          "Cùng đơn vị với dữ liệu gốc (EUR), giúp việc đọc hiểu và lập báo cáo trực quan hơn nhiều.",
+          "Áp dụng quy tắc thực nghiệm 68-95-99.7 để phân loại các mức độ dao động quanh tâm đối với phân phối chuẩn.",
+          "Cho phép tính Hệ số biến thiên CV = SD/Mean để so sánh mức độ ổn định giữa các nhóm dữ liệu."
+        ],
+        example: "<strong>SD(Sales) ≈ 2,632 EUR</strong>. Nghĩa là doanh thu hàng ngày dao động lệch khoảng ±2,632 EUR quanh mức trung bình 6,840 EUR. Hệ số biến động CV ≈ 38% xác nhận doanh số giữa các ngày biến động tương đối lớn.",
+        code: "sd(df_clean$sales, na.rm = TRUE)"
+      }
+    };
+
+    function switchDescTab(key, btnEl) {
+      document.querySelectorAll('.desc-nav-btn').forEach(btn => btn.classList.remove('active'));
+      btnEl.classList.add('active');
+
+      const data = descData[key];
+      document.getElementById('panelTitle').textContent = data.title;
+      document.getElementById('panelSubtitle').textContent = data.subtitle;
+      
+      const formulaEl = document.getElementById('panelFormula');
+      formulaEl.innerHTML = data.formula;
+      
+      const prosConsList = document.getElementById('panelProsCons');
+      prosConsList.innerHTML = '';
+      data.proscons.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = item;
+        prosConsList.appendChild(li);
+      });
+      
+      document.getElementById('panelExample').innerHTML = data.example;
+      document.getElementById('panelCode').textContent = data.code;
+
+      try {
+        renderMathInElement(formulaEl, {
+          delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "$", right: "$", display: false}
+          ]
+        });
+      } catch (err) {
+        console.error("KaTeX error: ", err);
+      }
+    }
+
+    // ==========================================
+    // 3. Landing Page: Live Descriptive Calculator
+    // ==========================================
+    function calculateLiveStats() {
+      const inputStr = document.getElementById('calcInput').value;
+      const arr = inputStr.split(',')
+                          .map(val => parseFloat(val.trim()))
+                          .filter(val => !isNaN(val));
+
+      if (arr.length === 0) {
+        alert("Vui lòng nhập danh sách số hợp lệ (cách nhau bởi dấu phẩy)!");
+        return;
+      }
+
+      const n = arr.length;
+      const sum = arr.reduce((acc, val) => acc + val, 0);
+      const mean = sum / n;
+
+      const sorted = [...arr].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      const median = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+
+      let sumSqDiff = arr.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0);
+      const variance = n > 1 ? sumSqDiff / (n - 1) : 0;
+      const sd = Math.sqrt(variance);
+
+      document.getElementById('calcN').textContent = n;
+      document.getElementById('calcMean').textContent = Math.round(mean).toLocaleString('vi-VN');
+      document.getElementById('calcMedian').textContent = Math.round(median).toLocaleString('vi-VN');
+      document.getElementById('calcSD').textContent = Math.round(sd).toLocaleString('vi-VN');
+
+      const maxVal = Math.max(...arr);
+      const chartRows = document.getElementById('chartRows');
+      chartRows.innerHTML = '';
+
+      arr.forEach((val, index) => {
+        const percent = maxVal > 0 ? (val / maxVal) * 100 : 0;
+        const row = document.createElement('div');
+        row.className = 'bar-chart-row';
+        if (val > mean + sd || val < mean - sd) {
+          row.classList.add('special');
+        }
+
+        row.innerHTML = `
+          <div class="bar-chart-label">Ngày ${index + 1}</div>
+          <div class="bar-chart-wrapper">
+            <div class="bar-chart-fill" style="width: ${percent}%"></div>
+          </div>
+          <div class="bar-chart-value">${val.toLocaleString('vi-VN')} EUR</div>
+        `;
+        chartRows.appendChild(row);
+      });
+    }
+    calculateLiveStats(); // Run initially
+
+    // ==========================================
+    // 4. Landing Page: Stepper Navigation
+    // ==========================================
+    const stepData = [
+      {
+        step: 1,
+        title: "📝 Đặt giả thuyết <span>Bước 1</span>",
+        details: 'Thiết lập giả thuyết không $H_0$ ("Không có sự khác biệt / không có hiệu ứng") và giả thuyết đối $H_1$ ("Có sự khác biệt / có hiệu ứng thực tế"). Đây là gốc rễ của mọi kiểm định thống kê.',
+        header: "Sử dụng trong dự án Rossmann",
+        text: "<strong>Giả thuyết:</strong> So sánh doanh thu khi có chạy khuyến mãi (`Promo = 1`) và khi không chạy khuyến mãi (`Promo = 0`). <br>$H_0$: Doanh số trung bình của hai nhóm bằng nhau ($\mu_1 = \mu_2$). <br>$H_1$: Doanh số trung bình của nhóm chạy khuyến mãi cao hơn ($\mu_1 > \mu_2$)."
+      },
+      {
+        step: 2,
+        title: "🎯 Chọn mức ý nghĩa $\\alpha$ <span>Bước 2</span>",
+        details: "Mức ý nghĩa $\\alpha$ (thường là 0.05 hoặc 5%) xác định ngưỡng tối đa cho việc bác bỏ giả thuyết $H_0$. Nó đại diện cho xác suất phạm phải Sai lầm loại I (bác bỏ nhầm $H_0$ khi nó đúng thực sự).",
+        header: "Sử dụng trong dự án Rossmann",
+        text: "Nhóm chọn $\\alpha = 0.05$. Điều này đảm bảo rằng độ tin cậy của các phát biểu thống kê đạt tối thiểu 95%, giảm thiểu việc cho rằng khuyến mãi có tác dụng trong khi thực tế chỉ là do biến động ngẫu nhiên."
+      },
+      {
+        step: 3,
+        title: "📊 Tính toán Thống kê kiểm định <span>Bước 3</span>",
+        details: "Tính toán đại lượng thống kê (ví dụ: trị số $t$, $F$, $\\chi^2$, hoặc thứ hạng trong phi tham số) dựa trên công thức mẫu để đo khoảng cách chênh lệch giữa mẫu thực tế và giả định $H_0$ đúng.",
+        header: "Sử dụng trong dự án Rossmann",
+        text: "Đối với kiểm định Promo, ta tính thống kê Welch t-statistic. Đối với kiểm định phi tham số so sánh StoreType, ta tính thống kê Kruskal-Wallis H-statistic dựa trên hạng vị (ranks) doanh số."
+      },
+      {
+        step: 4,
+        title: "🧮 Tính toán p-value <span>Bước 4</span>",
+        details: "p-value là xác suất thu được một thống kê mẫu cực đoan bằng hoặc lớn hơn giá trị thực tế quan sát được, trong điều kiện giả thuyết không $H_0$ hoàn toàn đúng.",
+        header: "Sử dụng trong dự án Rossmann",
+        text: "Chạy các lệnh R như `t.test()` hay `wilcox.test()` để tự động tính p-value dựa trên phân phối t hoặc phân phối tiệm cận. Trong phân tích Promo, p-value đạt gần bằng 0 ($< 2.2 \\times 10^{-16}$)."
+      },
+      {
+        step: 5,
+        title: "⚖️ Ra quyết định thống kê <span>Bước 5</span>",
+        details: "So sánh p-value thu được với mức ý nghĩa $\\alpha$: Nếu $p < \\alpha$, ta bác bỏ $H_0$ và chấp nhận $H_1$. Nếu $p \\ge \\alpha$, ta không đủ bằng chứng bác bỏ $H_0$.",
+        header: "Sử dụng trong dự án Rossmann",
+        text: "Vì p-value ($< 0.05$), ta **bác bỏ giả thuyết không $H_0$**. Nhóm chính thức kết luận: Chương trình khuyến mãi (Promo) có tác dụng **tăng doanh số trung bình thực tế** của các cửa hàng Rossmann một cách có ý nghĩa thống kê."
+      }
+    ];
+
+    function goToStep(stepNum) {
+      document.querySelectorAll('.step-node').forEach((node, idx) => {
+        node.className = 'step-node';
+        if (idx + 1 < stepNum) {
+          node.classList.add('completed');
+        } else if (idx + 1 === stepNum) {
+          node.classList.add('active');
+        }
+      });
+
+      const progressPercent = ((stepNum - 1) / 4) * 100;
+      document.getElementById('stepperProgress').style.width = `${progressPercent}%`;
+
+      const step = stepData[stepNum - 1];
+      const box = document.getElementById('stepContentBox');
+      
+      box.innerHTML = `
+        <h3 class="step-title" id="stepTitle">${step.title}</h3>
+        <p class="step-details" id="stepDetails">${step.details}</p>
+        <div class="step-rossmann-use">
+          <h5 id="stepUseCaseHeader"><i class="fa-solid fa-code-branch" style="color:var(--blue);"></i> ${step.header}</h5>
+          <p id="stepUseCaseText">${step.text}</p>
+        </div>
+      `;
+
+      try {
+        renderMathInElement(box, {
+          delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "$", right: "$", display: false}
+          ]
+        });
+      } catch (err) {
+        console.error("KaTeX stepper error: ", err);
+      }
+    }
+    goToStep(1); // Init step 1
+
+    // ==========================================
+    // 5. Landing Page: Sigmoid Curve Visualizer
+    // ==========================================
+    function updateSigmoidPlot() {
+      const b0 = parseFloat(document.getElementById('inputB0').value);
+      const b1 = parseFloat(document.getElementById('inputB1').value);
+      const xInput = parseFloat(document.getElementById('inputX').value);
+
+      document.getElementById('valB0').textContent = b0.toFixed(2);
+      document.getElementById('valB1').textContent = b1.toFixed(2);
+      document.getElementById('valX').textContent = xInput.toFixed(2);
+
+      const pathEl = document.getElementById('sigmoidCurve');
+      let pathD = "M ";
+      
+      for (let x = -10; x <= 10; x += 0.2) {
+        let z = b0 + b1 * x;
+        let p = 1 / (1 + Math.exp(-z));
+        let svgX = (x + 10) * 25;
+        let svgY = 280 * (1 - p);
+        
+        if (x === -10) {
+          pathD += `${svgX.toFixed(1)} ${svgY.toFixed(1)}`;
+        } else {
+          pathD += ` L ${svgX.toFixed(1)} ${svgY.toFixed(1)}`;
+        }
+      }
+      pathEl.setAttribute('d', pathD);
+
+      const zActive = b0 + b1 * xInput;
+      const pActive = 1 / (1 + Math.exp(-zActive));
+      
+      const dotX = (xInput + 10) * 25;
+      const dotY = 280 * (1 - pActive);
+
+      const dotEl = document.getElementById('activePoint');
+      dotEl.setAttribute('cx', dotX);
+      dotEl.setAttribute('cy', dotY);
+
+      document.getElementById('stepZ').innerHTML = `z = ${b0.toFixed(2)} + (${b1.toFixed(2)}) * (${xInput.toFixed(2)}) = <strong>${zActive.toFixed(2)}</strong>`;
+      document.getElementById('stepP').innerHTML = `P(Y=1 | X₁) = \\frac{1}{1 + e^{-(${zActive.toFixed(2)})}} = <strong>${(pActive * 100).toFixed(2)}%</strong>`;
+      
+      try {
+        renderMathInElement(document.querySelector('.calc-step-box'), {
+          delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "$", right: "$", display: false}
+          ]
+        });
+      } catch (e) {}
+    }
+    updateSigmoidPlot();
+
+    // ==========================================
+    // 6. Landing Page: Odds Ratio (OR) Calculator
+    // ==========================================
+    function updateORCalc() {
+      const beta = parseFloat(document.getElementById('inputBeta').value);
+      document.getElementById('valBeta').textContent = beta.toFixed(2);
+
+      const or = Math.exp(beta);
+      document.getElementById('orResult').textContent = or.toFixed(2);
+
+      let explanation = "";
+      if (beta > 0) {
+        const percent = (or - 1) * 100;
+        explanation = `Khi biến độc lập tăng thêm 1 đơn vị, cơ hội (odds) xảy ra sự kiện mục tiêu ($Y = 1$) sẽ <strong>tăng gấp ${or.toFixed(2)} lần</strong> (tương ứng tăng <strong>${percent.toFixed(1)}%</strong>) so với ban đầu. <br><br><em>Ví dụ thực tế:</em> Nếu $\\beta_{\\text{promo}} = ${beta.toFixed(2)} \\Rightarrow$ chạy khuyến mãi sẽ kích hoạt cơ hội đạt doanh thu vượt ngưỡng tăng gấp ${or.toFixed(2)} lần.`;
+      } else if (beta < 0) {
+        const percent = (1 - or) * 100;
+        explanation = `Khi biến độc lập tăng thêm 1 đơn vị, cơ hội (odds) xảy ra sự kiện mục tiêu ($Y = 1$) bị <strong>giảm xuống còn bằng ${or.toFixed(2)} lần</strong> (tương ứng giảm <strong>${percent.toFixed(1)}%</strong>) so với ban đầu. <br><br><em>Ví dụ thực tế:</em> Nếu $\\beta_{\\text{holiday}} = ${beta.toFixed(2)} \\Rightarrow$ kỳ nghỉ lễ làm thu hẹp cơ hội đạt doanh số cao chỉ còn ${or.toFixed(2)} lần ngày thường.`;
+      } else {
+        explanation = "Odds Ratio bằng 1.00 nghĩa là biến độc lập này hoàn toàn không có mối tương quan hay tác động nào đến tỷ lệ xảy ra sự kiện mục tiêu.";
+      }
+
+      const explanationEl = document.getElementById('orExplanation');
+      explanationEl.innerHTML = explanation;
+
+      try {
+        renderMathInElement(explanationEl, {
+          delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "$", right: "$", display: false}
+          ]
+        });
+      } catch (err) {}
+    }
+    updateORCalc();
+
+
+    // ==========================================
+    // 7. Slide Presentation Navigation Logic
+    // ==========================================
+    const slides = document.querySelectorAll('.slide');
+    const navDots = document.getElementById('navDots');
+    let current = 0;
+    const total = slides.length;
+
+    // Build nav dots
+    for (let i = 0; i < total; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+      dot.onclick = () => goToSlide(i);
+      navDots.appendChild(dot);
+    }
+
+    function goToSlide(index) {
+      if (index < 0 || index >= total) return;
+      slides[current].classList.remove('active');
+      navDots.children[current].classList.remove('active');
+      current = index;
+      slides[current].classList.add('active');
+      navDots.children[current].classList.add('active');
+    }
+
+    function navigateSlide(dir) { goToSlide(current + dir); }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', e => {
+      if (!document.body.classList.contains('slide-mode-active')) return;
+      if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); navigateSlide(1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); navigateSlide(-1); }
+      if (e.key === 'Home') { e.preventDefault(); goToSlide(0); }
+      if (e.key === 'End') { e.preventDefault(); goToSlide(total - 1); }
+      if (e.key === 'Escape') { e.preventDefault(); toggleMode('landing'); } // Exit slides with Escape
+      // Fullscreen toggle
+      if (e.key === 'f' || e.key === 'F') {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
+      }
+    });
+
+    // Touch / swipe support
+    let touchStartX = 0;
+    document.addEventListener('touchstart', e => { 
+      if (!document.body.classList.contains('slide-mode-active')) return;
+      touchStartX = e.touches[0].clientX; 
+    });
+    document.addEventListener('touchend', e => {
+      if (!document.body.classList.contains('slide-mode-active')) return;
+      const diff = touchStartX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 50) navigateSlide(diff > 0 ? 1 : -1);
+    });
+  </script>
+
+</body>
+
+</html>

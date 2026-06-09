@@ -39,6 +39,5 @@ desktop.ini
 *.tmp
 
 # --- Exceptions ---
-!slides/presentation.html
-!index.html
+!presentation.html
 
