@@ -1129,9 +1129,9 @@
     </div>
 
     <!-- ========== SLIDE 8: CHUYỂN SANG THỐNG KÊ SUY DIỄN ========== -->
-    <div class="slide slide--light" data-index="7">
+    <div class="slide slide--accent" data-index="7">
       <div class="label">Thống kê Suy diễn</div>
-      <h2>🔄 Từ <span style="color:var(--blue)">Mô tả</span> &rarr; <span style="color:var(--coral)">Suy diễn</span></h2>
+      <h2>🔄 Từ <span style="color:#93C5FD">Mô tả</span> &rarr; <span style="color:#FDBA74">Suy diễn</span></h2>
       <p class="subtitle" style="margin-bottom:24px;">"Từ mẫu (sample) → suy luận về tổng thể (population)"</p>
       <div class="table-wrap">
         <table>
@@ -1167,9 +1167,9 @@
         </table>
       </div>
       <div
-        style="margin-top:24px;padding:18px 24px;border-radius:12px;background:rgba(249,115,22,0.05);border:1px solid rgba(249,115,22,0.15);">
-        <p style="font-size:16px;text-align:center;color:var(--gray-600);">❓ <strong>Câu hỏi cốt lõi:</strong> Kết quả
-          quan sát trên mẫu có đủ mạnh để kết luận về tổng thể, hay chỉ là <span class="highlight-coral">dao động ngẫu
+        style="margin-top:24px;padding:18px 24px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);">
+        <p style="font-size:16px;text-align:center;color:var(--white);">❓ <strong>Câu hỏi cốt lõi:</strong> Kết quả
+          quan sát trên mẫu có đủ mạnh để kết luận về tổng thể, hay chỉ là <span style="color:#FDBA74;font-weight:600;">dao động ngẫu
             nhiên</span>?</p>
       </div>
       <div class="slide-number">08 / 15</div>
@@ -1317,33 +1317,33 @@
     </div>
 
     <!-- ========== SLIDE 12: TẠI SAO CẦN LOGISTIC ========== -->
-    <div class="slide slide--light" data-index="11">
+    <div class="slide slide--coral" data-index="11">
       <div class="label">Hồi quy Logistic</div>
-      <h2>❓ Tại sao cần <span style="color:var(--coral)">Logistic Regression</span>?</h2>
+      <h2>❓ Tại sao cần <span style="color:var(--white)">Logistic Regression</span>?</h2>
       <div class="grid-2 mt-24">
         <div>
-          <div class="card" style="border-left:4px solid var(--coral);">
-            <h3 style="font-size:16px;color:var(--coral);">⚠️ Vấn đề: Y là nhị phân (0/1)</h3>
-            <p style="margin-top:8px;font-size:15px;">Khi biến phụ thuộc là câu trả lời "Có/Không", hồi quy tuyến tính <strong>thất bại</strong> vì:</p>
+          <div class="card" style="border-left:4px solid var(--white);">
+            <h3 style="font-size:16px;color:var(--white);margin-bottom:12px;">⚠️ Vấn đề: Y là nhị phân (0/1)</h3>
+            <p style="margin-top:8px;font-size:15px;color:rgba(255,255,255,0.9);">Khi biến phụ thuộc là câu trả lời "Có/Không", hồi quy tuyến tính <strong>thất bại</strong> vì:</p>
             <ul class="clean-list emoji-list" style="margin-top:12px;">
-              <li style="font-size:15px;">🚫 Dự đoán có thể <span class="highlight-coral">&lt; 0 hoặc &gt; 1</span> → vô nghĩa cho xác suất</li>
-              <li style="font-size:15px;">📉 Vi phạm giả định phương sai đồng nhất</li>
-              <li style="font-size:15px;">〰️ Quan hệ X → P(Y=1) thường <strong>không tuyến tính</strong></li>
+              <li style="font-size:15px;color:rgba(255,255,255,0.9);">🚫 Dự đoán có thể <span style="color:var(--white);font-weight:600;">&lt; 0 hoặc &gt; 1</span> → vô nghĩa cho xác suất</li>
+              <li style="font-size:15px;color:rgba(255,255,255,0.9);">📉 Vi phạm giả định phương sai đồng nhất</li>
+              <li style="font-size:15px;color:rgba(255,255,255,0.9);">〰️ Quan hệ X → P(Y=1) thường <strong>không tuyến tính</strong></li>
             </ul>
           </div>
         </div>
         <div>
-          <div class="card" style="border-left:4px solid var(--blue);margin-bottom:16px;">
-            <h3 style="font-size:16px;color:var(--blue);">🎯 Ứng dụng trong đồ án</h3>
+          <div class="card" style="border-left:4px solid #93C5FD;margin-bottom:16px;">
+            <h3 style="font-size:16px;color:#93C5FD;margin-bottom:12px;">🎯 Ứng dụng trong đồ án</h3>
             <ul class="clean-list emoji-list" style="margin-top:8px;">
-              <li style="font-size:15px;">💵 Doanh số có vượt <span class="highlight">median</span> không? → Y ∈ {0, 1}</li>
-              <li style="font-size:15px;">🚨 Cửa hàng có <span class="highlight-coral">outlier</span> hay không? → Y ∈ {0, 1}</li>
+              <li style="font-size:15px;color:rgba(255,255,255,0.9);">💵 Doanh số có vượt <span style="color:var(--white);font-weight:600;">median</span> không? → Y ∈ {0, 1}</li>
+              <li style="font-size:15px;color:rgba(255,255,255,0.9);">🚨 Cửa hàng có <span style="color:var(--white);font-weight:600;">outlier</span> hay không? → Y ∈ {0, 1}</li>
             </ul>
           </div>
           <div
-            style="padding:18px 24px;border-radius:12px;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.12);">
-            <p style="font-size:15px;color:var(--gray-600);">💡 <strong>Giải pháp:</strong> Biến đổi xác suất p thành
-              <span class="highlight">log-odds</span> rồi mô hình hóa tuyến tính trên thang đo đó</p>
+            style="padding:18px 24px;border-radius:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);">
+            <p style="font-size:15px;color:var(--white);">💡 <strong>Giải pháp:</strong> Biến đổi xác suất p thành
+              <span style="color:#93C5FD;font-weight:600;">log-odds</span> rồi mô hình hóa tuyến tính trên thang đo đó</p>
           </div>
         </div>
       </div>
@@ -1469,9 +1469,9 @@
     </div>
 
     <!-- ========== SLIDE 15: SO SÁNH TỔNG HỢP & KẾT LUẬN ========== -->
-    <div class="slide slide--light" data-index="14">
+    <div class="slide slide--gradient" data-index="14">
       <div class="label">Tổng kết</div>
-      <h2 style="font-size:36px;">⚖️ So sánh Linear vs Logistic & Kết luận</h2>
+      <h2 style="font-size:36px;color:var(--white);">⚖️ So sánh Linear vs Logistic & Kết luận</h2>
       <div class="matrix-grid mt-16" style="grid-template-columns: 180px 1fr 1fr;">
         <div class="matrix-cell matrix-cell--header">📋 Tiêu chí</div>
         <div class="matrix-cell matrix-cell--header">Linear Regression</div>
@@ -1534,9 +1534,9 @@
         </div>
       </div>
       <div
-        style="margin-top:24px;padding:16px 24px;border-radius:12px;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.15);text-align:center;">
-        <p style="font-size:16px;">🤝 <strong>Điểm chung:</strong> Cả hai đều là <strong>Mô hình Tuyến tính Tổng quát (GLM)</strong>, chỉ khác ở hàm liên kết<br>
-          <span style="font-size:14px;color:var(--gray-500);">glm(..., family = gaussian) vs glm(..., family = binomial)</span>
+        style="margin-top:24px;padding:16px 24px;border-radius:12px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);text-align:center;">
+        <p style="font-size:16px;color:var(--white);">🤝 <strong>Điểm chung:</strong> Cả hai đều là <strong>Mô hình Tuyến tính Tổng quát (GLM)</strong>, chỉ khác ở hàm liên kết<br>
+          <span style="font-size:14px;color:var(--gray-400);">glm(..., family = gaussian) vs glm(..., family = binomial)</span>
         </p>
       </div>
       <div class="slide-number">15 / 15</div>
