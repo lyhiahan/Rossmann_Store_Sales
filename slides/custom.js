@@ -229,7 +229,7 @@ function handleSlideCharts(index) {
   if      (index === 3)  setTimeout(initSalesDistChart,     380);
   else if (index === 9)  setTimeout(initPromoCompareChart,  380);
   else if (index === 12) setTimeout(initSigmoidChart,       380);
-  else if (index === 14) setTimeout(initModelCompareChart,  380);
+  else if (index === 13) setTimeout(initModelCompareChart,  380);
 }
 
 /* =============================================================================

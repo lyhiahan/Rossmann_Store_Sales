@@ -24,9 +24,9 @@
 * **Kịch bản chi tiết:**
   > "Để tiếp cận dữ liệu một cách khoa học, nhóm đã chia cấu trúc phân tích thành hai trụ cột cốt lõi của thống kê học. 
   > 
-  > Trụ cột thứ nhất là **Thống kê Mô tả (Descriptive Statistics)**. Trụ cột này trả lời cho câu hỏi: *'Dữ liệu hiện có trông như thế nào?'*. Nó giúp nhóm tóm tắt dữ liệu thông qua các đại lượng đo lường xu hướng trung tâm như Mean, Median; đo lường độ phân tán như Variance, Standard Deviation, và trực quan hóa phân phối qua các biểu đồ như Histogram hay Boxplot.
+  > Trụ cột thứ nhất là **Thống kê Mô tả**. Trụ cột này trả lời cho câu hỏi: *'Dữ liệu hiện có trông như thế nào?'*. Nó giúp nhóm tóm tắt dữ liệu thông qua các đại lượng đo lường xu hướng trung tâm như Mean, Median; đo lường độ phân tán như Variance, Standard Deviation, và trực quan hóa phân phối qua các biểu đồ như Histogram hay Boxplot.
   > 
-  > Tuy nhiên, mô tả là chưa đủ. Nhóm cần đi đến trụ cột thứ hai: **Thống kê Suy diễn (Inferential Statistics)** để trả lời câu hỏi: *'Dữ liệu mẫu này cho phép chúng ta rút ra kết luận rộng hơn nào cho toàn bộ hệ thống?'*. Đây chính là nơi nhóm áp dụng các kiểm định giả thuyết (Hypothesis Testing), phân tích tương quan và xây dựng các mô hình dự báo hồi quy để suy luận đặc tính của hơn 3.000 cửa hàng Rossmann dựa trên mẫu 50 cửa hàng đang quan sát."
+  > Tuy nhiên, mô tả là chưa đủ. Nhóm cần đi đến trụ cột thứ hai: **Thống kê Suy diễn** để trả lời câu hỏi: *'Dữ liệu mẫu này cho phép chúng ta rút ra kết luận rộng hơn nào cho toàn bộ hệ thống?'*. Đây chính là nơi nhóm áp dụng các kiểm định giả thuyết, phân tích tương quan và xây dựng các mô hình dự báo hồi quy để suy luận đặc tính của hơn 3.000 cửa hàng Rossmann dựa trên mẫu 50 cửa hàng đang quan sát."
 * **Lưu ý cho người thuyết trình:**
   * *Trình bày mạch lạc, tạo cấu trúc logic rõ ràng để người nghe dễ theo dõi các slide chi tiết phía sau.*
 
@@ -37,7 +37,7 @@
 * **Kịch bản chi tiết:**
   > "Hãy bắt đầu với đại lượng đo lường xu hướng trung tâm quen thuộc nhất: **Số trung bình (Mean)**. Về mặt toán học, trung bình mẫu $\bar{x}$ đơn giản là tổng của tất cả các giá trị quan sát chia cho kích thước mẫu $n$. Trong đồ án Rossmann, doanh số trung bình thực tế của 50 cửa hàng vào những ngày mở cửa là **6.840 EUR/ngày**. 
   > 
-  > Ưu điểm của Mean là nó tận dụng triệt để mọi điểm dữ liệu để đưa ra một con số đại diện duy nhất. Tuy nhiên, nhược điểm chí mạng của nó là **cực kỳ nhạy cảm với các giá trị ngoại lai (outliers)**. Trong bối cảnh bán lẻ Đức, vào những dịp mua sắm lớn như trước Giáng sinh hay các ngày chạy khuyến mãi bùng nổ, doanh số một số cửa hàng có thể vọt lên $15.000$ đến $20.000$ EUR. Những ngày đột biến này sẽ kéo trị trung bình Mean lên cao hơn đáng kể so với mức doanh số của một ngày hoạt động bình thường điển hình. Do đó, nếu chỉ dùng Mean để lập kế hoạch tồn kho, chúng ta rất dễ bị đánh giá sai lệch."
+  > Ưu điểm của Mean là nó tận dụng triệt để mọi điểm dữ liệu để đưa ra một con số đại diện duy nhất. Tuy nhiên, nhược điểm chí mạng của nó là **cực kỳ nhạy cảm với các giá trị ngoại lai**. Trong bối cảnh bán lẻ Đức, vào những dịp mua sắm lớn như trước Giáng sinh hay các ngày chạy khuyến mãi bùng nổ, doanh số một số cửa hàng có thể vọt lên $15.000$ đến $20.000$ EUR. Những ngày đột biến này sẽ kéo trị trung bình Mean lên cao hơn đáng kể so với mức doanh số của một ngày hoạt động bình thường điển hình. Do đó, nếu chỉ dùng Mean để lập kế hoạch tồn kho, chúng ta rất dễ bị đánh giá sai lệch."
 * **Lưu ý cho người thuyết trình:**
   * *Chỉ vào công thức toán học và giải thích ngắn gọn.*
   * *Nhấn mạnh giá trị số liệu thực tế của đồ án: **6.840 EUR/ngày**.*
@@ -49,7 +49,7 @@
 * **Kịch bản chi tiết:**
   > "Để khắc phục hạn chế của Mean, chúng em sử dụng **Trung vị (Median)**. Median là giá trị nằm ở chính giữa tập dữ liệu sau khi đã được sắp xếp theo thứ tự tăng dần. Nếu số quan sát là chẵn, ta lấy trung bình của hai giá trị ở giữa. 
   > 
-  > Đặc tính tuyệt vời của Median là tính **bền vững (robust)** — nó hoàn toàn không bị ảnh hưởng bởi các giá trị cực biên ở đuôi phân phối. Trong đồ án, chúng em đã tận dụng đặc tính này để điền khuyết (imputation) cho biến khoảng cách đối thủ cạnh tranh (`CompetitionDistance`) bằng giá trị Median của tập huấn luyện nhằm tránh rò rỉ dữ liệu.
+  > Đặc tính tuyệt vời của Median là tính **bền vững** — nó hoàn toàn không bị ảnh hưởng bởi các giá trị cực biên ở đuôi phân phối. Trong đồ án, chúng em đã tận dụng đặc tính này để điền khuyết (imputation) cho biến khoảng cách đối thủ cạnh tranh (`CompetitionDistance`) bằng giá trị Median của tập huấn luyện nhằm tránh rò rỉ dữ liệu.
   > 
   > Nhìn vào biểu đồ phân phối doanh số trên slide, thầy cô có thể thấy rõ hiện tượng phân phối lệch phải (right-skewed) điển hình của dữ liệu bán lẻ. Giá trị **Median doanh số là 6.450 EUR**, thấp hơn **Mean là 6.840 EUR** khoảng **390 EUR**. Khoảng chênh lệch này cùng hệ số Skewness dương ($0,94$) xác nhận đuôi phân phối bị kéo dài về phía bên phải do các ngày doanh thu đột biến cao. Điều này đòi hỏi nhóm phải áp dụng biến đổi Log-transform hoặc các mô hình phi tuyến tính như Random Forest hay XGBoost để dự đoán hiệu quả hơn."
 * **Lưu ý cho người thuyết trình:**
@@ -63,7 +63,7 @@
 * **Kịch bản chi tiết:**
   > "Bên cạnh xu hướng trung tâm, một khía cạnh cực kỳ quan trọng là độ phân tán của dữ liệu. Đại lượng toán học nền tảng đo lường điều này là **Phương sai (Variance)**. 
   > 
-  > Xin thầy cô lưu ý sự khác biệt giữa hai công thức trên slide. Khi tính phương sai cho toàn bộ tổng thể, ta chia cho $N$. Nhưng khi tính phương sai mẫu từ dữ liệu thực nghiệm, ta phải chia cho $n-1$ thay vì $n$. Trong thống kê, đây được gọi là **Hiệu chỉnh Bessel (Bessel's Correction)**. Việc chia cho $n-1$ giúp bù đắp xu hướng đánh giá thấp độ phân tán của mẫu nhỏ, đảm bảo rằng phương sai mẫu $s^2$ là một ước lượng không chệch (unbiased estimator) của phương sai tổng thể $\sigma^2$.
+  > Xin thầy cô lưu ý sự khác biệt giữa hai công thức trên slide. Khi tính phương sai cho toàn bộ tổng thể, ta chia cho $N$. Nhưng khi tính phương sai mẫu từ dữ liệu thực nghiệm, ta phải chia cho $n-1$ thay vì $n$. Trong thống kê, đây được gọi là **Hiệu chỉnh Bessel**. Việc chia cho $n-1$ giúp bù đắp xu hướng đánh giá thấp độ phân tán của mẫu nhỏ, đảm bảo rằng phương sai mẫu $s^2$ là một ước lượng không chệch của phương sai tổng thể $\sigma^2$.
   > 
   > Phương sai doanh số mẫu tính được trong đồ án của nhóm là một con số khổng lồ: **6.925.176 $\text{EUR}^2$**. Dù con số này là nền tảng cho nhiều thuật toán tối ưu hóa, nó lại có một nhược điểm lớn trong thực tế: đơn vị đo lường lúc này là **EUR bình phương ($\text{EUR}^2$)** — một đơn vị hoàn toàn vô nghĩa và cực kỳ khó giải thích cho các nhà quản lý doanh nghiệp."
 * **Lưu ý cho người thuyết trình:**
@@ -71,12 +71,12 @@
 
 ---
 
-### Slide 6 — Độ lệch chuẩn — Standard Deviation (SD)
+### Slide 6 — Độ lệch chuẩn
 * **Nội dung hiển thị trên slide:** Công thức SD ($s = \sqrt{s^2}$). Chỉ số thực tế của đồ án: SD = 2.632 EUR, Hệ số biến thiên (CV) = 38.47%. Minh họa quy tắc phân phối chuẩn 68-95-99.7% với các khoảng doanh số tương ứng: $\pm 1\sigma$ (4.208 – 9.472 EUR), $\pm 2\sigma$ (1.576 – 12.104 EUR). Code R: `sd(df_clean$sales)`.
 * **Kịch bản chi tiết:**
-  > "Để đưa độ đo phân tán về một đơn vị dễ hiểu, chúng ta chỉ cần lấy căn bậc hai của phương sai, thu được **Độ lệch chuẩn (Standard Deviation - SD)**. 
+  > "Để đưa độ đo phân tán về một đơn vị dễ hiểu, chúng ta chỉ cần lấy căn bậc hai của phương sai, thu được **Độ lệch chuẩn**. 
   > 
-  > Độ lệch chuẩn doanh số trong đồ án của chúng em là **2.632 EUR**. Vì cùng đơn vị với dữ liệu gốc, chúng em có thể phát biểu một cách rất trực quan rằng: *'Doanh số bán hàng hàng ngày dao động trung bình khoảng $\pm 2.632$ EUR xung quanh mức trung bình 6.840 EUR'*. Nhóm cũng tính toán **Hệ số biến thiên (Coefficient of Variation - CV)** bằng tỷ số giữa SD và Mean, đạt **38,47%**. Con số CV cao này phản ánh mức độ biến động doanh số rất mạnh giữa các ngày trong tuần và các mùa trong năm.
+  > Độ lệch chuẩn doanh số trong đồ án của chúng em là **2.632 EUR**. Vì cùng đơn vị với dữ liệu gốc, chúng em có thể phát biểu một cách rất trực quan rằng: *'Doanh số bán hàng hàng ngày dao động trung bình khoảng $\pm 2.632$ EUR xung quanh mức trung bình 6.840 EUR'*. Nhóm cũng tính toán **Hệ số biến thiên** bằng tỷ số giữa SD và Mean, đạt **38,47%**. Con số CV cao này phản ánh mức độ biến động doanh số rất mạnh giữa các ngày trong tuần và các mùa trong năm.
   > 
   > Trên slide là hình vẽ minh họa quy luật thực nghiệm 68-95-99.7. Nếu doanh số tuân theo phân phối chuẩn hoàn hảo, khoảng 68% số ngày bán hàng sẽ nằm trong khoảng $\pm 1$ độ lệch chuẩn từ Mean, tương đương từ $4.208$ đến $9.472$ EUR. Khoảng 95% số ngày sẽ nằm trong khoảng $\pm 2$ độ lệch chuẩn, tức là từ $1.576$ đến $12.104$ EUR. Việc hiểu rõ các khoảng dao động này giúp Rossmann thiết lập các mức lưu kho an toàn tối ưu."
 * **Lưu ý cho người thuyết trình:**
@@ -103,7 +103,7 @@
   > 
   > Trong thực tế kinh doanh, chúng ta hầu như không bao giờ có được dữ liệu tức thời của toàn bộ tổng thể mọi lúc mọi nơi. Ở đồ án này, nhóm chỉ quan sát dữ liệu của **50 cửa hàng** trong **12 tháng**. Nhưng câu hỏi mà ban giám đốc Rossmann quan tâm là: *'Chương trình khuyến mãi có thực sự hiệu quả cho toàn bộ hơn 3.000 cửa hàng trên toàn quốc hay không?'*.
   > 
-  > Nếu chỉ nhìn vào con số trung bình của 50 cửa hàng tăng lên, làm sao chúng ta chắc chắn đó là hiệu ứng thực tế chứ không phải do sai số chọn mẫu ngẫu nhiên? Để trả lời câu hỏi này một cách khoa học, thống kê suy diễn cung cấp công cụ **Kiểm định giả thuyết (Hypothesis Testing)**. Chúng ta sẽ dùng các đặc trưng tính toán được trên mẫu — gọi là các **Thống kê (Statistics)** như $\bar{x} = 6.840$ EUR để suy luận về các **Tham số (Parameters)** chưa biết của tổng thể như $\mu$ với một mức độ tin cậy toán học xác định."
+  > Nếu chỉ nhìn vào con số trung bình của 50 cửa hàng tăng lên, làm sao chúng ta chắc chắn đó là hiệu ứng thực tế chứ không phải do sai số chọn mẫu ngẫu nhiên? Để trả lời câu hỏi này một cách khoa học, thống kê suy diễn cung cấp công cụ **Kiểm định giả thuyết**. Chúng ta sẽ dùng các đặc trưng tính toán được trên mẫu — gọi là các **Thống kê** như $\bar{x} = 6.840$ EUR để suy luận về các **Tham số** chưa biết của tổng thể như $\mu$ với một mức độ tin cậy toán học xác định."
 * **Lưu ý cho người thuyết trình:**
   * *Nói với giọng truyền cảm, nhấn mạnh tính thực tế của bài toán doanh nghiệp để thu hút người nghe.*
 
@@ -127,11 +127,11 @@
 ### Slide 10 — Các kiểm định thống kê được sử dụng trong đồ án
 * **Nội dung hiển thị trên slide:** Bảng so sánh các kiểm định được dùng trong đồ án: Doanh số theo Store Type (ANOVA vs Kruskal-Wallis, cả hai p < 2e-16); Hiệu quả Khuyến mãi (Welch t-test vs Wilcoxon, cả hai p < 2e-16); Doanh số vs Cạnh tranh (Pearson r=0.0002 vs Spearman rho=0.049). Biểu đồ so sánh doanh số ngày có khuyến mãi ($8.091$ EUR) vs không khuyến mãi ($5.739$ EUR). Thanh đo kích thước hiệu ứng (Effect Size) Cohen's d = 0.994 (Rất lớn).
 * **Kịch bản chi tiết:**
-  > "Trong đồ án này, nhóm trưởng Quốc Anh đã thiết lập một phương pháp kiểm định rất chặt chẽ gọi là **Kiểm định đôi (Dual Testing)**. Vì doanh số bán hàng không tuân theo phân phối chuẩn, nhóm chạy song song cả kiểm định tham số truyền thống lẫn kiểm định phi tham số đối chứng để đối chiếu chéo kết quả.
+  > "Trong đồ án này, nhóm trưởng Quốc Anh đã thiết lập một phương pháp kiểm định rất chặt chẽ gọi là **Kiểm định đôi**. Vì doanh số bán hàng không tuân theo phân phối chuẩn, nhóm chạy song song cả kiểm định tham số truyền thống lẫn kiểm định phi tham số đối chứng để đối chiếu chéo kết quả.
   > 
   > Đầu tiên, đối với giả thuyết về sự khác biệt doanh số giữa các loại cửa hàng (`StoreType`), cả kiểm định ANOVA và Kruskal-Wallis đều cho **p-value cực nhỏ ($< 2\times 10^{-16}$)**, khẳng định chắc chắn doanh thu trung bình giữa các loại cửa hàng là khác nhau đáng kể.
   > 
-  > Thứ hai, về hiệu quả khuyến mãi (`Promo`), cả Welch t-test và Wilcoxon cũng cho **p-value $< 2\times 10^{-16}$**. Nhìn vào biểu đồ cột, doanh số trung bình ngày có khuyến mãi là **8.091 EUR/ngày**, cao hơn ngày thường không khuyến mãi là **5.739 EUR/ngày** (tăng tới **41,0%**). Để đo lường ý nghĩa thực tiễn, nhóm tính toán kích thước hiệu ứng **Cohen's d (Welch-corrected) đạt 0.994** — cho thấy tác động của khuyến mãi là cực kỳ lớn và thực chất, chứ không chỉ mang ý nghĩa lý thuyết.
+  > Thứ hai, về hiệu quả khuyến mãi (`Promo`), cả Welch t-test và Wilcoxon cũng cho **p-value $< 2\times 10^{-16}$**. Nhìn vào biểu đồ cột, doanh số trung bình ngày có khuyến mãi là **8.091 EUR/ngày**, cao hơn ngày thường không khuyến mãi là **5.739 EUR/ngày** (tăng tới **41,0%**). Để đo lường ý nghĩa thực tiễn, nhóm tính toán kích thước hiệu ứng **Cohen's d đạt 0.994** — cho thấy tác động của khuyến mãi là cực kỳ lớn và thực chất, chứ không chỉ mang ý nghĩa lý thuyết.
   > 
   > Cuối cùng, về mối tương quan giữa doanh số và khoảng cách đối thủ (`CompetitionDistance`), hệ số tương quan Spearman đạt trị số cực kỳ yếu ($\rho \approx -0,016$). Mặc dù kiểm định cho p-value có ý nghĩa thống kê ($0.049 < 0.05$) do kích thước mẫu rất lớn, nhưng về mặt thực tiễn, khoảng cách đối thủ gần như không ảnh hưởng đến doanh thu của cửa hàng trong một thị trường đã bão hòa như ở Đức."
 * **Lưu ý cho người thuyết trình:**
@@ -140,14 +140,14 @@
 
 ---
 
-### Slide 11 — Nền tảng Hồi quy tuyến tính đa biến (Linear Regression)
+### Slide 11 — Nền tảng Hồi quy tuyến tính đa biến
 * **Nội dung hiển thị trên slide:** Phương trình hồi quy đa biến: $Y = \beta_0 + \beta_1X_1 + \beta_2X_2 + \cdots + \beta_pX_p + \varepsilon$. Giải thích phương pháp OLS (tối thiểu hóa RSS). 4 giả định kinh điển (Tuyến tính, Nhiễu chuẩn, Phương sai đồng nhất, Không tự tương quan). Kết quả mô hình: R² Validation = 86.78%, RMSE = 960.5 EUR. Hệ số tiêu biểu: Customers (+11.32 EUR), Promo (+976.5 EUR), StoreType C (+350.2 EUR), DayOfWeek 7 (-2.215 EUR). Code R: `lm(...)`.
 * **Kịch bản chi tiết:**
-  > "Đi xa hơn các kiểm định đơn lẻ, nhóm xây dựng mô hình hồi quy để lượng hóa đồng thời tác động của nhiều yếu tố. Mô hình nền tảng đầu tiên là **Hồi quy tuyến tính đa biến (Linear Regression)**.
+  > "Đi xa hơn các kiểm định đơn lẻ, nhóm xây dựng mô hình hồi quy để lượng hóa đồng thời tác động của nhiều yếu tố. Mô hình nền tảng đầu tiên là **Hồi quy tuyến tính đa biến**.
   > 
-  > Mô hình sử dụng phương pháp **Bình phương nhỏ nhất (OLS)** để tìm kiếm bộ hệ số $\beta$ sao cho tổng bình phương các sai số RSS là nhỏ nhất. Tuy nhiên, để các ước lượng OLS có độ tin cậy tốt nhất (BLUE), dữ liệu phải thỏa mãn 4 giả định kinh điển: tính tuyến tính, phân phối chuẩn của sai số, phương sai sai số đồng nhất và không có tự tương quan. Trên thực tế, dữ liệu Rossmann vi phạm giả định phương sai đồng nhất do biến động doanh số theo mùa, đòi hỏi chúng ta phải hết sức cẩn thận khi diễn giải khoảng tin cậy.
+  > Mô hình sử dụng phương pháp **Bình phương nhỏ nhất** để tìm kiếm bộ hệ số $\beta$ sao cho tổng bình phương các sai số RSS là nhỏ nhất. Tuy nhiên, để các ước lượng OLS có độ tin cậy tốt nhất (BLUE), dữ liệu phải thỏa mãn 4 giả định kinh điển: tính tuyến tính, phân phối chuẩn của sai số, phương sai sai số đồng nhất và không có tự tương quan. Trên thực tế, dữ liệu Rossmann vi phạm giả định phương sai đồng nhất do biến động doanh số theo mùa, đòi hỏi chúng ta phải hết sức cẩn thận khi diễn giải khoảng tin cậy.
   > 
-  > Kết quả thực nghiệm của mô hình đạt **R² = 86,78%** trên tập Validation — nghĩa là mô hình giải thích được gần 87% sự biến động của doanh số với sai số trung bình **RMSE là 960,5 EUR**. Điểm đắt giá của mô hình này nằm ở tính **diễn giải trực tiếp (interpretability)** thông qua các hệ số hồi quy:
+  > Kết quả thực nghiệm của mô hình đạt **R² = 86,78%** trên tập Validation — nghĩa là mô hình giải thích được gần 87% sự biến động của doanh số với sai số trung bình **RMSE là 960,5 EUR**. Điểm đắt giá của mô hình này nằm ở tính **diễn giải trực tiếp** thông qua các hệ số hồi quy:
   > *   Mỗi một khách hàng tăng thêm giúp doanh thu tăng **11,32 EUR**.
   > *   Việc chạy khuyến mãi (`Promo`) giúp tăng trung bình **976,5 EUR/ngày**.
   > *   Đặc biệt, ngày Chủ nhật (`DayOfWeek 7`) làm doanh số sụt giảm **2.215 EUR** do luật đóng cửa bắt buộc của Đức."
@@ -166,7 +166,7 @@
   > 2.  **Vi phạm giả định**: Phương sai sai số không bao giờ đồng nhất vì nó phụ thuộc trực tiếp vào giá trị của biến độc lập $X$.
   > 3.  **Sai lệch dạng hàm**: Mối quan hệ thực tế giữa các yếu tố với xác suất xảy ra biến cố thường là phi tuyến tính dạng hình chữ S chứ không phải một đường thẳng kéo dài vô tận.
   > 
-  > Để giải quyết triệt để các giới hạn này, nhóm đã áp dụng mô hình **Hồi quy Logistic (Logistic Regression)** bằng cách sử dụng hàm liên kết **Logit** để ánh xạ dải xác suất giới hạn $(0, 1)$ sang dải số thực vô hạn $(-\infty, +\infty)$."
+  > Để giải quyết triệt để các giới hạn này, nhóm đã áp dụng mô hình **Hồi quy Logistic** bằng cách sử dụng hàm liên kết **Logit** để ánh xạ dải xác suất giới hạn $(0, 1)$ sang dải số thực vô hạn $(-\infty, +\infty)$."
 * **Lưu ý cho người thuyết trình:**
   * *Sử dụng giọng điệu mang tính lật mở vấn đề khi trình bày về sự thất bại của OLS.*
 
@@ -190,31 +190,15 @@
 
 ---
 
-### Slide 14 — Phương pháp ước lượng MLE & Diễn giải Odds Ratio
-* **Nội dung hiển thị trên slide:** Công thức toán học ước lượng hợp lý cực đại (MLE) cho $\hat{\beta}$. Liệt kê các chỉ số đánh giá mô hình phân loại (Confusion Matrix, Accuracy, Precision, Recall, F1, AUC-ROC). Định nghĩa và bảng diễn giải hệ số qua Odds Ratio ($e^{\beta_j}$). Ví dụ thực tế: $\beta_{promo} = 0.693 \Rightarrow OR = e^{0.693} \approx 2.0$ (Khuyến mãi làm tăng gấp đôi tỷ lệ cược đạt doanh số cao). Code R: `glm(..., family = binomial)`.
-* **Kịch bản chi tiết:**
-  > "Do tính phi tuyến tính của hàm Sigmoid, chúng ta không thể dùng phương pháp OLS để giải trực tiếp hệ số $\beta$. Thay vào đó, Hồi quy Logistic sử dụng phương pháp **Ước lượng Hợp lý Cực đại (Maximum Likelihood Estimation - MLE)**. MLE hoạt động theo nguyên lý lặp để tìm ra bộ hệ số $\beta$ sao cho xác suất xảy ra các điểm dữ liệu thực tế quan sát được là lớn nhất.
-  > 
-  > Để diễn giải ý nghĩa của các hệ số $\beta$ thu được, chúng ta sử dụng **Tỷ lệ cược (Odds Ratio - OR)** bằng cách lấy cơ số tự nhiên $e$ lũy thừa hệ số $\beta$.
-  > *   Nếu hệ số $\beta$ dương, dẫn đến $OR > 1$: biến độc lập làm tăng khả năng xảy ra sự kiện.
-  > *   Nếu $\beta = 0$, $OR = 1$: biến độc lập hoàn toàn không có ảnh hưởng.
-  > *   Nếu $\beta$ âm, $OR < 1$: biến độc lập làm giảm khả năng xảy ra sự kiện.
-  > 
-  > Hãy xem một ví dụ thực tế cực kỳ sống động trong mô hình dự báo doanh số cao của nhóm: Hệ số $\beta$ của biến khuyến mãi `Promo` là **0.693**. Khi tính toán $OR = e^{0.693} \approx 2.0$. Con số này có ý nghĩa thực tiễn là: *'Khi cửa hàng chạy chương trình khuyến mãi, tỷ lệ cược (odds) để đạt mức doanh số cao vượt median sẽ tăng gấp 2 lần so với ngày thường không chạy khuyến mãi'*. Đây là thông tin cực kỳ đắt giá cho bộ phận marketing để hoạch định ngân sách promotion."
-* **Lưu ý cho người thuyết trình:**
-  * *Giải thích rõ sự khác biệt giữa "tỷ lệ cược" (odds) và "xác suất" (probability) để thể hiện sự chính xác về mặt học thuật.*
-
----
-
-### Slide 15 — So sánh tổng hợp và tổng kết cơ sở lý thuyết
-* **Nội dung hiển thị trên slide:** Bảng so sánh Hồi quy Tuyến tính vs Hồi quy Logistic (Biến Y, Đầu ra, Hàm liên kết, Phương pháp ước lượng, Hàm mất mát, Diễn giải hệ số). Sơ đồ cột so sánh hiệu suất các mô hình trong đồ án ($R^2$): XGBoost ($97.79\%$), Random Forest ($94.24\%$), Linear Regression ($86.78\%$), ARIMA ($31.2\%$), ETS ($28.7\%$). Kết luận chung.
+### Slide 14 — So sánh tổng hợp và tổng kết cơ sở lý thuyết
+* **Nội dung hiển thị trên slide:** Bảng so sánh Hồi quy tuyến tính vs Hồi quy Logistic (Biến Y, Đầu ra, Hàm liên kết, Phương pháp ước lượng, Hàm mất mát, Diễn giải hệ số). Sơ đồ cột so sánh hiệu suất các mô hình trong đồ án ($R^2$): XGBoost ($97.79\%$), Random Forest ($94.24\%$), Hồi quy tuyến tính ($86.78\%$), ARIMA ($31.2\%$), ETS ($28.7\%$). Kết luận chung.
 * **Kịch bản chi tiết:**
   > "Để kết thúc buổi thuyết trình, nhóm xin tổng hợp toàn bộ bức tranh lý thuyết và thực nghiệm của đồ án.
   > 
-  > Như thầy cô thấy trên bảng so sánh, cả Hồi quy tuyến tính và Hồi quy Logistic thực chất đều thuộc **Họ mô hình tuyến tính tổng quát (Generalized Linear Models - GLM)**. Chúng có cấu trúc tương đồng nhưng khác nhau ở hàm liên kết (Identity vs Logit) và phương pháp ước lượng (OLS vs MLE) để phù hợp với đặc tính của biến mục tiêu $Y$.
+  > Như thầy cô thấy trên bảng so sánh, cả Hồi quy tuyến tính và Hồi quy Logistic thực chất đều thuộc **Họ mô hình tuyến tính tổng quát**. Chúng có cấu trúc tương đồng nhưng khác nhau ở hàm liên kết (Đồng nhất so với Logit) và phương pháp ước lượng (Bình phương tối thiểu so với Hợp lý cực đại) để phù hợp với đặc tính của biến mục tiêu $Y$.
   > 
   > Nhìn vào biểu đồ hiệu suất mô hình thực tế của nhóm:
-  > *   **XGBoost** đạt kết quả vượt trội nhất với **R² đạt 97,79%**, theo sát là **Random Forest với 94,24%**. Điều này hoàn toàn trùng khớp với lý thuyết thống kê mô tả ban đầu: dữ liệu Rossmann có phân phối lệch phải mạnh và chứa nhiều tương tác phi tuyến tính, nên các thuật toán dạng cây (tree-based) xử lý hiệu quả hơn hẳn so với **Hồi quy tuyến tính baseline (86,78%)**.
+  > *   **XGBoost** đạt kết quả vượt trội nhất với **R² đạt 97,79%**, theo sát là **Random Forest với 94,24%**. Điều này hoàn toàn trùng khớp với lý thuyết thống kê mô tả ban đầu: dữ liệu Rossmann có phân phối lệch phải mạnh và chứa nhiều tương tác phi tuyến tính, nên các thuật toán dạng cây xử lý hiệu quả hơn hẳn so với **Hồi quy tuyến tính nền tảng (86,78%)**.
   > *   Ngược lại, các mô hình chuỗi thời gian thuần túy như **ARIMA (31.2%)** và **ETS (28.7%)** đạt hiệu suất rất thấp. Lý do kinh điển là chúng chỉ dự báo dựa trên lịch sử trễ của chính doanh số mà không thể tích hợp trực tiếp các biến ngoại sinh quan trọng như lịch khuyến mãi hay ngày lễ.
   > 
   > Sự kết hợp hài hòa giữa thống kê học cổ điển và học máy hiện đại đã giúp nhóm xây dựng được một giải pháp dự báo doanh số Rossmann có độ chính xác cực kỳ cao và có ý nghĩa thực tiễn sâu sắc. 
