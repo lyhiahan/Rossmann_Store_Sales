@@ -942,8 +942,8 @@ code.hljs {
 }
 
 /* Ensure MathJax containers inside math-card are centered */
-.math-card mjx-container,
-.math-card .MathJax {
+.math-card mjx-container[display="true"],
+.math-card .MathJax_Display {
   margin: 0 auto !important;
   display: block !important;
 }
