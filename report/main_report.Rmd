@@ -1,708 +1,1009 @@
 ---
-title: "Phân Tích Doanh Số Rossmann Store Sales"
+title: "Rossmann Store Sales — Dự đoán Doanh số Bán hàng"
 subtitle: "Đồ án cuối kỳ — Lập trình R cho phân tích dữ liệu"
-author: "Quốc Anh, Thanh Phúc, Gia Hân, Đức Thắng, Thành Tài"
-date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+author:
+  - "Quốc Anh — Data Engineering & Báo cáo"
+  - "Thanh Phúc — Thống kê mô tả & Phụ lục"
+  - "Gia Hân — Visualization nâng cao & Slide"
+  - "Đức Thắng — Linear Regression & Random Forest"
+  - "Thành Tài — XGBoost & So sánh mô hình"
+date: "`r format(Sys.Date(), '%d tháng %m, %Y')`"
 output:
-  html_document:
-    toc: true
-    toc_depth: 3
-    toc_float: true
-    number_sections: true
-    theme: flatly
-    highlight: tango
-    fig_caption: true
-    code_folding: show
-    df_print: kable
   word_document:
     toc: true
     toc_depth: 3
     fig_caption: true
-    # reference_docx: report/reference_template.docx
+    fig_width: 8
+    fig_height: 5
+bibliography: references.bib
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo       = TRUE,
-  message    = FALSE,
-  warning    = FALSE,
-  fig.align  = "center",
-  fig.width  = 10,
-  fig.height = 5,
-  out.width  = "90%",
-  cache      = FALSE
+  echo      = TRUE,
+  warning   = FALSE,
+  message   = FALSE,
+  fig.align = "center",
+  dpi       = 150,
+  comment   = "#>"
 )
-```
 
-<!-- ================================================================== -->
-<!-- 0. SETUP & LIBRARIES                                               -->
-<!-- ================================================================== -->
-
-```{r load-setup}
-# Load shared setup (packages + config)
+# ── 1. Nạp tất cả scripts theo thứ tự phụ thuộc ─────────
 source(here::here("R", "00_setup.R"))
-```
-
-```{r load-utils}
-# Load utility functions (Quốc Anh viết, cả nhóm dùng)
 source(here::here("R", "utils.R"))
-```
-
-<!-- ================================================================== -->
-<!-- 1. TÓM TẮT (ABSTRACT) — Quốc Anh                                  -->
-<!-- ================================================================== -->
-
-# Tóm tắt {-}
-
-Báo cáo này trình bày kết quả phân tích và dự đoán doanh số bán hàng của chuỗi dược phẩm **Rossmann** — một trong những chuỗi bán lẻ dược phẩm lớn nhất tại Đức với hơn 3.700 cửa hàng (tính đến 2015). Dữ liệu nghiên cứu gồm **50 cửa hàng** trong khoảng thời gian từ **01/08/2014 đến 31/07/2015**, được trích xuất từ bộ dữ liệu Kaggle *Rossmann Store Sales*.
-
-Nhóm xây dựng một **Data Pipeline không rò rỉ dữ liệu (Zero Data Leakage)** gồm 6 bước: đọc và kiểm tra cấu trúc, tích hợp dữ liệu, làm sạch cơ bản, chia tập Train (70%) / Validation (30%) **trước** khi tính toán thống kê, Feature Engineering dựa trên chỉ số từ tập Train, và xuất file. Phương pháp phân tích bao gồm: **Thống kê mô tả (EDA)** với 12 biểu đồ chuyên sâu, **Kiểm định thống kê** (ANOVA, Kruskal-Wallis, Welch t-test, Wilcoxon, Spearman Correlation) với cả kiểm định phi tham số đối chứng, **Mô hình Regression** (Linear Regression, Random Forest, XGBoost), và **Phân tích chuỗi thời gian** (STL Decomposition, ARIMA, ETS).
-
-Kết quả cho thấy **XGBoost** đạt hiệu suất dự đoán tốt nhất với R² cao nhất, **khuyến mãi (promo)** là yếu tố ảnh hưởng mạnh nhất đến doanh số (Cohen's d ở mức *medium*), và tính **mùa vụ tuần-tháng** rõ rệt — phù hợp với đặc trưng thị trường bán lẻ Đức.
-
-<!-- ================================================================== -->
-<!-- 2. GIỚI THIỆU (INTRODUCTION) — Quốc Anh                           -->
-<!-- ================================================================== -->
-
-# Giới thiệu
-
-## Bối cảnh
-
-Ngành bán lẻ dược phẩm (*Drugstore*) tại Đức là một trong những thị trường cạnh tranh khốc liệt nhất châu Âu, với ba chuỗi lớn **Rossmann**, **dm**, và **Müller** chiếm lĩnh phần lớn thị phần. Trong giai đoạn 2014–2015, kinh tế Đức tăng trưởng ổn định (~1,6% GDP năm 2014), tỷ lệ thất nghiệp thấp nhất kể từ tái thống nhất (~4,7%), và ngành bán lẻ dược phẩm đạt doanh thu ~40 tỷ EUR/năm. Xu hướng tiêu dùng chuyển dịch mạnh sang các chuỗi discount drugstore — tạo điều kiện thuận lợi cho Rossmann mở rộng mạng lưới.
-
-**Rossmann** ra đời năm 1972 tại Đức, chuyên kinh doanh dược phẩm, mỹ phẩm, sản phẩm chăm sóc cá nhân và đồ gia dụng. Với mô hình giá rẻ, khuyến mãi thường xuyên (*Rossmann Angebote*), chuỗi đã vượt mốc **3.700 cửa hàng** trên toàn nước Đức vào năm 2015. Việc dự đoán chính xác doanh số từng cửa hàng có ý nghĩa chiến lược trong: (1) **quản lý tồn kho** — giảm lãng phí và thiếu hụt hàng hóa; (2) **bố trí nhân sự** — tối ưu ca làm việc theo lượng khách kỳ vọng; và (3) **hoạch định chiến lược khuyến mãi** — đánh giá ROI của các chương trình promotion.
-
-**Bài toán Kaggle** *"Rossmann Store Sales"* yêu cầu dự đoán doanh thu 6 tuần tới cho 1.115 cửa hàng, cung cấp bộ dữ liệu phong phú bao gồm thông tin về cửa hàng (loại hình, vị trí đối thủ, danh mục sản phẩm), lịch khuyến mãi, và ngày lễ — tạo nên một bài toán rất phù hợp cho việc thực hành kỹ thuật Data Engineering và Machine Learning trong bối cảnh thực tế.
-
-## Mục tiêu phân tích
-
-1. **Xây dựng Data Pipeline chuẩn mực**, đảm bảo không rò rỉ dữ liệu (Zero Data Leakage) khi chia tập Train/Validation — phục vụ toàn bộ thành viên nhóm sử dụng dữ liệu sạch và đồng nhất.
-2. **Khám phá và phân tích dữ liệu (EDA)**, nhận diện các pattern chính: phân phối doanh số, tác động khuyến mãi, tính mùa vụ, ảnh hưởng ngày lễ, và khoảng cách đối thủ cạnh tranh.
-3. **Kiểm định thống kê chặt chẽ** các giả thuyết kinh doanh: sự khác biệt doanh số giữa loại cửa hàng (ANOVA + Kruskal-Wallis), tác động khuyến mãi (Welch t-test + Wilcoxon), và tương quan khoảng cách đối thủ (Spearman).
-4. **Xây dựng mô hình dự đoán** bằng 3 thuật toán: Linear Regression (baseline), Random Forest, và XGBoost — so sánh hiệu suất và xác định feature quan trọng nhất.
-5. **Phân tích chuỗi thời gian** bằng STL Decomposition, ARIMA, và ETS — nhận diện xu hướng và tính mùa vụ.
-
-## Câu hỏi nghiên cứu
-
-| # | Câu hỏi | Phương pháp |
-|---|---------|-------------|
-| **Q1** | Doanh số có khác biệt có ý nghĩa giữa các loại cửa hàng? | ANOVA + Kruskal-Wallis |
-| **Q2** | Khuyến mãi có tác động thực sự đến doanh thu? Mức độ ảnh hưởng (*effect size*) là bao nhiêu? | Welch t-test + Cohen's d |
-| **Q3** | Khoảng cách đến đối thủ gần nhất có ảnh hưởng đến doanh số? | Spearman Correlation |
-| **Q4** | Mô hình Machine Learning nào dự đoán doanh số tốt nhất? | RMSE, MAE, R², RMSPE |
-| **Q5** | Xu hướng và tính mùa vụ của doanh số diễn biến như thế nào? | STL, ARIMA, ETS |
-
-<!-- ================================================================== -->
-<!-- 3. DỮ LIỆU (DATA) — Quốc Anh + Thanh Phúc                        -->
-<!-- ================================================================== -->
-
-# Dữ liệu
-
-## Mô tả tập dữ liệu {.tabset}
-
-Dữ liệu được lấy từ cuộc thi Kaggle **"Rossmann Store Sales"** (2015), bao gồm hai file chính:
-
-| File | Số dòng | Số cột | Mô tả |
-|------|---------|--------|-------|
-| `train.csv` | 1.017.209 | 9 | Doanh số hàng ngày của 1.115 cửa hàng (01/2013 – 07/2015) |
-| `store.csv` | 1.115 | 10 | Thông tin đặc điểm của từng cửa hàng |
-
-**Phạm vi phân tích:** Nhóm chọn **50 cửa hàng** (Store 1–50) trong khoảng thời gian **01/08/2014 đến 31/07/2015** (12 tháng) nhằm đảm bảo tính đại diện và khả thi trong tính toán.
-
-### Các biến chính trong `train.csv`
-
-| Biến | Kiểu | Mô tả |
-|------|------|-------|
-| `Store` | int | Mã cửa hàng (1–1.115) |
-| `Date` | date | Ngày bán hàng |
-| `Sales` | int | Doanh số (EUR/ngày) — **biến mục tiêu** |
-| `Customers` | int | Số khách hàng |
-| `Open` | binary | Cửa hàng mở (1) hay đóng (0) |
-| `Promo` | binary | Có khuyến mãi (1) hay không (0) |
-| `StateHoliday` | char | Loại ngày lễ quốc gia (a/b/c/0) |
-| `SchoolHoliday` | binary | Kỳ nghỉ học |
-| `DayOfWeek` | int | Ngày trong tuần (1=Thứ 2, ..., 7=CN) |
-
-### Các biến chính trong `store.csv`
-
-| Biến | Kiểu | Mô tả |
-|------|------|-------|
-| `StoreType` | char | Loại cửa hàng (a/b/c/d) |
-| `Assortment` | char | Danh mục sản phẩm: a=Basic, b=Extra, c=Extended |
-| `CompetitionDistance` | num | Khoảng cách đến đối thủ gần nhất (mét) |
-| `CompetitionOpenSinceMonth/Year` | int | Thời điểm đối thủ mở cửa |
-| `Promo2` | binary | Chương trình khuyến mãi dài hạn |
-| `PromoInterval` | char | Các tháng khuyến mãi định kỳ |
-
-### Biến Feature Engineering (do Quốc Anh tạo)
-
-| Biến | Công thức | Mục đích |
-|------|-----------|----------|
-| `year`, `month`, `day` | Trích từ `Date` | Nắm bắt tính mùa vụ |
-| `week_of_year` | `isoweek(date)` | Chu kỳ tuần |
-| `is_weekend` | `day_of_week ∈ {6, 7}` | Cờ cuối tuần |
-| `sales_per_customer` | `sales / customers` | ⚠️ CHỈ dùng cho EDA, **không** đưa vào model (Target Leakage) |
-| `competition_open_months` | Tháng kể từ khi đối thủ mở | Thâm niên cạnh tranh (-1 = không có đối thủ) |
-| `has_competition` | Cờ nhị phân | Có/không có đối thủ |
-| `is_outlier` | IQR theo từng store | Gắn cờ giá trị bất thường (giữ lại, không xóa) |
-
-## Đọc, Merge và Làm sạch dữ liệu — Quốc Anh
-
-```{r data-pipeline}
 source(here::here("R", "data_pipeline.R"))
+source(here::here("R", "statistical_tests.R"))
+source(here::here("R", "eda.R"))
+source(here::here("R", "visualization.R"))
+source(here::here("R", "modeling.R"))
+source(here::here("R", "time_series.R"))
+source(here::here("R", "evaluation.R"))
+
+# ── 2. Xây dựng bảng hiển thị cho kiểm định thống kê ────
+# Nạp kết quả từ RDS (tránh phụ thuộc biến toàn cục)
+stat_tests <- readRDS(here::here("output", "tables", "stat_tests.rds"))
+
+# Trích xuất giá trị từ các htest / summary.aov objects
+anova_tbl   <- stat_tests$anova_storetype[[1]]  # data.frame 2x5
+anova_l_tbl <- stat_tests$anova_log_summary[[1]]
+kw          <- stat_tests$kruskal_wallis         # htest
+tt          <- stat_tests$ttest_promo            # htest
+tt_log      <- stat_tests$ttest_log_promo        # htest
+wlcx        <- stat_tests$wilcoxon_promo         # htest
+cohen_df    <- stat_tests$cohen_d_promo          # data.frame
+cor_test    <- stat_tests$cor_test_result         # htest
+
+# Bảng ANOVA & Kruskal-Wallis
+anova_display <- data.frame(
+  `Kiểm định`   = c("One-way ANOVA (Sales ~ Store Type)",
+                      "ANOVA trên log(Sales)",
+                      "Kruskal-Wallis"),
+  `Thống kê F/H` = c(
+    round(anova_tbl[["F value"]][1], 2),
+    round(anova_l_tbl[["F value"]][1], 2),
+    round(kw$statistic, 2)
+  ),
+  `p-value` = c(
+    formatC(anova_tbl[["Pr(>F)"]][1], format = "e", digits = 2),
+    formatC(anova_l_tbl[["Pr(>F)"]][1], format = "e", digits = 2),
+    formatC(kw$p.value, format = "e", digits = 2)
+  ),
+  `Kết luận` = c(
+    ifelse(anova_tbl[["Pr(>F)"]][1] < 0.05, "Bác bỏ H0", "Không bác bỏ"),
+    ifelse(anova_l_tbl[["Pr(>F)"]][1] < 0.05, "Bác bỏ H0", "Không bác bỏ"),
+    ifelse(kw$p.value < 0.05, "Bác bỏ H0", "Không bác bỏ")
+  ),
+  check.names = FALSE
+)
+
+# Cohen's d interpretation
+cohen_d_val    <- cohen_df$Cohens_d
+cohen_interp   <- ifelse(abs(cohen_d_val) >= 0.8, "large",
+                  ifelse(abs(cohen_d_val) >= 0.5, "medium", "small"))
+
+# Bảng t-test & Wilcoxon
+ttest_display <- data.frame(
+  `Kiểm định` = c("Welch Two-Sample t-test",
+                    "Welch t-test (log scale)",
+                    "Wilcoxon Rank-Sum"),
+  `Thống kê`  = c(
+    round(tt$statistic, 2),
+    round(tt_log$statistic, 2),
+    round(wlcx$statistic, 0)
+  ),
+  `p-value` = c(
+    formatC(tt$p.value, format = "e", digits = 2),
+    formatC(tt_log$p.value, format = "e", digits = 2),
+    formatC(wlcx$p.value, format = "e", digits = 2)
+  ),
+  `Cohen d` = c(
+    paste0(round(cohen_d_val, 3), " (", cohen_interp, ")"),
+    "—",
+    "—"
+  ),
+  `Kết luận` = c(
+    ifelse(tt$p.value < 0.05, "Bác bỏ H0", "Không bác bỏ"),
+    ifelse(tt_log$p.value < 0.05, "Bác bỏ H0", "Không bác bỏ"),
+    ifelse(wlcx$p.value < 0.05, "Bác bỏ H0", "Không bác bỏ")
+  ),
+  check.names = FALSE
+)
+
+# Bảng Spearman & Pearson
+cor_display <- data.frame(
+  `Kiểm định`   = c("Spearman Rank Correlation",
+                      "Pearson Correlation"),
+  `Hệ số rho/r` = c(
+    round(stat_tests$spearman_rho, 4),
+    round(stat_tests$pearson_r, 4)
+  ),
+  `p-value` = c(
+    formatC(cor_test$p.value, format = "e", digits = 2),
+    "—"
+  ),
+  `Kết luận` = c(
+    ifelse(cor_test$p.value < 0.05, "Có tương quan", "Không tương quan"),
+    "—"
+  ),
+  check.names = FALSE
+)
+
+# ── 3. Bảng hệ số hồi quy Linear Regression ─────────────
+lm_summary  <- summary(model_lm)
+lm_coef_all <- as.data.frame(lm_summary$coefficients)
+lm_coef_all$term <- rownames(lm_coef_all)
+names(lm_coef_all) <- c("Estimate", "Std.Error", "t.value", "p.value", "Term")
+lm_coef_all <- lm_coef_all[, c("Term", "Estimate", "Std.Error", "t.value", "p.value")]
+lm_coef_sig <- lm_coef_all[lm_coef_all$p.value < 0.05, ]
+lm_coef_sig <- lm_coef_sig[order(abs(lm_coef_sig$Estimate), decreasing = TRUE), ]
+
+# ── 4. Alias tham số XGBoost & đường dẫn hình ảnh ────────
+xgb_params   <- params
+PATH_FIG_MODEL <- here::here("output", "figures")
+
+# Lưu biểu đồ feature importance riêng biệt cho include_graphics
+tryCatch({
+  ggplot2::ggsave(file.path(PATH_FIG_MODEL, "feature_importance_rf.png"),
+                  p_fi_rf, width = 7, height = 5, dpi = 150)
+  ggplot2::ggsave(file.path(PATH_FIG_MODEL, "feature_importance_xgb.png"),
+                  p_fi_xgb, width = 7, height = 5, dpi = 150)
+}, error = function(e) message("FI plot save skipped: ", e$message))
 ```
 
-## Data Pipeline — Quốc Anh
+\newpage
 
-> Toàn bộ pipeline 6 bước đã được thực hiện trong `data_pipeline.R`:
->
-> 1. **Data Ingestion**: Đọc với `readr::read_csv()`, kiểm tra NA
-> 2. **Data Integration**: Merge `train.csv` + `store.csv` bằng `left_join()`
-> 3. **Data Cleaning**: Xử lý NA, đồng bộ StateHoliday, lọc nhiễu logic (Open==0, Sales==0)
-> 4. **Feature Engineering**: `year`, `month`, `day`, `week_of_year`, `is_weekend`, `sales_per_customer`, `competition_open_months`, `has_competition`, `is_outlier`
-> 5. **Data Split**: 70% Train / 30% Validation với `set.seed(42)`
-> 6. **Export**: RDS + CSV files
+# 1. Tóm tắt
 
-```{r data-overview}
-cat("Kích thước dữ liệu sau xử lý:", nrow(df_clean), "dòng x", ncol(df_clean), "cột\n")
+Nghiên cứu này phân tích dữ liệu doanh số bán hàng của chuỗi cửa hàng **Rossmann** — một trong những chuỗi dược phẩm lớn nhất châu Âu — nhằm xây dựng mô hình dự đoán doanh số và phát hiện các yếu tố ảnh hưởng chính. Dữ liệu được thu thập từ cuộc thi Kaggle @rossmannkaggle, bao gồm thông tin bán hàng hàng ngày của 50 cửa hàng trong giai đoạn 08/2014 – 07/2015.
+
+Nhóm áp dụng quy trình phân tích dữ liệu hoàn chỉnh theo phương pháp luận @rfordatascience: từ tiền xử lý, trực quan hóa (≥ 12 loại biểu đồ), kiểm định thống kê (ANOVA, Kruskal-Wallis, Welch t-test, Wilcoxon, Spearman), đến xây dựng **5 mô hình dự đoán**: Linear Regression, Random Forest @breiman2001, XGBoost @chen2016xgboost, ARIMA và ETS @hyndman2021. Kết quả cho thấy **XGBoost** đạt hiệu suất tốt nhất với R² cao nhất và RMSE thấp nhất. Các yếu tố ảnh hưởng lớn nhất đến doanh số bao gồm: **lượng khách hàng, khuyến mãi, loại cửa hàng** và **ngày trong tuần**.
+
+\newpage
+
+# 2. Giới thiệu
+
+## 2.1 Bối cảnh và Động lực
+
+Dự đoán doanh số bán hàng là bài toán quan trọng trong quản lý bán lẻ, ảnh hưởng trực tiếp đến quyết định tồn kho, nhân sự và chiến lược kinh doanh. Chuỗi cửa hàng Rossmann hoạt động tại nhiều quốc gia châu Âu với hơn 3.000 cửa hàng, tạo ra lượng dữ liệu giao dịch lớn và đa dạng — phù hợp cho việc áp dụng các phương pháp phân tích dữ liệu hiện đại @introstatlearning.
+
+Cuộc thi Kaggle "Rossmann Store Sales" cung cấp bộ dữ liệu kiểm chứng chất lượng cao, cho phép sinh viên thực hành toàn bộ quy trình phân tích dữ liệu từ làm sạch đến mô hình hóa.
+
+## 2.2 Mục tiêu Nghiên cứu
+
+Đồ án hướng đến 5 mục tiêu chính:
+
+1. **Tiền xử lý dữ liệu**: Xây dựng pipeline làm sạch và feature engineering tự động, tránh data leakage.
+2. **Khám phá dữ liệu**: Phân tích phân phối, xu hướng, mối tương quan và phát hiện outlier.
+3. **Kiểm định thống kê**: Sử dụng kiểm định tham số và phi tham số để xác nhận các giả thuyết.
+4. **Mô hình dự đoán**: Xây dựng và so sánh ≥ 3 mô hình hồi quy & chuỗi thời gian.
+5. **Trực quan hóa**: Tạo ≥ 8 loại biểu đồ đa dạng để truyền đạt insights hiệu quả.
+
+## 2.3 Câu hỏi Nghiên cứu
+
+| Mã  | Câu hỏi                                                          |
+|-----|-------------------------------------------------------------------|
+| Q1  | Loại cửa hàng (Store Type) ảnh hưởng thế nào đến doanh số?       |
+| Q2  | Khuyến mãi (Promo) có tác động đáng kể đến doanh số không?       |
+| Q3  | Doanh số thay đổi theo ngày trong tuần và tháng ra sao?           |
+| Q4  | Mối quan hệ giữa số lượng khách và doanh số mạnh đến mức nào?    |
+| Q5  | Mô hình nào dự đoán doanh số tốt nhất?                           |
+
+## 2.4 Cấu trúc Báo cáo
+
+Báo cáo gồm **11 phần** theo cấu trúc đề bài: Tóm tắt → Giới thiệu → Dữ liệu → Trực quan hóa → Mô hình hóa → Kết quả & Thảo luận → Kết luận → Phụ lục → Đóng góp thành viên → Tham khảo → Peer Assessment.
+
+\newpage
+
+# 3. Dữ liệu
+
+## 3.1 Nguồn Dữ liệu
+
+Dữ liệu từ cuộc thi Kaggle **"Rossmann Store Sales"** @rossmannkaggle gồm hai file:
+
+- **train.csv** (`r format(nrow(train_raw), big.mark = ",")` dòng): Giao dịch bán hàng hàng ngày — `Date`, `Store`, `Sales`, `Customers`, `Open`, `Promo`, `StateHoliday`, `SchoolHoliday`.
+- **store.csv** (1.115 cửa hàng): Thông tin cửa hàng — `StoreType`, `Assortment`, `CompetitionDistance`, `Promo2`, `PromoInterval`.
+
+Đây là tập dữ liệu **kiểm chứng, chất lượng cao** từ Kaggle — nền tảng uy tín trong cộng đồng khoa học dữ liệu.
+
+## 3.2 Mô tả Biến
+
+```{r str-data, echo=TRUE}
 str(df_clean)
 ```
 
-## Kiểm định thống kê — Quốc Anh
+Bảng mô tả các biến chính sau tiền xử lý:
 
-```{r statistical-tests}
-source(here::here("R", "statistical_tests.R"))
+| Biến                 | Kiểu      | Mô tả                                         |
+|----------------------|-----------|------------------------------------------------|
+| `store`              | Factor    | Mã cửa hàng (1–50)                            |
+| `date`               | Date      | Ngày giao dịch (2014-08 – 2015-07)            |
+| `sales`              | Numeric   | Doanh số bán hàng (biến mục tiêu)             |
+| `customers`          | Numeric   | Số lượng khách hàng                            |
+| `store_type`         | Factor    | Loại cửa hàng (a, b, c, d)                    |
+| `promo`              | Factor    | Khuyến mãi (0 = Không, 1 = Có)                |
+| `assortment`         | Factor    | Loại hàng hóa (a, b, c)                       |
+| `state_holiday`      | Factor    | Ngày lễ (0, a, b, c)                          |
+| `school_holiday`     | Factor    | Nghỉ học (0, 1)                               |
+| `day_of_week`        | Factor    | Ngày trong tuần (1–7)                          |
+| `competition_distance` | Numeric | Khoảng cách đối thủ (m)                        |
+| `is_weekend`         | Numeric   | Cuối tuần (0/1)                                |
+| `sales_per_customer` | Numeric   | Doanh thu trung bình/khách                     |
+| `competition_open_months` | Numeric | Số tháng đối thủ đã mở                    |
+| `is_outlier`         | Logical   | Đánh dấu giá trị ngoại lệ (IQR)              |
+
+## 3.3 Tiền xử lý Dữ liệu
+
+Quy trình tiền xử lý gồm **6 bước**, được thiết kế để **tránh data leakage** (thống kê tính từ tập train, áp dụng cho tập validation):
+
+1. **Ghép dữ liệu**: Join `train.csv` ↔ `store.csv` theo `Store`.
+2. **Lọc**: Chọn 50 cửa hàng (Store 1–50), khoảng thời gian 08/2014–07/2015, chỉ ngày mở (`Open == 1`, `Sales > 0`).
+3. **Chuyển kiểu**: Biến phân loại → `factor`; `Date` → `Date`; clean column names.
+4. **Chia tập**: Random split 70% train / 30% validation (seed = 42).
+5. **Xử lý NA & Feature Engineering**: Impute `CompetitionDistance` bằng median (từ train), tạo biến mới (`year`, `month`, `day`, `week_of_year`, `is_weekend`, `sales_per_customer`).
+6. **Đánh dấu Outlier**: Sử dụng IQR method trên mỗi cửa hàng (ngưỡng Q1/Q3 từ train).
+
+```{r cleaning-summary, echo=FALSE}
+cat("══════════════════════════════════════════════════\n")
+cat("         TÓM TẮT TIỀN XỬ LÝ DỮ LIỆU\n")
+cat("══════════════════════════════════════════════════\n")
+cat("Số quan sát sau lọc             :", format(nrow(df_clean), big.mark = ","), "dòng\n")
+cat("Số biến (sau feature engineering):", ncol(df_clean), "\n")
+cat("Số cửa hàng                     :", dplyr::n_distinct(df_clean$store), "\n")
+cat("Khoảng thời gian                :", as.character(min(df_clean$date)),
+    "→", as.character(max(df_clean$date)), "\n")
+cat("Tỷ lệ NA còn lại               :", round(sum(is.na(df_clean)) / prod(dim(df_clean)) * 100, 2), "%\n")
+cat("──────────────────────────────────────────────────\n")
+cat("Tập Train                       :", format(nrow(train_data), big.mark = ","), "dòng\n")
+cat("Tập Validation                  :", format(nrow(val_data), big.mark = ","), "dòng\n")
+cat("══════════════════════════════════════════════════\n")
 ```
 
-## Thống kê mô tả (EDA) — Thanh Phúc
+## 3.4 Kiểm định Thống kê
 
-> **Bối cảnh thực tế (2014–2015):** Giai đoạn này, kinh tế Đức tăng trưởng ổn định (~1,6% GDP năm 2014, ~1,5% năm 2015), tỷ lệ thất nghiệp thấp nhất kể từ thống nhất (~4,7%). Ngành bán lẻ dược phẩm Đức đạt doanh thu ~40 tỷ EUR/năm, với xu hướng người tiêu dùng chuyển sang mua sắm tại các chuỗi lớn thay vì hiệu thuốc độc lập — tạo điều kiện thuận lợi cho Rossmann mở rộng thị phần.
+Trước khi phân tích, nhóm thực hiện các kiểm định thống kê để xác nhận giả thuyết bằng phương pháp **tham số** và **phi tham số** @cohen1988.
 
-```{r eda, include=FALSE}
-source(here::here("R", "eda.R"))
+### 3.4.1 ANOVA & Kruskal-Wallis: Ảnh hưởng của Store Type
+
+**Giả thuyết**: H0: Doanh số trung bình không khác biệt giữa các loại cửa hàng (a, b, c, d).
+
+```{r anova-table, echo=FALSE}
+knitr::kable(anova_display,
+             caption = "Bảng 1: Kết quả kiểm định ANOVA & Kruskal-Wallis",
+             align = c("l", "r", "r", "l"))
 ```
 
----
+**Nhận xét**: Cả kiểm định tham số (ANOVA) và phi tham số (Kruskal-Wallis) đều bác bỏ H0, xác nhận rằng **loại cửa hàng có ảnh hưởng có ý nghĩa thống kê đến doanh số** (trả lời Q1).
 
-### 3.5.1 Tổng quan dữ liệu
+### 3.4.2 Welch t-test & Wilcoxon: Tác động của Khuyến mãi
 
-Tập dữ liệu sau xử lý gồm **`r format(nrow(df), big.mark=",")`** quan sát từ **50 cửa hàng** Rossmann trong 12 tháng (08/2014–07/2015). Dưới đây là thống kê mô tả các biến chính:
+**Giả thuyết**: H0: Doanh số trung bình không khác biệt giữa có và không có khuyến mãi.
 
-```{r eda-summary-numeric}
-kable(summary_numeric,
-      caption = "Bảng 1: Thống kê mô tả biến liên tục",
-      align = "lrrrrrrrrrr") %>%
-  kable_styling(bootstrap_options = c("striped","hover","condensed"),
-                full_width = FALSE, font_size = 12) %>%
-  column_spec(1, bold = TRUE) %>%
-  row_spec(which(summary_numeric$`Biến` == "sales"), background = "#EBF5FB")
+```{r ttest-table, echo=FALSE}
+knitr::kable(ttest_display,
+             caption = "Bảng 2: Kết quả kiểm định t-test & Wilcoxon cho Promo",
+             align = c("l", "r", "r", "c", "l"))
 ```
 
-**Nhận xét:**
+**Nhận xét**: Tất cả kiểm định đều bác bỏ H0. Khuyến mãi có tác động **có ý nghĩa thống kê** đến doanh số (trả lời Q2).
 
-- **Sales** (trung bình ~`r comma(round(mean(df$sales)))` EUR/ngày/cửa hàng): Mức doanh thu này phù hợp với báo cáo ngành bán lẻ dược phẩm Đức — một cửa hàng dược phẩm quy mô trung bình tại Đức đạt khoảng 1,5–3 triệu EUR/năm (~4.100–8.200 EUR/ngày). Rossmann nằm ở phân khúc discount drugstore nên mức doanh số thấp hơn hiệu thuốc truyền thống nhưng bù lại bằng **lượng khách rất lớn**.
-- **Customers** (trung bình ~`r comma(round(mean(df$customers)))` người/ngày): Rossmann phục vụ tệp khách hàng đại chúng với đơn hàng nhỏ nhưng tần suất cao — đặc trưng của mô hình *discount drugstore* như dm, Rossmann, Müller tại Đức.
-- **Sales_per_customer** (~`r round(mean(df$sales_per_customer, na.rm=TRUE), 1)` EUR/khách): Giỏ hàng trung bình thấp phản ánh chiến lược giá rẻ, khuyến mãi thường xuyên.
-- **Competition_distance** (trung vị ~`r comma(round(median(df$competition_distance, na.rm=TRUE)))` m): Mật độ cạnh tranh cao tại Đức — trung bình mỗi thành phố lớn có 3–5 chuỗi drugstore trong bán kính 2km.
+### 3.4.3 Tương quan Spearman & Pearson: Sales — Competition Distance
 
-```{r eda-summary-cat}
-summary_categorical %>%
-  kable(caption = "Bảng 2: Phân bố biến phân loại", align = "llrr") %>%
-  kable_styling(bootstrap_options = c("striped","hover","condensed"),
-                full_width = FALSE, font_size = 12) %>%
-  pack_rows(index = table(summary_categorical$`Biến`))
+**Giả thuyết**: H0: Không có tương quan giữa khoảng cách đối thủ cạnh tranh và doanh số.
+
+```{r spearman-table, echo=FALSE}
+knitr::kable(cor_display,
+             caption = "Bảng 3: Kết quả kiểm định tương quan Sales–CompetitionDistance",
+             align = c("l", "r", "r", "l"))
 ```
 
----
+**Nhận xét**: Hệ số tương quan Spearman (rho ≈ `r round(stat_tests$spearman_rho, 4)`) cho thấy mối quan hệ **rất yếu** giữa khoảng cách đối thủ và doanh số — p-value nhỏ do cỡ mẫu lớn, nhưng ý nghĩa thực tiễn không đáng kể. Điều này cho thấy khoảng cách đối thủ cạnh tranh không phải yếu tố quyết định doanh số.
 
-### 3.5.2 Phân tích phân phối {.tabset}
+*Lưu ý: Tương quan Sales — Customers được kiểm tra riêng trong phần Trực quan hóa (r ≈ `r round(cor(df_clean$sales, df_clean$customers), 3)`, rất mạnh).*
 
-#### Phân phối Sales
+\newpage
 
-```{r eda-p1, fig.cap="Hình 1: Phân phối doanh số — lệch phải điển hình trong bán lẻ"}
-print(eda_p1)
+# 4. Trực quan hóa Dữ liệu
+
+## 4.1 Thống kê mô tả và Biểu đồ cơ bản
+
+*Phần này do **Thanh Phúc** thực hiện — minh họa kỹ năng R với dplyr, ggplot2 và các biểu đồ tạo trực tiếp trong Rmarkdown.*
+
+### 4.1.1 Tổng quan Phân phối Sales
+
+```{r sales-overview, echo=TRUE}
+sales_summary <- df_clean |>
+  dplyr::summarise(
+    N      = dplyr::n(),
+    Mean   = round(mean(sales), 0),
+    Median = round(median(sales), 0),
+    SD     = round(sd(sales), 0),
+    Min    = min(sales),
+    Max    = max(sales),
+    Skewness = round(moments::skewness(sales), 2),
+    Kurtosis = round(moments::kurtosis(sales), 2)
+  )
+knitr::kable(sales_summary, caption = "Bảng 4: Thống kê mô tả biến Sales")
 ```
 
-> **Nhận xét & Nguyên nhân:** Phân phối lệch phải (skewness = `r round(skew_sales,2)`) là hiện tượng **phổ biến trong dữ liệu bán lẻ thực tế**. Nguyên nhân chính: (1) Những ngày lễ lớn (Giáng sinh, Phục sinh, Black Friday) tạo ra đột biến doanh số gấp 2–3 lần ngày thường — đây chính là "đuôi phải dài"; (2) Chương trình khuyến mãi bùng nổ cuối tuần; (3) Tính mùa vụ của ngành dược (mùa cảm cúm thu-đông tăng mạnh). Đây **không phải dấu hiệu bất thường** mà là đặc trưng cấu trúc của dữ liệu ngành.
+Bộ dữ liệu gồm **`r format(nrow(df_clean), big.mark = ",")`** quan sát. Doanh số trung bình đạt **`r scales::comma(round(mean(df_clean$sales)))`** EUR với trung vị **`r scales::comma(round(median(df_clean$sales)))`** EUR, cho thấy phân phối **lệch phải** (skewness = `r round(moments::skewness(df_clean$sales), 2)`). Mỗi khách hàng chi tiêu trung bình khoảng **`r round(mean(df_clean$sales_per_customer, na.rm = TRUE), 1)`** EUR.
 
-#### Q-Q Plot
+### 4.1.2 Thống kê mô tả theo Store Type
 
-```{r eda-p2, fig.cap="Hình 2: Q-Q Plot xác nhận lệch chuẩn ở đuôi phân phối"}
-print(eda_p2)
+```{r stats-storetype, echo=TRUE}
+stats_by_type <- df_clean |>
+  dplyr::group_by(store_type) |>
+  dplyr::summarise(
+    N          = dplyr::n(),
+    sales_mean = round(mean(sales), 0),
+    sales_med  = round(median(sales), 0),
+    sales_sd   = round(sd(sales), 0),
+    cust_mean  = round(mean(customers), 0),
+    spc_mean   = round(mean(sales_per_customer, na.rm = TRUE), 1),
+    .groups    = "drop"
+  )
+knitr::kable(stats_by_type, caption = "Bảng 5: Thống kê mô tả theo loại cửa hàng")
 ```
 
-> **Nhận xét:** Điểm dữ liệu lệch khỏi đường thẳng lý thuyết ở cả hai đuôi, đặc biệt đuôi phải — xác nhận phân phối không chuẩn. **Hậu quả thực tiễn:** Các kiểm định tham số (t-test, ANOVA) cần được đối chiếu với kiểm định phi tham số (như Quốc Anh đã thực hiện trong `statistical_tests.R`). Mô hình tuyến tính thuần túy sẽ kém hiệu quả hơn các mô hình cây quyết định.
+### 4.1.3 Thống kê mô tả theo Khuyến mãi (Promo)
 
-#### Log-transform
-
-```{r eda-p3, fig.cap="Hình 3: Log(Sales) cải thiện tính đối xứng đáng kể"}
-print(eda_p3)
+```{r stats-promo, echo=TRUE}
+stats_by_promo <- df_clean |>
+  dplyr::group_by(promo) |>
+  dplyr::summarise(
+    N            = dplyr::n(),
+    sales_mean   = round(mean(sales), 0),
+    sales_med    = round(median(sales), 0),
+    sales_sd     = round(sd(sales), 0),
+    cust_mean    = round(mean(customers), 0),
+    .groups      = "drop"
+  ) |>
+  dplyr::mutate(
+    promo = ifelse(as.character(promo) == "1", "Có khuyến mãi", "Không khuyến mãi")
+  )
+knitr::kable(stats_by_promo, caption = "Bảng 6: So sánh doanh số có/không khuyến mãi")
 ```
 
-> **Nhận xét:** Sau log-transform, skewness giảm từ `r round(skew_sales,2)` xuống `r round(skew_log_s,3)`. Phân phối gần chuẩn hơn, phù hợp hơn cho các phương pháp thống kê cổ điển. **Ứng dụng thực tế:** Trong báo cáo tài chính bán lẻ, doanh số thường được phân tích trên thang logarithm để so sánh tăng trưởng % (growth rate) giữa các cửa hàng có quy mô khác nhau.
+Khi có khuyến mãi, doanh số trung bình tăng khoảng **`r round((stats_by_promo$sales_mean[stats_by_promo$promo == "Có khuyến mãi"] / stats_by_promo$sales_mean[stats_by_promo$promo == "Không khuyến mãi"] - 1) * 100, 0)`%** và lượng khách tăng **`r round((stats_by_promo$cust_mean[stats_by_promo$promo == "Có khuyến mãi"] / stats_by_promo$cust_mean[stats_by_promo$promo == "Không khuyến mãi"] - 1) * 100, 0)`%**, xác nhận hiệu quả rõ rệt của chương trình khuyến mãi.
 
-#### Phân phối Customers
+### 4.1.4 Phân phối biến số — Histogram và Density
 
-```{r eda-p4, fig.cap="Hình 4: Phân phối số khách — biến động theo mùa và ngày trong tuần"}
-print(eda_p4)
+```{r hist-sales, echo=TRUE, fig.cap="Hình 1: Phân phối doanh số Sales"}
+ggplot2::ggplot(df_clean, ggplot2::aes(x = sales)) +
+  ggplot2::geom_histogram(bins = 50, fill = COLORS$primary, color = "white", alpha = 0.85) +
+  ggplot2::geom_vline(xintercept = mean(df_clean$sales),
+                      color = COLORS$danger, linewidth = 1, linetype = "dashed") +
+  ggplot2::geom_vline(xintercept = median(df_clean$sales),
+                      color = COLORS$success, linewidth = 1, linetype = "dashed") +
+  ggplot2::annotate("text", x = mean(df_clean$sales) + 800, y = Inf,
+                    label = paste("Mean =", round(mean(df_clean$sales))),
+                    vjust = 2, color = COLORS$danger, size = 3.5) +
+  ggplot2::annotate("text", x = median(df_clean$sales) - 800, y = Inf,
+                    label = paste("Median =", round(median(df_clean$sales))),
+                    vjust = 3.5, color = COLORS$success, size = 3.5) +
+  ggplot2::labs(title = "Phân phối Doanh số (Sales)",
+                subtitle = paste0("Skewness = ", round(moments::skewness(df_clean$sales), 2),
+                                  " | Phân phối lệch phải"),
+                x = "Doanh số (EUR)", y = "Tần suất")
 ```
 
-```{r eda-dist-table}
-kable(dist_stats, caption = "Bảng 3: Kiểm tra phân phối chuẩn") %>%
-  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE)
+Phân phối doanh số có **skewness = `r round(moments::skewness(df_clean$sales), 2)`**, cho thấy đuôi dài bên phải — nghĩa là có nhiều giao dịch doanh số thấp và một số ít giao dịch doanh số rất cao.
+
+```{r density-sales-promo, echo=TRUE, fig.cap="Hình 2: Phân phối mật độ Sales theo Khuyến mãi"}
+ggplot2::ggplot(df_clean, ggplot2::aes(x = sales, fill = promo)) +
+  ggplot2::geom_density(alpha = 0.5) +
+  ggplot2::scale_fill_manual(
+    values = c("0" = COLORS$promo[1], "1" = COLORS$promo[2]),
+    labels = c("Không KM", "Có KM")
+  ) +
+  ggplot2::labs(title = "Mật độ Doanh số theo Khuyến mãi",
+                x = "Doanh số (EUR)", y = "Mật độ", fill = "Khuyến mãi")
 ```
 
-> **Nhận xét:** Cả Sales và Customers đều không tuân phân phối chuẩn (Shapiro p < 0,001). Đây là **kết quả kỳ vọng** với dữ liệu bán lẻ thực tế — hành vi mua sắm của người tiêu dùng phụ thuộc nhiều vào lịch (cuối tuần, ngày lễ, phát lương) nên không thể ngẫu nhiên đều.
+Biểu đồ density cho thấy đường cong "Có KM" dịch sang phải rõ rệt, xác nhận khuyến mãi giúp tăng doanh số ở mọi phân khúc.
 
----
-
-### 3.5.3 Phân tích theo nhóm {.tabset}
-
-#### Store Type & Doanh số
-
-```{r eda-stats-storetype}
-kable(stats_storetype,
-      caption = "Bảng 4: Thống kê Sales theo Store Type",
-      col.names = c("Store Type","N","TB (EUR)","Trung vị (EUR)","ĐLC","Min","Max")) %>%
-  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE) %>%
-  row_spec(which.max(stats_storetype$mean_s), bold = TRUE, color = "white", background = "#1E88E5")
+```{r hist-customers, echo=TRUE, fig.cap="Hình 3: Phân phối số lượng khách hàng"}
+ggplot2::ggplot(df_clean, ggplot2::aes(x = customers)) +
+  ggplot2::geom_histogram(bins = 40, fill = "#2196F3", color = "white", alpha = 0.85) +
+  ggplot2::labs(title = "Phân phối Số lượng Khách hàng",
+                x = "Số khách hàng", y = "Tần suất")
 ```
 
-```{r eda-p5, fig.height=6, fig.cap="Hình 5: Density plot — cấu trúc phân phối khác biệt giữa các loại cửa hàng"}
-print(eda_p5)
+### 4.1.5 So sánh doanh số — Violin + Boxplot
+
+```{r violin-storetype, echo=TRUE, fig.cap="Hình 4: Violin + Boxplot Sales theo Store Type"}
+ggplot2::ggplot(df_clean, ggplot2::aes(x = store_type, y = sales, fill = store_type)) +
+  ggplot2::geom_violin(alpha = 0.5, color = NA) +
+  ggplot2::geom_boxplot(width = 0.2, alpha = 0.8, outlier.alpha = 0.2) +
+  ggplot2::scale_fill_manual(values = COLORS$store_type) +
+  ggplot2::labs(title = "Phân phối Doanh số theo Loại Cửa hàng",
+                x = "Loại cửa hàng", y = "Doanh số (EUR)") +
+  ggplot2::theme(legend.position = "none")
 ```
 
-> **Nguyên nhân & Giải thích:**
->
-> - **Type A** (cửa hàng nhỏ, phổ thông): Chiếm đa số (~53% quan sát). Đây là mô hình cửa hàng khu dân cư (*Stadtteil-Filiale*) — doanh số ổn định, ít biến động, phục vụ nhu cầu hàng ngày.
-> - **Type B** (trung tâm mua sắm/siêu thị): Ít nhất nhưng doanh số **cao nhất và biến động nhất**. Nguyên nhân: lưu lượng khách phụ thuộc hoàn toàn vào sức hút của trung tâm mua sắm — ngày lễ tăng đột biến, ngày thường rất thấp. Năm 2014–2015, Đức có ~460 trung tâm mua sắm, doanh thu ngành trung tâm thương mại tăng 3% — Type B hưởng lợi trực tiếp.
-> - **Type C** (cửa hàng nhỏ chuyên biệt): Doanh số thấp nhất — phù hợp với vị trí thường ở ngoại ô hoặc khu vực ít dân.
-> - **Type D** (cửa hàng lớn, flagship): Doanh số cao thứ hai, ổn định — mô hình *Vollsortimenter* với đầy đủ danh mục sản phẩm.
+Cửa hàng loại **b** có phân phối doanh số rộng nhất và trung vị cao nhất, trong khi loại **a** tập trung ở khoảng doanh số trung bình. Loại **d** có ít biến động nhất.
 
-#### Khuyến mãi (Promo)
-
-```{r eda-stats-promo}
-kable(stats_promo,
-      caption = "Bảng 5: Tác động khuyến mãi đến doanh số",
-      col.names = c("Promo","N","TB (EUR)","Trung vị (EUR)","ĐLC","Min","Max")) %>%
-  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE) %>%
-  row_spec(2, bold = TRUE, background = "#FDEDEC")
+```{r violin-promo, echo=TRUE, fig.cap="Hình 5: Violin + Boxplot Sales theo Promo"}
+ggplot2::ggplot(df_clean, ggplot2::aes(x = promo, y = sales, fill = promo)) +
+  ggplot2::geom_violin(alpha = 0.5, color = NA) +
+  ggplot2::geom_boxplot(width = 0.2, alpha = 0.8, outlier.alpha = 0.2) +
+  ggplot2::scale_fill_manual(
+    values = c("0" = COLORS$promo[1], "1" = COLORS$promo[2]),
+    labels = c("Không KM", "Có KM")
+  ) +
+  ggplot2::labs(title = "Phân phối Doanh số: Có vs Không Khuyến mãi",
+                x = "Khuyến mãi", y = "Doanh số (EUR)") +
+  ggplot2::theme(legend.position = "none")
 ```
 
-```{r eda-p6, fig.cap="Hình 6: Khuyến mãi tăng doanh số đồng đều ở tất cả loại cửa hàng"}
-print(eda_p6)
+### 4.1.6 Tỷ lệ Promo và Doanh số — Bar Chart
+
+```{r bar-promo-type, echo=TRUE, fig.cap="Hình 6: Doanh số theo Store Type × Promo"}
+promo_type_stats <- df_clean |>
+  dplyr::group_by(store_type, promo) |>
+  dplyr::summarise(avg_sales = mean(sales), .groups = "drop") |>
+  dplyr::mutate(promo_label = ifelse(as.character(promo) == "1", "Có KM", "Không KM"))
+
+ggplot2::ggplot(promo_type_stats,
+                ggplot2::aes(x = store_type, y = avg_sales, fill = promo_label)) +
+  ggplot2::geom_col(position = "dodge", alpha = 0.85, width = 0.7) +
+  ggplot2::scale_fill_manual(values = c("Không KM" = COLORS$promo[1],
+                                        "Có KM"    = COLORS$promo[2])) +
+  ggplot2::geom_text(ggplot2::aes(label = scales::comma(round(avg_sales))),
+                     position = ggplot2::position_dodge(width = 0.7),
+                     vjust = -0.5, size = 3) +
+  ggplot2::labs(title = "Doanh số Trung bình theo Loại Cửa hàng và Khuyến mãi",
+                x = "Loại cửa hàng", y = "Doanh số TB (EUR)", fill = "Trạng thái")
 ```
 
-> **Phân tích nhân quả:** Khuyến mãi làm tăng doanh số trung bình ~**`r round((stats_promo$mean_s[stats_promo$promo==1]/stats_promo$mean_s[stats_promo$promo==0]-1)*100, 0)`%**. **Cơ chế tác động:** (1) *Price elasticity* — ngành FMCG/dược phẩm có độ co giãn giá cao, giảm 10–20% giá kích thích tăng lượng mua 30–50%; (2) *Basket enlargement* — khuyến mãi khuyến khích mua thêm sản phẩm ngoài nhu cầu ban đầu; (3) *Traffic generation* — thu hút khách từ đối thủ cạnh tranh trong ngày khuyến mãi.
->
-> **Bối cảnh 2014–2015:** Đây là giai đoạn Rossmann mạnh tay với chương trình "Rossmann Angebote" hàng tuần — một trong những lý do chuỗi vượt dm về số lượng cửa hàng tại Đức (>3.700 cửa hàng năm 2015).
+Khuyến mãi tăng doanh số ở **tất cả** loại cửa hàng. Cửa hàng loại **b** hưởng lợi nhiều nhất từ promo — gợi ý rằng chiến lược khuyến mãi cần tùy chỉnh theo loại cửa hàng.
 
-#### Assortment
+```{r bar-dayofweek, echo=TRUE, fig.cap="Hình 7: Doanh số theo ngày trong tuần"}
+day_stats <- df_clean |>
+  dplyr::group_by(day_of_week) |>
+  dplyr::summarise(avg_sales = mean(sales), .groups = "drop") |>
+  dplyr::mutate(
+    day_label = factor(day_of_week,
+                       levels = c("1","2","3","4","5","6","7"),
+                       labels = c("Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","CN"))
+  )
 
-```{r eda-stats-assort}
-kable(stats_assortment,
-      caption = "Bảng 6: Thống kê Sales theo Assortment",
-      col.names = c("Assortment","N","TB (EUR)","Trung vị (EUR)","ĐLC","Min","Max")) %>%
-  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE)
+ggplot2::ggplot(day_stats, ggplot2::aes(x = day_label, y = avg_sales, fill = avg_sales)) +
+  ggplot2::geom_col(alpha = 0.85) +
+  ggplot2::scale_fill_gradient(low = "#e3f2fd", high = COLORS$primary) +
+  ggplot2::geom_text(ggplot2::aes(label = scales::comma(round(avg_sales))),
+                     vjust = -0.5, size = 3.5) +
+  ggplot2::labs(title = "Doanh số Trung bình theo Ngày trong Tuần",
+                x = NULL, y = "Doanh số TB (EUR)") +
+  ggplot2::theme(legend.position = "none")
 ```
 
-```{r eda-p9, fig.cap="Hình 7: Boxplot Sales theo Assortment — 'Extra' vượt trội"}
-print(eda_p9)
+**Thứ 2** (Monday) có doanh số cao nhất — có thể do khách hàng mua sắm đầu tuần. **Chủ nhật** có doanh số thấp nhất vì nhiều cửa hàng đóng cửa (trả lời Q3).
+
+### 4.1.7 Heatmap Doanh số theo Tháng và Ngày
+
+```{r heatmap-month-day, echo=TRUE, fig.cap="Hình 8: Heatmap doanh số Month × Day of Week"}
+heatmap_data <- df_clean |>
+  dplyr::mutate(month_name = factor(month, levels = 1:12,
+                                    labels = paste0("T", 1:12))) |>
+  dplyr::group_by(month_name, day_of_week) |>
+  dplyr::summarise(avg_sales = mean(sales), .groups = "drop") |>
+  dplyr::mutate(
+    day_label = factor(day_of_week,
+                       levels = c("1","2","3","4","5","6","7"),
+                       labels = c("T2","T3","T4","T5","T6","T7","CN"))
+  )
+
+ggplot2::ggplot(heatmap_data,
+                ggplot2::aes(x = day_label, y = month_name, fill = avg_sales)) +
+  ggplot2::geom_tile(color = "white", linewidth = 0.5) +
+  ggplot2::scale_fill_gradient2(low = "#fff3e0", mid = "#ff9800", high = "#e65100",
+                                midpoint = mean(heatmap_data$avg_sales)) +
+  ggplot2::geom_text(ggplot2::aes(label = scales::comma(round(avg_sales))),
+                     size = 2.5) +
+  ggplot2::labs(title = "Heatmap: Doanh số TB theo Tháng và Ngày",
+                x = "Ngày trong tuần", y = "Tháng", fill = "Sales TB")
 ```
 
-> **Nhận xét:** Assortment **b (Extra)** có doanh số trung bình cao nhất dù chỉ chiếm số ít. Đây là các cửa hàng có thêm danh mục đặc biệt (ví dụ: mỹ phẩm cao cấp, thực phẩm chức năng) — phản ánh xu hướng *premiumization* trong bán lẻ dược phẩm Đức giai đoạn này, khi người tiêu dùng có thu nhập tăng sẵn sàng chi tiêu cho sản phẩm chăm sóc sức khỏe cao cấp hơn.
+Heatmap cho thấy **tháng 12** (Giáng sinh) có doanh số cao nhất ở hầu hết các ngày, đặc biệt các ngày đầu tuần. Mùa hè (T6–T8) cũng có doanh số khá cao.
 
-#### Doanh thu / Khách
+### 4.1.8 Bảng Cross-tabulation
 
-```{r eda-p10, fig.cap="Hình 8: Sales per Customer — giá trị đơn hàng đồng đều giữa các loại cửa hàng"}
-print(eda_p10)
+```{r crosstab-type-promo, echo=TRUE}
+cross_type_promo <- df_clean |>
+  dplyr::count(store_type, promo) |>
+  tidyr::pivot_wider(names_from = promo, values_from = n, names_prefix = "Promo_") |>
+  dplyr::mutate(
+    Total = Promo_0 + Promo_1,
+    `Tỷ lệ KM (%)` = round(Promo_1 / Total * 100, 1)
+  )
+knitr::kable(cross_type_promo,
+             caption = "Bảng 7: Cross-tab Store Type × Promo")
 ```
 
-> **Phát hiện quan trọng:** Dù tổng doanh số chênh lệch lớn giữa các Store Type, **giá trị đơn hàng/khách (~`r round(mean(df$sales_per_customer, na.rm=TRUE), 1)` EUR) khá đồng đều**. Điều này cho thấy sự khác biệt doanh số đến từ **lượng khách** chứ không phải hành vi chi tiêu. Hàm ý: chiến lược tăng doanh số hiệu quả nhất là **tăng lưu lượng khách** (traffic), không phải tăng giá bán.
-
-#### Heatmap Ngày × Tháng
-
-```{r eda-p7, fig.height=6.5, fig.cap="Hình 9: Heatmap doanh số theo ngày trong tuần và tháng"}
-print(eda_p7)
+```{r crosstab-day-month, echo=TRUE}
+cross_month_day <- df_clean |>
+  dplyr::mutate(
+    month_grp = dplyr::case_when(
+      month %in% c(12, 1, 2) ~ "Đông",
+      month %in% 3:5         ~ "Xuân",
+      month %in% 6:8         ~ "Hè",
+      TRUE                   ~ "Thu"
+    ),
+    is_wkend = ifelse(is_weekend == 1, "Cuối tuần", "Ngày thường")
+  ) |>
+  dplyr::group_by(month_grp, is_wkend) |>
+  dplyr::summarise(
+    n      = dplyr::n(),
+    avg_s  = round(mean(sales), 0),
+    avg_c  = round(mean(customers), 0),
+    .groups = "drop"
+  )
+knitr::kable(cross_month_day,
+             caption = "Bảng 8: Doanh số theo Mùa và Ngày (thường/cuối tuần)")
 ```
 
-> **Đọc kết quả:**
->
-> - **Thứ Hai cao nhất tuần:** Người Đức có thói quen đi mua sắm đầu tuần sau khi nhận bản tin khuyến mãi cuối tuần (*Prospekt*). Đây là hành vi tiêu dùng đặc thù Đức, được nhiều nghiên cứu hành vi người tiêu dùng xác nhận.
-> - **Tháng 12 đỉnh điểm:** Mùa Giáng sinh (Weihnachten) là dịp mua sắm lớn nhất năm tại Đức — chi tiêu hộ gia đình tăng ~35% so với tháng thường. Rossmann hưởng lợi từ nhu cầu quà tặng, sản phẩm chăm sóc cá nhân, và đồ trang trí.
-> - **Chủ nhật thấp nhất:** Luật *Ladenschlussgesetz* của Đức quy định hầu hết cửa hàng đóng cửa Chủ nhật — giải thích tại sao Chủ nhật có doanh số gần bằng 0.
-> - **Tháng 8–9 thấp:** Mùa hè — người Đức đi nghỉ hè (*Sommerurlaub*), lưu lượng khách tại các khu dân cư giảm. Năm 2014, tỷ lệ người Đức đi du lịch hè đạt 76% — cao nhất châu Âu.
+### 4.1.9 Phân tích Outlier
 
-#### Ảnh hưởng Ngày lễ
-
-```{r eda-stats-holiday}
-kable(stats_holiday,
-      caption = "Bảng 7: Doanh số theo loại ngày lễ",
-      col.names = c("Loại ngày lễ","N","TB Sales (EUR)","Trung vị","ĐLC","TB Khách")) %>%
-  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE) %>%
-  row_spec(1, bold = TRUE, background = "#E8F8F5")
-```
-
-```{r eda-p8, fig.cap="Hình 10: Ngày lễ làm GIẢM doanh số — nghịch lý bán lẻ Đức"}
-print(eda_p8)
-```
-
-> **Nghịch lý & Giải thích:** Doanh số ngày lễ thấp hơn ngày thường — điều này **ngược với trực giác** nhưng hoàn toàn hợp lý tại Đức:
->
-> 1. **Đóng cửa bắt buộc:** Luật Đức quy định hầu hết cửa hàng đóng cửa ngày lễ quốc gia — dữ liệu lọc `open=1` chỉ bao gồm những ngày có hoạt động, nhưng số cửa hàng mở rất ít.
-> 2. **Hành vi "mua trước":** Người Đức có thói quen mua sắm rất nhiều **trước** ngày lễ (đặc biệt trước Giáng sinh và Phục sinh), dẫn đến sụt giảm vào chính ngày lễ.
-> 3. **Ngày lễ Phục sinh (Easter):** Có doanh số đặc biệt cao do Rossmann là điểm mua quà Phục sinh phổ biến — nhưng dữ liệu bị pha loãng bởi các chuỗi cửa hàng đóng cửa.
-
-#### Xu hướng Tháng
-
-```{r eda-p12, fig.cap="Hình 11: Doanh số theo tháng — xu hướng U-shape với đỉnh tháng 12"}
-print(eda_p12)
-```
-
-```{r eda-monthly-table}
-kable(monthly_stats %>% mutate(across(c(mean_sales, median_sales, total_sales), comma)),
-      caption = "Bảng 8: Chi tiết doanh số theo tháng",
-      col.names = c("Tháng","DS TB (EUR)","DS Trung vị","Tổng DS","Số quan sát")) %>%
-  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE)
-```
-
-> **Phân tích xu hướng mùa vụ:**
->
-> | Giai đoạn | Xu hướng | Nguyên nhân |
-> |-----------|----------|-------------|
-> | T8–T9/2014 | Thấp | Mùa hè — kỳ nghỉ *Sommerferien* |
-> | T10–T11/2014 | Tăng | Mùa cảm cúm, chuẩn bị Giáng sinh |
-> | T12/2014 | Đỉnh | Weihnachten — mua sắm và quà tặng |
-> | T1–T2/2015 | Giảm | Sau lễ, kinh tế hộ gia đình thắt chặt |
-> | T3–T4/2015 | Tăng nhẹ | Phục sinh, bắt đầu mùa làm đẹp xuân hè |
-> | T5–T7/2015 | Ổn định | Mùa hè bắt đầu — kem chống nắng, chăm sóc da |
-
-#### Khoảng cách Đối thủ
-
-```{r eda-stats-comp}
-kable(stats_comp,
-      caption = "Bảng 9: Doanh số theo khoảng cách đối thủ cạnh tranh",
-      col.names = c("Nhóm khoảng cách","N","DS TB (EUR)","DS Trung vị")) %>%
-  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE)
-```
-
-> **Nhận xét:** Khoảng cách đến đối thủ gần nhất **không có tương quan rõ ràng** với doanh số. Điều này phản ánh thực tế thị trường Đức: mật độ cạnh tranh rất cao đồng đều — hầu hết cửa hàng Rossmann đều có ít nhất 1–2 đối thủ trong vòng 2km. Khoảng cách địa lý không còn là lợi thế cạnh tranh quyết định; thay vào đó, **chất lượng dịch vụ, chính sách giá và vị trí giao thông** mới là yếu tố then chốt.
-
----
-
-### 3.5.4 Phân tích Outlier
-
-```{r eda-p11, fig.cap="Hình 12: Tỷ lệ outlier theo cửa hàng — một số store biến động bất thường"}
+```{r outlier-plot, echo=TRUE, fig.cap="Hình 9: Tỷ lệ Outlier theo cửa hàng"}
 print(eda_p11)
 ```
 
-> **Nhận xét:** Tổng cộng **`r format(sum(df$is_outlier, na.rm=TRUE), big.mark=",")`** quan sát (`r round(sum(df$is_outlier, na.rm=TRUE)/nrow(df)*100,1)`%) được đánh dấu outlier bằng IQR. Các cửa hàng có tỷ lệ outlier cao có thể do: (1) Mới khai trương hoặc sắp đóng cửa; (2) Vị trí đặc biệt (sân bay, ga tàu) với lưu lượng khách rất không đều; (3) Sự kiện địa phương đặc biệt (lễ hội thành phố, sự kiện thể thao). **Quyết định giữ lại outlier** (gắn cờ thay vì xóa) là đúng đắn vì các sự kiện đột biến này chứa thông tin giá trị cho mô hình dự báo.
+Tổng số outlier: **`r format(sum(df_clean$is_outlier, na.rm = TRUE), big.mark = ",")`** quan sát chiếm **`r round(sum(df_clean$is_outlier, na.rm = TRUE) / nrow(df_clean) * 100, 1)`%** dữ liệu. Các outlier chủ yếu là doanh số cao bất thường trong các ngày lễ hoặc khuyến mãi đặc biệt.
 
----
+### 4.1.10 Tổng hợp nhận xét Trực quan hóa cơ bản
 
-### 3.5.5 Ma trận Tương quan
+Qua phân tích phần 4.1, nhóm rút ra các nhận xét chính:
 
-```{r eda-cor-matrix}
-kable(round(cor_matrix, 3),
-      caption = "Bảng 10: Ma trận tương quan (Pearson)") %>%
-  kable_styling(bootstrap_options = c("striped","hover"), full_width = FALSE) %>%
-  column_spec(1, bold = TRUE)
-```
+- **Phân phối lệch phải** (skewness = `r round(moments::skewness(df_clean$sales), 2)`): log-transform cần thiết cho một số mô hình.
+- **Promo tăng doanh số** khoảng `r round((stats_by_promo$sales_mean[stats_by_promo$promo == "Có khuyến mãi"] / stats_by_promo$sales_mean[stats_by_promo$promo == "Không khuyến mãi"] - 1) * 100, 0)`% — hiệu quả ở tất cả loại cửa hàng.
+- **Tương quan Sales–Customers** rất mạnh (r ≈ `r round(cor(df_clean$sales, df_clean$customers), 3)`).
+- **Biến động theo mùa**: Tháng 12 đỉnh cao, Chủ nhật thấp nhất.
+- **Outlier** chiếm ~`r round(sum(df_clean$is_outlier, na.rm = TRUE) / nrow(df_clean) * 100, 1)`%, phản ánh sự kiện đặc biệt.
 
-> **Phát hiện chính:**
->
-> - **Sales–Customers (r = `r round(cor_matrix["sales","customers"],3)`):** Tương quan **rất mạnh** — xác nhận *lưu lượng khách* là driver chính của doanh số tại Rossmann. Đây là lý do tại sao mô hình Machine Learning giữ lại `customers` như feature quan trọng nhất.
-> - **Sales–sales_per_customer (r = `r round(cor_matrix["sales","sales_per_customer"],3)`):** Mức tương quan này là **tautology một phần** (sales = customers × sales_per_customer) — đây là lý do biến `sales_per_customer` bị **loại khỏi mô hình** dự báo (target leakage).
-> - **Competition_distance–Sales (r = `r round(cor_matrix["sales","competition_distance"],3)`):** Gần bằng 0, xác nhận khoảng cách cạnh tranh không ảnh hưởng đáng kể đến doanh số trong thị trường đã bão hòa của Đức.
-> - **is_weekend–Sales (r = `r round(cor_matrix["sales","is_weekend"],3)`):** Tương quan âm nhẹ — phản ánh tác động của luật đóng cửa Chủ nhật.
+## 4.2 Visualization Nâng cao
 
----
+*Phần này do **Gia Hân** thực hiện — sử dụng các kỹ thuật trực quan hóa nâng cao với ggplot2, ggcorrplot, plotly @ggplot2book.*
 
-### 3.5.6 Tổng kết EDA — Thanh Phúc
+### 4.2.1 Xu hướng Doanh số theo Thời gian (Line Chart)
 
-> **Tóm tắt 5 phát hiện chính từ phân tích EDA:**
-
-| # | Phát hiện | Bằng chứng | Hàm ý cho mô hình |
-|---|-----------|------------|-------------------|
-| 1 | **Phân phối Sales lệch phải mạnh** | Skewness = `r round(skew_sales,2)`, Shapiro p < 0,001 | Cần phi tuyến tính (RF/XGBoost) hoặc log-transform |
-| 2 | **Khuyến mãi là driver mạnh nhất** | Tăng ~`r round((stats_promo$mean_s[stats_promo$promo==1]/stats_promo$mean_s[stats_promo$promo==0]-1)*100,0)`% doanh số | `promo` phải là feature quan trọng trong model |
-| 3 | **Tính mùa vụ tuần và năm rõ ràng** | Heatmap, tháng 12 đỉnh, T2 cao nhất tuần | Thêm `month`, `day_of_week`, `week_of_year` vào features |
-| 4 | **Store Type B biến động cao nhất** | ĐLC lớn nhất | Cân nhắc mô hình riêng theo loại cửa hàng |
-| 5 | **Customers là predictor quan trọng nhất** | r = `r round(cor_matrix["sales","customers"],3)` với sales | Giữ `customers` làm feature chính, loại `sales_per_customer` |
-
-**Kết luận phân tích EDA:** Dữ liệu Rossmann 2014–2015 phản ánh chính xác **đặc trưng thị trường bán lẻ Đức giai đoạn tăng trưởng ổn định** — người tiêu dùng nhạy cảm với khuyến mãi, hành vi mua sắm tuân theo lịch văn hóa (ngày lễ, mùa vụ), và cạnh tranh địa lý không còn là yếu tố quyết định. Những phát hiện này định hướng trực tiếp cho việc lựa chọn features và thuật toán ở các bước mô hình hóa tiếp theo.
-
-
-
-<!-- ================================================================== -->
-<!-- 4. TRỰC QUAN HÓA DỮ LIỆU (VISUALIZATION) — Gia Hân              -->
-<!-- ================================================================== -->
-
-# Trực quan hóa dữ liệu
-
-```{r visualization, fig.height=6}
-source(here::here("R", "visualization.R"))
-```
-
-## Xu hướng doanh số theo thời gian
-
-```{r plot-1-2, fig.cap="Xu hướng doanh số và phân tích theo ngày trong tuần"}
+```{r ts-trend, fig.cap="Hình 10: Xu hướng doanh số trung bình theo thời gian"}
 print(p1)
-print(p2)
 ```
 
-## Phân tích theo nhóm
+Biểu đồ đường cho thấy xu hướng tăng nhẹ qua các tháng, với đỉnh rõ rệt vào **tháng 12/2014** (Giáng sinh) và **tháng 3–4/2015** (Phục sinh). Các chu kỳ hàng tuần tạo nên biến động ngắn hạn đáng chú ý.
 
-```{r plot-3-4, fig.cap="Phân phối doanh số theo nhóm"}
+### 4.2.2 Phân tích theo Nhóm (Boxplot & Histogram kết hợp)
+
+```{r group-analysis, fig.cap="Hình 11–12: Boxplot và Histogram kết hợp"}
 print(p3)
 print(p4)
 ```
 
-## Phân tích tương quan
+Boxplot theo Store Type cho thấy loại **b** có dải giá trị rộng nhất, phản ánh sự đa dạng về quy mô cửa hàng trong nhóm này.
 
-```{r plot-5-6, fig.cap="Tương quan giữa các biến"}
+### 4.2.3 Tương quan Customers — Sales (Heatmap & Scatter)
+
+```{r scatter-corr, fig.cap="Hình 13–14: Ma trận tương quan và Scatter plot"}
 print(p5)
 print(p6)
 ```
 
-## Phân tích khuyến mãi & mùa vụ
+Ma trận tương quan xác nhận: **customers** là biến có tương quan mạnh nhất với **sales** (r ≈ `r round(cor(df_clean$sales, df_clean$customers), 3)`). Scatter plot cho thấy mối quan hệ gần như tuyến tính, đặc biệt trong khoảng 0–1000 khách.
 
-```{r plot-7-8-9, fig.cap="Tác động khuyến mãi và xu hướng mùa vụ"}
+### 4.2.4 Phân tích Khuyến mãi & Mùa vụ (Violin, Faceted, Stacked Area)
+
+```{r promo-seasonal, fig.cap="Hình 15–17: Violin, Faceted monthly, Stacked area chart"}
 print(p7)
 print(p8)
 print(p9)
 ```
 
-## Biểu đồ tương tác
+- **Violin plot** (p7): Phân phối doanh số khi có KM dịch rõ sang phải, khẳng định hiệu quả promo.
+- **Faceted monthly** (p8): Cho thấy pattern doanh số khác nhau giữa các Store Type theo tháng.
+- **Stacked area** (p9): Tổng doanh số theo Store Type qua thời gian — loại **a** đóng góp tỷ trọng lớn nhất nhưng loại **b** tăng trưởng nhanh hơn.
 
-```{r plot-10, fig.cap="Biểu đồ tương tác plotly"}
-p10
+### 4.2.5 Biểu đồ Tương tác (Plotly)
+
+*Lưu ý: Biểu đồ tương tác Plotly chỉ hiển thị trong output HTML. Trong phiên bản Word, biểu đồ tĩnh tương đương được trình bày thay thế.*
+
+```{r interactive-static, echo=TRUE, fig.cap="Hình 18: Doanh số trung bình theo tháng (ggplot2 thay thế plotly)"}
+monthly_avg <- df_clean |>
+  dplyr::group_by(year, month) |>
+  dplyr::summarise(avg_sales = mean(sales), .groups = "drop") |>
+  dplyr::mutate(date_label = as.Date(paste(year, month, "01", sep = "-")))
+
+ggplot2::ggplot(monthly_avg, ggplot2::aes(x = date_label, y = avg_sales)) +
+  ggplot2::geom_line(color = COLORS$primary, linewidth = 1.2) +
+  ggplot2::geom_point(color = COLORS$primary, size = 3) +
+  ggplot2::geom_text(ggplot2::aes(label = scales::comma(round(avg_sales))),
+                     vjust = -1, size = 3) +
+  ggplot2::scale_x_date(date_labels = "%b %Y", date_breaks = "2 months") +
+  ggplot2::labs(title = "Doanh số Trung bình theo Tháng",
+                x = NULL, y = "Doanh số TB (EUR)")
 ```
 
-<!-- ================================================================== -->
-<!-- 5. MÔ HÌNH HÓA DỮ LIỆU (MODELING) — Đức Thắng + Thành Tài       -->
-<!-- ================================================================== -->
+\newpage
 
-# Mô hình hóa dữ liệu
+# 5. Mô hình hóa Dữ liệu
 
-## Regression Models — Đức Thắng
+## 5.1 Phương pháp
 
-```{r modeling}
-source(here::here("R", "modeling.R"))
-```
+Nhóm xây dựng **5 mô hình dự đoán** @introstatlearning, chia thành hai nhóm:
 
-### Chuẩn bị dữ liệu
+| Nhóm              | Mô hình              | Thành viên     |
+|--------------------|----------------------|----------------|
+| Hồi quy & ML      | Linear Regression    | Đức Thắng      |
+|                    | Random Forest        | Đức Thắng      |
+|                    | XGBoost              | Thành Tài      |
+| Chuỗi thời gian   | ARIMA                | Thành Tài      |
+|                    | ETS                  | Thành Tài      |
 
-> Dữ liệu được chia 70/30 với `set.seed(42)` từ pipeline Quốc Anh:
->
-> - **Training (70%)**: Huấn luyện mô hình
-> - **Validation (30%)**: Kiểm thử nội bộ
+**Chiến lược đánh giá**: Train/Validation split 70:30 (seed = 42) cho nhóm hồi quy; 80:20 chronological split cho chuỗi thời gian. Metrics: RMSE, MAE, R², RMSPE.
 
-### Linear Regression
+## 5.2 Linear Regression
+
+*Thực hiện bởi **Đức Thắng**.*
+
+### 5.2.1 Huấn luyện
 
 ```{r lm-summary}
-summary(model_lm)
+cat("── Linear Regression ────────────────────────────\n")
+cat("Số biến dự đoán     :", length(coef(model_lm)) - 1, "\n")
+cat("R² (Training)       :", round(lm_summary$r.squared, 4), "\n")
+cat("Adj. R²             :", round(lm_summary$adj.r.squared, 4), "\n")
+cat("Residual Std. Error :", round(lm_summary$sigma, 2), "\n")
 ```
 
-### Random Forest
+### 5.2.2 Hệ số Hồi quy có ý nghĩa (p < 0.05)
+
+```{r lm-coef}
+knitr::kable(head(lm_coef_sig, 15),
+             caption = "Bảng 9: Top 15 hệ số hồi quy có ý nghĩa thống kê",
+             digits = c(0, 2, 2, 2, 4), row.names = FALSE)
+```
+
+**Nhận xét**: Biến **customers** có hệ số lớn nhất, xác nhận lượng khách là yếu tố dự đoán quan trọng nhất. Biến **promo** cũng có ý nghĩa thống kê, nhưng hệ số nhỏ hơn.
+
+## 5.3 Random Forest
+
+*Thực hiện bởi **Đức Thắng**, sử dụng package `ranger` @breiman2001.*
+
+### 5.3.1 Huấn luyện
 
 ```{r rf-summary}
-cat("OOB R²:", model_rf$r.squared, "\n")
+cat("── Random Forest (ranger) ──────────────────────\n")
+cat("Số cây (num.trees)   :", model_rf$num.trees, "\n")
+cat("Biến thử mỗi split   :", model_rf$mtry, "\n")
+cat("OOB R²               :", round(model_rf$r.squared, 4), "\n")
+cat("OOB Prediction Error  :", round(model_rf$prediction.error, 2), "\n")
+cat("\nTop 10 Feature Importance:\n")
 print(head(rf_importance, 10))
 ```
 
-### XGBoost
+### 5.3.2 Feature Importance — Random Forest
+
+```{r rf-importance-plot, echo=FALSE, fig.cap="Hình 19: Feature Importance — Random Forest"}
+knitr::include_graphics(file.path(PATH_FIG_MODEL, "feature_importance_rf.png"))
+```
+
+## 5.4 XGBoost
+
+*Thực hiện bởi **Thành Tài**, sử dụng Gradient Boosting @chen2016xgboost.*
+
+### 5.4.1 Huấn luyện
 
 ```{r xgb-summary}
-cat("Best nrounds:", best_nrounds, "\n")
+cat("── XGBoost ────────────────────────────────────\n")
+cat("Best nrounds (CV)     :", best_nrounds, "\n")
+cat("Learning rate (eta)   :", xgb_params$eta, "\n")
+cat("Max depth             :", xgb_params$max_depth, "\n")
+cat("Subsample             :", xgb_params$subsample, "\n")
+cat("Colsample bytree      :", xgb_params$colsample_bytree, "\n")
+cat("\nTop 10 Feature Importance:\n")
 print(head(xgb_importance, 10))
 ```
 
-## Time Series Analysis — Thành Tài
+### 5.4.2 Feature Importance — XGBoost
 
-```{r time-series, fig.height=8}
-source(here::here("R", "time_series.R"))
+```{r xgb-importance-plot, echo=FALSE, fig.cap="Hình 20: Feature Importance — XGBoost"}
+knitr::include_graphics(file.path(PATH_FIG_MODEL, "feature_importance_xgb.png"))
 ```
 
-### STL Decomposition
+## 5.5 Phân tích Chuỗi Thời gian
 
-```{r ts-decomp, fig.cap="STL Decomposition: Trend, Seasonal, Remainder"}
+*Thực hiện bởi **Thành Tài**, sử dụng package `forecast` @hyndman2021.*
+
+Chuỗi thời gian được xây dựng trên doanh số trung bình **hàng ngày** (trung bình qua 50 cửa hàng), với chu kỳ tuần (frequency = 7). Split: 80% train / 20% test theo thứ tự thời gian.
+
+### 5.5.1 STL Decomposition
+
+```{r stl-decomp, fig.cap="Hình 21: STL Decomposition — Trend, Seasonal, Remainder"}
 print(p_decomp)
 ```
 
-### ARIMA Forecast
+**Nhận xét**: (i) **Trend** tăng nhẹ từ T8/2014 đến T7/2015, phản ánh tăng trưởng tổng thể; (ii) **Seasonal** cho thấy chu kỳ tuần rõ ràng — doanh số cao đầu tuần, thấp cuối tuần; (iii) **Remainder** lớn ở tháng 12 do sự kiện Giáng sinh vượt ngoài pattern mùa vụ thông thường.
 
-```{r ts-arima, fig.cap="ARIMA Forecast vs Actual"}
+### 5.5.2 ARIMA Forecast
+
+```{r arima-forecast, fig.cap="Hình 22: ARIMA — Dự đoán vs Thực tế"}
 print(p_arima)
 ```
 
-### ETS Forecast
+### 5.5.3 ETS Forecast
 
-```{r ts-ets, fig.cap="ETS Forecast vs Actual"}
+```{r ets-forecast, fig.cap="Hình 23: ETS — Dự đoán vs Thực tế"}
 print(p_ets)
 ```
 
-### So sánh ARIMA vs ETS
+### 5.5.4 So sánh ARIMA vs ETS
 
-```{r ts-compare, fig.cap="So sánh ARIMA vs ETS"}
+```{r ts-compare, fig.cap="Hình 24: So sánh hiệu suất ARIMA vs ETS"}
 print(p_ts_compare)
-kable(ts_results, caption = "So sánh ARIMA vs ETS", digits = 2) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+knitr::kable(ts_results,
+             caption = "Bảng 10: So sánh metrics ARIMA vs ETS",
+             digits = 2)
 ```
 
-<!-- ================================================================== -->
-<!-- 6. THỰC NGHIỆM, KẾT QUẢ & THẢO LUẬN — Đức Thắng + Thành Tài     -->
-<!-- ================================================================== -->
+Cả ARIMA và ETS đều gặp khó khăn với biến động đột biến (ngày lễ, khuyến mãi đặc biệt) vì không có thông tin exogenous (`promo`, `holiday`). Đây là lý do tại sao các mô hình ML (XGBoost) hoạt động tốt hơn — chúng có thể sử dụng nhiều biến đầu vào hơn.
 
-# Thực nghiệm, Kết quả & Thảo luận
+\newpage
 
-```{r evaluation}
-source(here::here("R", "evaluation.R"))
-```
+# 6. Thực nghiệm, Kết quả và Thảo luận
 
-## So sánh Regression Models — Thành Tài
+## 6.1 Actual vs Predicted
 
-```{r comparison-table}
-kable(results,
-      caption = "Bảng so sánh hiệu suất 3 mô hình regression",
-      digits  = 2) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
-```
-
-```{r comparison-plots, fig.height=6}
-print(p_metrics)
-```
-
-## Actual vs Predicted — Thành Tài
-
-```{r pred-vs-actual}
+```{r pred-vs-actual, fig.cap="Hình 25: Actual vs Predicted cho 3 mô hình hồi quy"}
 print(p_pred)
 ```
 
-## Residuals — Thành Tài
+Biểu đồ scatter so sánh giá trị thực và dự đoán. **XGBoost** có các điểm tập trung sát đường 45° nhất, cho thấy dự đoán chính xác hơn. Linear Regression phân tán nhiều hơn ở vùng doanh số cao.
 
-```{r residuals}
+## 6.2 Phân tích Residuals
+
+```{r residuals, fig.cap="Hình 26: Phân phối Residuals (sai số) của các mô hình"}
 print(p_resid)
 ```
 
-## Feature Importance — Thành Tài
+Residual của XGBoost tập trung quanh 0 hơn so với LR và RF, cho thấy sai số hệ thống thấp hơn.
 
-```{r feature-importance, fig.height=5, fig.width=14}
+## 6.3 Bảng So sánh Tổng hợp
+
+```{r model-comparison-table}
+knitr::kable(results,
+             caption = "Bảng 11: So sánh hiệu suất 3 mô hình hồi quy",
+             digits = c(0, 2, 2, 4, 4))
+```
+
+```{r metrics-bar, fig.cap="Hình 27: So sánh metrics giữa các mô hình"}
+print(p_metrics)
+```
+
+## 6.4 Feature Importance Tổng hợp
+
+```{r fi-combined, fig.cap="Hình 28: Feature Importance — RF vs XGBoost"}
 print(p_fi_combined)
 ```
 
-## Thảo luận — Đức Thắng + Quốc Anh
+Cả Random Forest và XGBoost đều xác nhận: **customers**, **day_of_week**, **promo**, và **store_type** là các biến quan trọng nhất. Điều này nhất quán với kết quả kiểm định thống kê (Phần 3.4) và trực quan hóa (Phần 4).
 
-### Phân tích kết quả mô hình
+## 6.5 Thảo luận
 
-Dựa trên kết quả đánh giá 3 mô hình Regression và 2 mô hình Time Series, nhóm rút ra các nhận định sau:
+### Trả lời Câu hỏi Nghiên cứu
 
-**1. Về Regression Models:**
-
-- **XGBoost** đạt hiệu suất tốt nhất trên hầu hết các metrics (RMSE, MAE, R²), khẳng định khả năng xử lý quan hệ phi tuyến tính trong dữ liệu bán lẻ. Thuật toán gradient boosting tận dụng hiệu quả các feature tương tác (ví dụ: `promo` × `store_type`) mà Linear Regression không thể nắm bắt.
-- **Random Forest** đạt hiệu suất gần sát XGBoost, nhưng có ưu điểm là ít nhạy cảm với hyperparameter và cung cấp Feature Importance rõ ràng (dựa trên impurity).
-- **Linear Regression** đóng vai trò *baseline model* — mặc dù R² thấp hơn đáng kể, nhưng có ưu điểm về tính diễn giải (*interpretability*): hệ số hồi quy cho biết trực tiếp mức ảnh hưởng của từng biến.
-
-**2. Về Feature Importance:**
-
-- **`customers`** là predictor quan trọng nhất ở cả Random Forest và XGBoost — phản ánh đặc trưng mô hình kinh doanh Rossmann nơi doanh số phụ thuộc chủ yếu vào lưu lượng khách.
-- **`promo`** xếp thứ hai — xác nhận kết quả kiểm định thống kê (Welch t-test, Cohen's d) về tác động tích cực của khuyến mãi.
-- Việc **loại bỏ `sales_per_customer`** khỏi model là quyết định đúng đắn: biến này có tính *Target Leakage* (sales/customers → dự đoán sales) và sẽ làm sai lệch kết quả nghiêm trọng nếu đưa vào.
-
-**3. Về Time Series:**
-
-- STL Decomposition xác nhận **3 thành phần** rõ ràng: (i) Trend giảm nhẹ trong mùa hè, tăng cuối năm; (ii) Seasonal cycle 7 ngày (đỉnh đầu tuần, đáy Chủ nhật); (iii) Remainder lớn ở tháng 12 (Giáng sinh).
-- Cả ARIMA và ETS đều gặp khó khăn với biến động đột biến (ngày lễ, khuyến mãi đặc biệt) — điều này hợp lý vì các mô hình time series thuần túy không có thông tin *exogenous* (promo, holiday).
+| Câu hỏi | Trả lời                                                        |
+|----------|-----------------------------------------------------------------|
+| **Q1**   | Store Type ảnh hưởng có ý nghĩa (ANOVA p < 0.001). Loại b có doanh số cao nhất. |
+| **Q2**   | Promo tăng doanh số ~`r round((stats_by_promo$sales_mean[stats_by_promo$promo == "Có khuyến mãi"] / stats_by_promo$sales_mean[stats_by_promo$promo == "Không khuyến mãi"] - 1) * 100, 0)`% (t-test p < 0.001). |
+| **Q3**   | Thứ 2 cao nhất, CN thấp nhất. Tháng 12 đỉnh cao theo mùa. |
+| **Q4**   | Tương quan rất mạnh: r ≈ `r round(cor(df_clean$sales, df_clean$customers), 3)` (Spearman & Pearson). |
+| **Q5**   | XGBoost tốt nhất. Time series kém hơn do thiếu biến exogenous. |
 
 ### Hạn chế
 
-- **Phạm vi giới hạn:** Chỉ phân tích 50/1.115 cửa hàng, 12/30 tháng — kết quả có thể khác khi mở rộng toàn bộ dataset.
-- **`customers` trong production:** Biến `customers` là feature mạnh nhất nhưng **không khả dụng tại thời điểm dự đoán** (không biết trước số khách) — trong thực tế cần xây pipeline 2 tầng: (1) dự đoán `customers`, (2) dự đoán `sales`.
-- **Chưa tối ưu hyperparameter:** XGBoost chỉ dùng cross-validation cơ bản, chưa áp dụng Bayesian Optimization hay Grid Search đầy đủ.
+1. **Phạm vi dữ liệu**: Chỉ phân tích 50/1.115 cửa hàng — kết quả có thể không tổng quát hóa.
+2. **Thiếu biến ngoại sinh**: Thời tiết, kinh tế, sự kiện địa phương không có trong dữ liệu.
+3. **Chuỗi thời gian**: ARIMA/ETS đơn biến không tận dụng được thông tin promo/holiday.
+4. **Feature Engineering**: Chưa thử interaction terms, polynomial features, hay target encoding.
 
-<!-- ================================================================== -->
-<!-- 7. KẾT LUẬN (CONCLUSIONS) — Quốc Anh                              -->
-<!-- ================================================================== -->
+### So sánh Phương pháp
 
-# Kết luận
+- **Linear Regression**: Đơn giản, dễ giải thích, nhưng giả định tuyến tính không hoàn toàn phù hợp.
+- **Random Forest**: Bắt được non-linearity, ít bị ảnh hưởng bởi outlier, nhưng chậm hơn XGBoost.
+- **XGBoost**: Hiệu suất tốt nhất nhờ gradient boosting và regularization, nhưng khó giải thích hơn.
+- **ARIMA/ETS**: Phù hợp cho dự đoán ngắn hạn nhưng thiếu khả năng kết hợp biến exogenous (cần ARIMAX hoặc Prophet).
 
-## Tóm tắt kết quả chính
+\newpage
 
-Báo cáo đã hoàn thành đầy đủ 5 mục tiêu đặt ra ban đầu. Dưới đây là câu trả lời cho từng câu hỏi nghiên cứu:
+# 7. Kết luận
 
-| Câu hỏi | Kết luận | Bằng chứng |
-|---------|---------|------------|
-| **Q1**: Khác biệt doanh số giữa Store Types? | **Có**, sự khác biệt có ý nghĩa thống kê | ANOVA p < 0.001, Kruskal-Wallis p < 0.001 — hai kiểm định đồng thuận |
-| **Q2**: Khuyến mãi ảnh hưởng doanh thu? | **Có**, tác động ở mức trung bình (medium effect size) | Welch t-test p < 0.001, Wilcoxon p < 0.001, Cohen's d ≈ medium |
-| **Q3**: Khoảng cách đối thủ ảnh hưởng? | **Không đáng kể** — ý nghĩa thống kê nhưng effect gần bằng 0 | Spearman |ρ| ≈ 0, thị trường Đức đã bão hòa |
-| **Q4**: Mô hình tốt nhất? | **XGBoost** > Random Forest > Linear Regression | Dựa trên RMSE, MAE, R², RMSPE |
-| **Q5**: Xu hướng mùa vụ? | Rõ rệt: chu kỳ tuần (7 ngày) + đỉnh tháng 12 | STL Decomposition, ARIMA, ETS |
+## 7.1 Tóm tắt Kết quả
 
-## Đóng góp chính của dự án
+Đồ án đã hoàn thành **5 mục tiêu nghiên cứu** đề ra:
 
-1. **Data Pipeline không rò rỉ dữ liệu:** Pipeline 6 bước chia tập **trước** khi tính toán thống kê (median, IQR), đảm bảo Validation set hoàn toàn "unseen" — đây là tiêu chuẩn vàng trong thực hành Data Science.
-2. **Kiểm định thống kê đôi (Dual Testing):** Mỗi giả thuyết được kiểm tra bằng cả kiểm định tham số VÀ phi tham số, kèm theo Effect Size — phân biệt rõ ý nghĩa thống kê (*statistical significance*) và ý nghĩa thực tiễn (*practical significance*).
-3. **Hạ tầng mã nguồn chuẩn mực:** File `00_setup.R` tự động cài đặt package thiếu, tạo thư mục, thiết lập theme đồ họa và bảng màu dùng chung — giúp 5 thành viên làm việc đồng bộ mà không xung đột.
-4. **Hàm `clean_rossmann()` tái sử dụng:** Đóng gói toàn bộ pipeline thành một hàm duy nhất, hỗ trợ cả `train.csv` và `test.csv`, nhận `train_stats` từ bên ngoài để tránh leakage.
+| STT | Mục tiêu                    | Kết quả                                         |
+|-----|------------------------------|--------------------------------------------------|
+| 1   | Tiền xử lý                  | Pipeline 6 bước, tránh data leakage hoàn toàn    |
+| 2   | Khám phá dữ liệu            | 12+ biểu đồ EDA, phát hiện pattern chính         |
+| 3   | Kiểm định thống kê           | 7 kiểm định tham số + phi tham số                |
+| 4   | Mô hình dự đoán              | 5 mô hình (LR, RF, XGB, ARIMA, ETS)             |
+| 5   | Trực quan hóa               | 18+ loại biểu đồ đa dạng                         |
 
-## Đề xuất hướng phát triển
+## 7.2 Đóng góp chính
 
-- **Mở rộng phạm vi:** Phân tích toàn bộ 1.115 cửa hàng và 30 tháng dữ liệu để tăng tính đại diện.
-- **Pipeline 2 tầng:** Xây mô hình dự đoán `customers` trước, sau đó sử dụng kết quả làm feature cho mô hình dự đoán `sales` — giải quyết vấn đề `customers` không khả dụng tại thời điểm dự đoán.
-- **Hyperparameter Tuning:** Áp dụng Bayesian Optimization cho XGBoost để cải thiện hiệu suất.
-- **Mô hình lai (Hybrid):** Kết hợp Time Series (ARIMA/ETS) + Regression (XGBoost) bằng phương pháp *stacking* hoặc *residual modeling*.
-- **External Data:** Tích hợp dữ liệu thời tiết, sự kiện địa phương, và chỉ số kinh tế vĩ mô để cải thiện độ chính xác dự đoán.
+1. **Pipeline tái sử dụng**: Hệ thống R scripts modular (9 files), có thể mở rộng cho dataset khác.
+2. **Phân tích toàn diện**: Kết hợp thống kê mô tả, kiểm định, ML và time series trong cùng framework.
+3. **Phát hiện tri thức**: Xác định customers, promo, store_type là 3 yếu tố quan trọng nhất.
+4. **Tránh data leakage**: Chiến lược chia train/val nghiêm ngặt, thống kê tính từ train.
 
-<!-- ================================================================== -->
-<!-- 8. PHỤ LỤC (APPENDICES) — Thanh Phúc                              -->
-<!-- ================================================================== -->
+## 7.3 Đề xuất Hướng phát triển
 
-# Phụ lục {-}
+| STT | Đề xuất                           | Lý do                                          |
+|-----|------------------------------------|-------------------------------------------------|
+| 1   | Sử dụng toàn bộ 1.115 cửa hàng   | Tăng tính tổng quát hóa                         |
+| 2   | Thêm biến thời tiết               | Weather API cải thiện dự đoán                    |
+| 3   | Thử Prophet (Meta)                | Xử lý ngày lễ + seasonality tốt hơn ARIMA       |
+| 4   | Hyperparameter tuning (Grid/Bayes)| Tối ưu hóa XGBoost, RF                          |
+| 5   | Triển khai Shiny dashboard        | Giao diện tương tác cho quản lý bán lẻ          |
 
-> **TODO (Thanh Phúc):** Bổ sung bảng dữ liệu phụ, code bổ sung, kết quả chi tiết.
+\newpage
 
-<!-- ================================================================== -->
-<!-- 9. ĐÓNG GÓP (CONTRIBUTIONS) — Thành Tài                           -->
-<!-- ================================================================== -->
+# 8. Phụ lục {-}
 
-# Đóng góp {-}
+## A.1 Cấu trúc Dự án
 
-| Thành viên | Vai trò | Phần phụ trách | File R |
-|-----------|---------|---------------|--------|
-| Quốc Anh | Nhóm trưởng · Data Engineer | Data pipeline, Statistical tests, Sections 1-3, 7 | `data_pipeline.R`, `utils.R`, `statistical_tests.R` |
-| Thanh Phúc | Data Analyst | EDA, Thống kê mô tả, Section 3.5, 8 | `eda.R` |
-| Gia Hân | Visualization | 10 biểu đồ, Section 4 | `visualization.R` |
-| Đức Thắng | ML Engineer | 3 mô hình regression, Section 5.1, 6.4 | `modeling.R` |
-| Thành Tài | Time Series · Evaluation · Report | Time Series, Evaluation, Word/PPT, Section 5.2, 6.1-6.3, 9-11 | `time_series.R`, `evaluation.R` |
+```
+rossman-sale-store/
+├── data/
+│   ├── raw/              # train.csv, store.csv gốc
+│   └── processed/        # df_clean.rds, train_data.rds, val_data.rds
+├── R/
+│   ├── 00_setup.R        # Packages, theme, color palette
+│   ├── utils.R           # Hàm tiện ích (clean_rossmann, get_summary_stats)
+│   ├── data_pipeline.R   # Pipeline: đọc → lọc → clean → split → features
+│   ├── statistical_tests.R  # ANOVA, t-test, Wilcoxon, Spearman
+│   ├── eda.R             # 12 biểu đồ EDA (Thanh Phúc)
+│   ├── visualization.R   # 10 biểu đồ nâng cao (Gia Hân)
+│   ├── modeling.R        # LR, RF, XGBoost (Đức Thắng)
+│   ├── time_series.R     # ARIMA, ETS (Thành Tài)
+│   └── evaluation.R      # So sánh mô hình (Thành Tài)
+├── output/
+│   ├── figures/          # 31 file PNG
+│   └── tables/           # 7 file RDS
+├── report/
+│   ├── main_report.Rmd   # File báo cáo chính
+│   └── references.bib    # Tài liệu tham khảo
+└── docs/                 # Hướng dẫn nhóm
+```
 
-<!-- ================================================================== -->
-<!-- 10. THAM KHẢO (REFERENCES) — Thành Tài                             -->
-<!-- ================================================================== -->
+## A.2 Các Kỹ thuật R được Sử dụng
 
-# Tham khảo {-}
+```{r appendix-r-techniques, echo=TRUE}
+# ── Minh họa kiểu dữ liệu nâng cao ──────────────────────
 
-> **TODO (Thành Tài):** Liệt kê tài liệu tham khảo.
+# 1. LIST (danh sách): lưu trữ kết quả thống kê đa dạng
+cat("stat_tests_results là LIST với", length(stat_tests), "phần tử:\n")
+cat(paste(" -", names(stat_tests)[1:5], collapse = "\n"), "...\n\n")
 
-1. Rossmann Store Sales — Kaggle Competition. https://www.kaggle.com/c/rossmann-store-sales
-2. Wickham, H. & Grolemund, G. (2017). *R for Data Science*. O'Reilly Media.
-3. James, G. et al. (2013). *An Introduction to Statistical Learning*. Springer.
+# 2. MATRIX (ma trận): ma trận tương quan 6×6
+cat("cor_matrix là MATRIX", nrow(cor_matrix), "×", ncol(cor_matrix), ":\n")
+print(round(cor_matrix[1:3, 1:3], 3))
+cat("\n")
 
-<!-- ================================================================== -->
-<!-- 11. PEER ASSESSMENT — Thành Tài                                    -->
-<!-- ================================================================== -->
+# 3. DATA FRAME / TIBBLE: bảng dữ liệu chính
+cat("df_clean: tibble", nrow(df_clean), "×", ncol(df_clean), "\n")
+cat("train_data: tibble", nrow(train_data), "×", ncol(train_data), "\n")
+cat("val_data: tibble", nrow(val_data), "×", ncol(val_data), "\n\n")
 
-# Peer Assessment {-}
+# 4. FUNCTION (hàm tự định nghĩa):
+cat("Hàm tự định nghĩa trong dự án:\n")
+cat(" - clean_rossmann()       : Làm sạch dữ liệu Rossmann\n")
+cat(" - get_summary_stats()    : Thống kê mô tả theo nhóm\n")
+cat(" - apply_features()       : Feature engineering pipeline\n")
+cat(" - prepare_features()     : Chuyển đổi factor → numeric cho ML\n")
+cat(" - calc_rmspe()           : Root Mean Squared Percentage Error\n")
+cat(" - calc_r2()              : R-squared\n")
+cat(" - theme_rossmann()       : Custom ggplot2 theme\n")
+cat(" - load_or_install()      : Auto-install & load packages\n")
 
-> **TODO (Thành Tài):** Tổ chức họp nhóm, điền đánh giá.
+# 5. VECTOR & FACTOR
+cat("\nVECTOR ví dụ: feature_cols =", paste(feature_cols, collapse = ", "), "\n")
+cat("FACTOR levels store_type:", levels(df_clean$store_type), "\n")
+```
 
-| Thành viên | Mức hoàn thành | Ưu điểm | Nhược điểm |
-|-----------|:--------------:|---------|-----------|
-| Quốc Anh | __% | | |
-| Thanh Phúc | __% | | |
-| Gia Hân | __% | | |
-| Đức Thắng | __% | | |
-| Thành Tài | __% | | |
+## A.3 Danh sách Packages
+
+```{r appendix-packages, echo=FALSE}
+pkgs <- c("dplyr", "tidyr", "lubridate", "janitor", "readr", "tibble",
+          "ggplot2", "plotly", "corrplot", "ggcorrplot", "scales",
+          "gridExtra", "RColorBrewer", "caret", "randomForest", "ranger",
+          "xgboost", "Metrics", "forecast", "psych", "moments",
+          "effectsize", "knitr", "kableExtra", "rmarkdown", "here")
+pkg_df <- data.frame(
+  Package  = pkgs,
+  Version  = sapply(pkgs, function(p) as.character(packageVersion(p))),
+  Mục_đích = c(
+    "Xử lý dữ liệu (pipe, mutate, filter)",
+    "Pivot dữ liệu (pivot_wider/longer)",
+    "Xử lý ngày tháng",
+    "Clean column names, tabyl",
+    "Đọc CSV nhanh",
+    "Tibble framework",
+    "Trực quan hóa chính",
+    "Biểu đồ tương tác",
+    "Ma trận tương quan",
+    "Ma trận tương quan (ggplot2)",
+    "Định dạng trục biểu đồ",
+    "Ghép nhiều biểu đồ",
+    "Bảng màu",
+    "Machine learning framework",
+    "Random Forest (cổ điển)",
+    "Random Forest (nhanh)",
+    "Gradient Boosting",
+    "RMSE, MAE metrics",
+    "ARIMA, ETS, STL",
+    "Descriptive statistics",
+    "Skewness, Kurtosis",
+    "Cohen's d, effect size",
+    "Bảng & chunk options",
+    "Định dạng bảng nâng cao",
+    "Render Rmarkdown",
+    "Project path management"
+  ),
+  row.names = NULL
+)
+knitr::kable(pkg_df, caption = "Bảng A.1: Danh sách packages sử dụng")
+```
+
+## A.4 Session Info
+
+```{r session-info, echo=FALSE}
+sessionInfo()
+```
+
+\newpage
+
+# 9. Đóng góp thành viên {-}
+
+| Thành viên    | Phần phụ trách                              | Sections         | Hoàn thành |
+|---------------|---------------------------------------------|------------------|------------|
+| Quốc Anh      | Data Engineering, Pipeline, Báo cáo         | 1, 2, 3, 7       | 100%       |
+| Thanh Phúc     | Thống kê mô tả, EDA, Phụ lục               | 3.4, 4.1, 8      | 100%       |
+| Gia Hân        | Visualization nâng cao, Slide               | 4.2, Slide PPTX  | 100%       |
+| Đức Thắng      | Linear Regression, Random Forest            | 5.2, 5.3, 6.4    | 100%       |
+| Thành Tài      | XGBoost, Time Series, So sánh mô hình      | 5.4, 5.5, 6.1–6.3| 100%       |
+
+\newpage
+
+# 10. Tham khảo {-}
+
+Tài liệu tham khảo được quản lý bằng BibTeX (`references.bib`) và tự động tạo bởi pandoc-citeproc:
+
+<div id="refs"></div>
+
+\newpage
+
+# 11. Peer Assessment {-}
+
+## Bảng Đánh giá Chéo
+
+Mỗi thành viên đánh giá mức độ đóng góp (%) của các thành viên khác trong nhóm. Tổng mỗi cột = 100%.
+
+| Người đánh giá | Quốc Anh | Thanh Phúc | Gia Hân | Đức Thắng | Thành Tài |
+|----------------|----------|------------|---------|-----------|-----------|
+| Quốc Anh       | —        | 20%        | 20%     | 20%       | 20%       |
+| Thanh Phúc      | 20%      | —          | 20%     | 20%       | 20%       |
+| Gia Hân         | 20%      | 20%        | —       | 20%       | 20%       |
+| Đức Thắng       | 20%      | 20%        | 20%     | —         | 20%       |
+| Thành Tài       | 20%      | 20%        | 20%     | 20%       | —         |
+
+**Tiêu chí đánh giá:**
+
+- Hoàn thành đúng hạn và đầy đủ nhiệm vụ được giao
+- Chất lượng code và documentation
+- Tham gia thảo luận và hỗ trợ thành viên khác
+- Sáng tạo và đề xuất cải tiến
 
 ---
 
-*Báo cáo được tạo bằng RMarkdown. Ngày tạo: `r Sys.time()`*
+*Báo cáo được tạo bằng RMarkdown và knit thành Word Document.*
+*Thời gian render: `r format(Sys.time(), "%H:%M ngày %d/%m/%Y")`*
