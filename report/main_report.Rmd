@@ -138,7 +138,7 @@ lm_coef_sig <- lm_coef_all[lm_coef_all$p.value < 0.05, ]
 lm_coef_sig <- lm_coef_sig[order(abs(lm_coef_sig$Estimate), decreasing = TRUE), ]
 
 # ── 4. Alias tham số XGBoost & đường dẫn hình ảnh ────────
-xgb_params   <- params
+xgb_params   <- best_params
 PATH_FIG_MODEL <- here::here("output", "figures")
 
 # Lưu biểu đồ feature importance riêng biệt cho include_graphics
@@ -694,7 +694,7 @@ knitr::include_graphics(file.path(PATH_FIG_MODEL, "feature_importance_rf.png"))
 
 ```{r xgb-summary}
 cat("── XGBoost ────────────────────────────────────\n")
-cat("Best nrounds (CV)     :", best_nrounds, "\n")
+cat("Best nrounds (CV)     :", best_nrounds_final, "\n")
 cat("Learning rate (eta)   :", xgb_params$eta, "\n")
 cat("Max depth             :", xgb_params$max_depth, "\n")
 cat("Subsample             :", xgb_params$subsample, "\n")
