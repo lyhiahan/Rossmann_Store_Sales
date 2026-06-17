@@ -58,6 +58,7 @@ feature_cols <- c("customers", "day_of_week", "promo", "state_holiday",
                   "competition_open_months", "has_competition")
 
 cat("[Đức Thắng] ⚠️ sales_per_customer ĐÃ BỊ LOẠI khỏi features (Target Leakage)\n")
+cat("[Đức Thắng] ℹ️ customers được giữ để phục vụ phân tích khi đã biết số khách; nếu dự báo tương lai nên loại bỏ.\n")
 cat("[Đức Thắng] Số features đầu vào:", length(feature_cols), "\n")
 
 # Hàm encode categorical → numeric cho Random Forest và XGBoost
@@ -65,7 +66,7 @@ cat("[Đức Thắng] Số features đầu vào:", length(feature_cols), "\n")
 #    KHÔNG phải giá trị gốc. Ví dụ: day_of_week factor(1,2,...,7) →
 #    as.numeric() cho 1,2,...,7 đúng THỨ TỰ LEVEL chứ không phải giá trị.
 #    Giải pháp: as.numeric(as.character(.)) cho biến có giá trị số gốc.
-prepare_features <- function(df, feature_cols) {
+prepare_features <- function(df, feature_cols, factor_levels = NULL) {
   # Lọc chỉ các cột tồn tại trong data
   available_cols <- feature_cols[feature_cols %in% names(df)]
 
@@ -79,27 +80,39 @@ prepare_features <- function(df, feature_cols) {
   # Convert factors → numeric ĐÚNG CÁCH
   # Biến có giá trị số gốc (day_of_week, promo, school_holiday): dùng as.character trước
   # Biến categorical thực sự (store_type, assortment, state_holiday): dùng integer codes
-  df_features <- df_features %>%
-    mutate(across(where(is.factor), ~ {
-      char_vals <- as.character(.)
+  for (col in names(df_features)) {
+    if (is.factor(df_features[[col]])) {
+      char_vals <- as.character(df_features[[col]])
       # Kiểm tra xem tất cả giá trị có phải số không
       num_vals <- suppressWarnings(as.numeric(char_vals))
-      if (all(!is.na(num_vals))) {
+      if (all(is.na(char_vals) | !is.na(num_vals))) {
         # Factor có giá trị số gốc → giữ giá trị số
-        num_vals
+        df_features[[col]] <- num_vals
       } else {
-        # Factor categorical → dùng integer codes
-        as.numeric(.)
+        # Factor categorical → dùng integer codes theo level của train để train/val nhất quán
+        ref_levels <- if (!is.null(factor_levels) && col %in% names(factor_levels)) {
+          factor_levels[[col]]
+        } else {
+          levels(df_features[[col]])
+        }
+        df_features[[col]] <- as.numeric(factor(char_vals, levels = ref_levels))
       }
-    }))
+    }
+  }
 
   return(as.data.frame(df_features))
 }
 
 # Áp dụng prepare_features cho train và val
-train_X <- prepare_features(train_data, feature_cols)
+train_factor_levels <- lapply(
+  train_data[intersect(feature_cols, names(train_data))],
+  function(x) if (is.factor(x)) levels(x) else NULL
+)
+train_factor_levels <- train_factor_levels[!vapply(train_factor_levels, is.null, logical(1))]
+
+train_X <- prepare_features(train_data, feature_cols, train_factor_levels)
 train_y <- train_data$sales
-test_X  <- prepare_features(test_data, feature_cols)
+test_X  <- prepare_features(test_data, feature_cols, train_factor_levels)
 test_y  <- test_data$sales
 
 # Đảm bảo train và test có cùng cột (consistency check)
@@ -311,7 +324,7 @@ model_xgb <- xgb.train(
   params        = best_params,
   data          = dtrain,
   nrounds       = best_nrounds_final,
-  watchlist     = list(train = dtrain, val = dtest),
+  evals         = list(train = dtrain, val = dtest),
   print_every_n = 50,
   verbose       = 1
 )
@@ -381,6 +394,8 @@ cat("[Đức Thắng] 🏆 Best (RMSPE):", c("LR", "RF", "XGB")[which.min(c(rmsp
 # TASK 7: saveRDS() — models + predictions + feature importance
 # =============================================================================
 cat("\n━━━ TASK 7: LƯU KẾT QUẢ ━━━\n")
+
+dir.create(here("output", "tables"), recursive = TRUE, showWarnings = FALSE)
 
 # Lưu 3 trained models
 saveRDS(
