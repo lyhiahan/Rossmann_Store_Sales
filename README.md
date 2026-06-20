@@ -17,10 +17,10 @@ Dự án phân tích và dự đoán doanh số bán hàng của chuỗi cửa h
 | STT | Họ và tên | Vai trò | File phụ trách |
 |:---:|-----------|---------|----------------|
 | 1 | **Quốc Anh** | Nhóm trưởng · Data Engineer · Báo cáo | `00_setup.R`, `utils.R`, `data_pipeline.R` |
-| 2 | **Thanh Phúc** | Data Analyst · EDA | `eda.R` |
+| 2 | **Thanh Phúc** | Data Analyst · EDA · Slide | `eda.R` |
 | 3 | **Gia Hân** | Data Visualization · Statistical Testing | `visualization.Rmd`, `statistical_tests.R` |
 | 4 | **Đức Thắng** | Machine Learning Engineer | `modeling.R` |
-| 5 | **Thành Tài** | Model Evaluation · Time Series · Slide | `evaluation.R`, `time_series.R` |
+| 5 | **Thành Tài** | Model Evaluation · Time Series | `evaluation.R`, `time_series.R` |
 
 ---
 
