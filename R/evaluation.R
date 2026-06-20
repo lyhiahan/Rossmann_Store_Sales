@@ -123,12 +123,8 @@ results <- tibble(
   arrange(RMSE)  # Sắp xếp theo RMSE tăng dần (mô hình tốt nhất lên đầu)
 
 cat("\n── Bảng so sánh metrics ──\n")
-print(
-  kable(results,
-        caption = "Bảng so sánh hiệu suất 3 mô hình",
-        digits  = c(0, 2, 2, 4, 4)) %>%
-    kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
-)
+print(results)
+
 
 # =============================================================================
 # 4. BIỂU ĐỒ 1: Bar Chart So sánh Metrics (facet_wrap)
@@ -310,5 +306,28 @@ cat("╠════════════════════════
 cat(sprintf("║ Top features      : %-29s║\n",
             paste(head(common_top5, 3), collapse = ", ")))
 cat("╚══════════════════════════════════════════════════╝\n")
+
+# In thêm thông số Logistic Regression nếu Đức Thắng đã chạy và lưu kết quả
+logit_path <- here("output", "tables", "logit_results.rds")
+if (file.exists(logit_path)) {
+  logit_res <- readRDS(logit_path)
+  logit_metrics_df <- logit_res$logit_metrics
+  
+  acc  <- logit_metrics_df$Value[logit_metrics_df$Metric == "Accuracy"]
+  prec <- logit_metrics_df$Value[logit_metrics_df$Metric == "Precision"]
+  rec  <- logit_metrics_df$Value[logit_metrics_df$Metric == "Recall"]
+  f1   <- logit_metrics_df$Value[logit_metrics_df$Metric == "F1-score"]
+  
+  cat("\n╔══════════════════════════════════════════════════╗\n")
+  cat("║   KEY METRICS — LOGISTIC REGRESSION (cho Slide)  ║\n")
+  cat("╠══════════════════════════════════════════════════╣\n")
+  cat(sprintf("║ Mô hình          : %-29s║\n", "Logistic Regression"))
+  cat(sprintf("║ Mục tiêu         : %-29s║\n", "Phân loại Doanh số Cao (>=10k)"))
+  cat(sprintf("║ Accuracy         : %-29s║\n", round(acc, 4)))
+  cat(sprintf("║ Precision        : %-29s║\n", round(prec, 4)))
+  cat(sprintf("║ Recall           : %-29s║\n", round(rec, 4)))
+  cat(sprintf("║ F1-score         : %-29s║\n", round(f1, 4)))
+  cat("╚══════════════════════════════════════════════════╝\n")
+}
 
 cat("\n[Thành Tài] ✅ Model Evaluation hoàn tất!\n")
