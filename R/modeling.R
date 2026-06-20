@@ -161,13 +161,16 @@ cat("========== MODEL 1B: LOGISTIC REGRESSION ==========\n")
 
 # Logistic Regression không dự đoán trực tiếp sales, mà dự đoán xác suất
 # một quan sát thuộc nhóm doanh thu cao (high_sales = 1).
-sales_threshold <- median(train_data$sales, na.rm = TRUE)
+sales_threshold <- 10000
+
 train_data$high_sales <- ifelse(train_data$sales >= sales_threshold, 1, 0)
 test_data$high_sales  <- ifelse(test_data$sales >= sales_threshold, 1, 0)
 
-cat("[Đức Thắng] Sales threshold (median train):", round(sales_threshold, 2), "\n")
+cat("[Đức Thắng] Sales threshold:", sales_threshold, "\n")
+
 cat("[Đức Thắng] Train high_sales distribution:\n")
 print(table(train_data$high_sales))
+
 cat("[Đức Thắng] Val high_sales distribution:\n")
 print(table(test_data$high_sales))
 
