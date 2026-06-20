@@ -8,9 +8,10 @@
 # CHÚ Ý: Chỉ Đức Thắng được chỉnh sửa file này!
 # Input:  data/processed/train_data.rds  (Quốc Anh tạo — 70% train)
 #         data/processed/val_data.rds    (Quốc Anh tạo — 30% validation)
-# Output: output/tables/models.rds            → 3 trained models (Thành Tài đọc)
+# Output: output/tables/models.rds            → trained models (Thành Tài đọc)
 #         output/tables/predictions.rds        → predictions + actual (Thành Tài đọc)
 #         output/tables/feature_importance.rds → RF + XGBoost importance (Thành Tài đọc)
+#         output/tables/logit_results.rds      → Logistic Regression classification results
 # =============================================================================
 
 library(dplyr)
@@ -151,6 +152,88 @@ pred_lm <- predict(model_lm, newdata = test_data)
 pred_lm <- pmax(pred_lm, 0)  # Sales không thể âm
 
 cat("[Đức Thắng] ✅ LR predictions — range:", round(range(pred_lm), 2), "\n")
+
+# =============================================================================
+# TASK 3B: LOGISTIC REGRESSION — HIGH SALES CLASSIFICATION
+# =============================================================================
+cat("\n━━━ TASK 3B: LOGISTIC REGRESSION — HIGH SALES CLASSIFICATION ━━━\n")
+cat("========== MODEL 1B: LOGISTIC REGRESSION ==========\n")
+
+# Logistic Regression không dự đoán trực tiếp sales, mà dự đoán xác suất
+# một quan sát thuộc nhóm doanh thu cao (high_sales = 1).
+sales_threshold <- median(train_data$sales, na.rm = TRUE)
+train_data$high_sales <- ifelse(train_data$sales >= sales_threshold, 1, 0)
+test_data$high_sales  <- ifelse(test_data$sales >= sales_threshold, 1, 0)
+
+cat("[Đức Thắng] Sales threshold (median train):", round(sales_threshold, 2), "\n")
+cat("[Đức Thắng] Train high_sales distribution:\n")
+print(table(train_data$high_sales))
+cat("[Đức Thắng] Val high_sales distribution:\n")
+print(table(test_data$high_sales))
+
+logit_features <- intersect(feature_cols, names(train_data))
+missing_logit_features <- setdiff(feature_cols, logit_features)
+if (length(missing_logit_features) > 0) {
+  cat("[Đức Thắng] ⚠️ Logistic features không tồn tại (bỏ qua):",
+      paste(missing_logit_features, collapse = ", "), "\n")
+}
+
+# Đảm bảo không đưa target/leakage vào feature của Logistic Regression.
+leakage_cols <- c("sales", "sales_per_customer", "high_sales")
+logit_features <- setdiff(logit_features, leakage_cols)
+
+logit_formula <- as.formula(paste("high_sales ~", paste(logit_features, collapse = " + ")))
+cat("[Đức Thắng] Logistic Regression Formula:", deparse(logit_formula), "\n")
+
+model_logit <- glm(logit_formula, data = train_data, family = binomial)
+
+cat("[Đức Thắng] --- Logistic Regression Summary ---\n")
+logit_summary <- summary(model_logit)
+print(logit_summary)
+
+logit_odds_ratio <- exp(coef(model_logit))
+cat("[Đức Thắng] --- Odds Ratio: exp(coef(model_logit)) ---\n")
+print(logit_odds_ratio)
+
+pred_logit_prob <- predict(model_logit, newdata = test_data, type = "response")
+pred_logit_class <- ifelse(pred_logit_prob >= 0.5, 1, 0)
+
+cat("[Đức Thắng] ✅ Logistic predicted probabilities — range:",
+    round(range(pred_logit_prob), 4), "\n")
+cat("[Đức Thắng] ✅ Logistic class threshold: 0.5\n")
+
+logit_actual <- test_data$high_sales
+logit_confusion_matrix <- table(
+  Actual = factor(logit_actual, levels = c(0, 1)),
+  Predicted = factor(pred_logit_class, levels = c(0, 1))
+)
+
+cat("[Đức Thắng] --- Logistic Confusion Matrix ---\n")
+print(logit_confusion_matrix)
+
+tn <- logit_confusion_matrix["0", "0"]
+fp <- logit_confusion_matrix["0", "1"]
+fn <- logit_confusion_matrix["1", "0"]
+tp <- logit_confusion_matrix["1", "1"]
+
+logit_accuracy <- (tp + tn) / sum(logit_confusion_matrix)
+logit_precision <- ifelse((tp + fp) == 0, NA, tp / (tp + fp))
+logit_recall <- ifelse((tp + fn) == 0, NA, tp / (tp + fn))
+logit_f1 <- ifelse(
+  is.na(logit_precision) || is.na(logit_recall) || (logit_precision + logit_recall) == 0,
+  NA,
+  2 * logit_precision * logit_recall / (logit_precision + logit_recall)
+)
+
+logit_metrics <- data.frame(
+  Metric = c("Accuracy", "Precision", "Recall", "F1-score"),
+  Value = c(logit_accuracy, logit_precision, logit_recall, logit_f1)
+)
+
+cat(sprintf("[Đức Thắng] Logistic Accuracy:  %.4f\n", logit_accuracy))
+cat(sprintf("[Đức Thắng] Logistic Precision: %.4f\n", logit_precision))
+cat(sprintf("[Đức Thắng] Logistic Recall:    %.4f\n", logit_recall))
+cat(sprintf("[Đức Thắng] Logistic F1-score:  %.4f\n", logit_f1))
 
 # =============================================================================
 # TASK 4: MÔ HÌNH 2 — RANDOM FOREST (ranger) + importance + TUNING
@@ -397,16 +480,24 @@ cat("\n━━━ TASK 7: LƯU KẾT QUẢ ━━━\n")
 
 dir.create(here("output", "tables"), recursive = TRUE, showWarnings = FALSE)
 
-# Lưu 3 trained models
+# Lưu trained models
 saveRDS(
-  list(lm = model_lm, rf = model_rf, xgb = model_xgb),
+  list(lm = model_lm, rf = model_rf, xgb = model_xgb, logit = model_logit),
   here("output", "tables", "models.rds")
 )
-cat("[Đức Thắng] ✅ Đã lưu: output/tables/models.rds (3 models)\n")
+cat("[Đức Thắng] ✅ Đã lưu: output/tables/models.rds (LM + RF + XGBoost + Logistic)\n")
 
 # Lưu predictions + actual (cho Thành Tài đánh giá)
 saveRDS(
-  list(lm = pred_lm, rf = pred_rf, xgb = pred_xgb, actual = test_y),
+  list(
+    lm = pred_lm,
+    rf = pred_rf,
+    xgb = pred_xgb,
+    actual = test_y,
+    logit_prob = pred_logit_prob,
+    logit_class = pred_logit_class,
+    high_sales_actual = logit_actual
+  ),
   here("output", "tables", "predictions.rds")
 )
 cat("[Đức Thắng] ✅ Đã lưu: output/tables/predictions.rds (predictions + actual)\n")
@@ -418,6 +509,18 @@ saveRDS(
 )
 cat("[Đức Thắng] ✅ Đã lưu: output/tables/feature_importance.rds (RF + XGBoost)\n")
 
+# Lưu kết quả Logistic Regression riêng cho phân loại high_sales
+saveRDS(
+  list(
+    model_logit = model_logit,
+    logit_metrics = logit_metrics,
+    logit_confusion_matrix = logit_confusion_matrix,
+    logit_odds_ratio = logit_odds_ratio
+  ),
+  here("output", "tables", "logit_results.rds")
+)
+cat("[Đức Thắng] ✅ Đã lưu: output/tables/logit_results.rds (model_logit + metrics + confusion matrix + odds ratio)\n")
+
 # =============================================================================
 # TÓM TẮT
 # =============================================================================
@@ -427,6 +530,9 @@ cat("╠════════════════════════
 cat("║  Model 1: Linear Regression                             ║\n")
 cat("║    → R²:", format(round(r2_lm, 4), width = 8),
     "| RMSE:", format(round(rmse_lm, 2), width = 10), "   ║\n")
+cat("║  Model 1B: Logistic Regression (high_sales)             ║\n")
+cat("║    → Accuracy:", format(round(logit_accuracy, 4), width = 6),
+    "| F1:", format(round(logit_f1, 4), width = 6), "                    ║\n")
 cat("║  Model 2: Random Forest (ranger, 500 trees, mtry =",
     format(best_mtry, width = 2), ") ║\n")
 cat("║    → OOB R²:", format(round(model_rf$r.squared, 4), width = 6),
@@ -445,5 +551,6 @@ cat("║  Output files:                                           ║\n")
 cat("║    ✅ output/tables/models.rds                           ║\n")
 cat("║    ✅ output/tables/predictions.rds → Thành Tài          ║\n")
 cat("║    ✅ output/tables/feature_importance.rds → Thành Tài   ║\n")
+cat("║    ✅ output/tables/logit_results.rds                    ║\n")
 cat("╚══════════════════════════════════════════════════════════╝\n")
 cat("[Đức Thắng] ✅ MODELING HOÀN TẤT!\n")
