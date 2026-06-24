@@ -1,9 +1,6 @@
-# =============================================================================
-# 00_setup.R — Thiết lập dùng chung (Thư viện + Theme + Thư mục)
-# Tác giả: Quốc Anh  |  KHÔNG chỉnh sửa nếu không có sự đồng ý của trưởng nhóm
-# =============================================================================
-
-# ── Thiết lập thư mục làm việc & đặt lại thư mục gốc của dự án cho gói 'here' ──
+﻿# 00_setup.R — Thiết lập dùng chung (Thư viện + Theme + Thư mục)
+# Tác giả: Quốc Anh  
+#  Thiết lập thư mục làm việc & đặt lại thư mục gốc của dự án cho gói 'here'
 get_sourced_file <- function() {
   for (i in seq_len(sys.nframe())) {
     ofile <- sys.frame(i)$ofile
@@ -19,7 +16,7 @@ if ("package:here" %in% search()) detach("package:here", unload = TRUE)
 if (isNamespaceLoaded("here")) unloadNamespace("here")
 library(here)
 
-# ── 1. Thư viện ───────────────────────────────────────────────────────────────
+#  1. Thư viện
 required_packages <- c(
   # Xử lý dữ liệu
   "dplyr", "tidyr", "lubridate", "janitor", "readr", "tibble",
@@ -48,7 +45,7 @@ load_or_install <- function(pkg) {
 invisible(lapply(required_packages, load_or_install))
 
 
-# ── 2. Khung thư mục dự án ─────────────────────────────────────────────────────
+#  2. Khung thư mục dự án
 dirs_needed <- here(c(
   "data/raw", "data/processed",
   "output/figures", "output/tables",
@@ -57,12 +54,12 @@ dirs_needed <- here(c(
 invisible(lapply(dirs_needed, dir.create, recursive = TRUE, showWarnings = FALSE))
 
 
-# ── 3. Tùy chọn toàn cục ──────────────────────────────────────────────────────
+#  3. Tùy chọn toàn cục
 options(scipen = 999)
 set.seed(42)
 
 
-# ── 4. Bảng màu dùng chung ────────────────────────────────────────────────────
+#  4. Bảng màu dùng chung
 COLORS <- list(
   store_type = c("a" = "#1E88E5", "b" = "#E53935", "c" = "#43A047", "d" = "#FB8C00"),
   promo      = c("0" = "#78909C", "1" = "#E53935"),
@@ -79,7 +76,7 @@ COLORS <- list(
 )
 
 
-# ── 5. Theme ggplot2 dùng chung ────────────────────────────────────
+#  5. Theme ggplot2 dùng chung
 theme_rossmann <- function(base_size = 12) {
   theme_minimal(base_size = base_size) %+replace%
     theme(
@@ -103,7 +100,7 @@ theme_rossmann <- function(base_size = 12) {
 theme_set(theme_rossmann())
 
 
-# ── Hoàn tất ──────────────────────────────────────────────────────────────────
+#  Hoàn tất
 cat(sprintf(
   "[THIẾT LẬP] Đã tải %d thư viện | theme_rossmann() đang hoạt động | thư mục gốc: %s\n",
   length(required_packages), here()

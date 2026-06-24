@@ -1,14 +1,6 @@
-# =============================================================================
-# THANH PHÚC — EXPLORATORY DATA ANALYSIS (EDA)
-# File: R/eda.R
+﻿# THANH PHÚC — EXPLORATORY DATA ANALYSIS (EDA)
 # Người phụ trách: Thanh Phúc
 # Mô tả: Thống kê mô tả, phân tích phân phối, phân tích nhóm, biểu đồ EDA
-# =============================================================================
-# CHÚ Ý: Chỉ Thanh Phúc được chỉnh sửa file này!
-# Input: readRDS(here("data", "processed", "df_clean.rds"))
-# Sử dụng: get_summary_stats() từ R/utils.R
-#           COLORS, theme_rossmann() từ R/00_setup.R
-# =============================================================================
 
 library(dplyr)
 library(tidyr)
@@ -19,7 +11,7 @@ library(scales)
 library(moments)
 library(here)
 
-# --- Fallback: nếu chưa chạy 00_setup.R / utils.R thì tự định nghĩa ---
+#  Fallback: nếu chưa chạy 00_setup.R / utils.R thì tự định nghĩa
 if (!exists("COLORS")) {
   COLORS <- list(
     store_type = c("a" = "#1E88E5", "b" = "#E53935", "c" = "#43A047", "d" = "#FB8C00"),
@@ -61,21 +53,14 @@ if (!exists("get_summary_stats")) {
   }
 }
 
-cat("╔══════════════════════════════════════════════════════════╗\n")
-cat("║  THANH PHÚC — EXPLORATORY DATA ANALYSIS (EDA)          ║\n")
-cat("║  Rossmann Store Sales Analysis                          ║\n")
-cat("╚══════════════════════════════════════════════════════════╝\n\n")
-
-# --- Đọc dữ liệu ---
+#  Đọc dữ liệu
 df <- readRDS(here("data", "processed", "df_clean.rds"))
-cat("[Thanh Phúc] Dữ liệu:", format(nrow(df), big.mark = ","), "dòng x", ncol(df), "cột\n\n")
+cat("Dữ liệu:", format(nrow(df), big.mark = ","), "dòng x", ncol(df), "cột\n\n")
 
-# =============================================================================
 # PHẦN 1: THỐNG KÊ MÔ TẢ TỔNG QUAN
-# =============================================================================
-cat("━━━ PHẦN 1: THỐNG KÊ MÔ TẢ ━━━\n")
+cat(" PHẦN 1: THỐNG KÊ MÔ TẢ \n")
 
-# --- 1a. Bảng thống kê biến liên tục ---
+#  1a. Bảng thống kê biến liên tục
 numeric_cols <- c("sales", "customers", "competition_distance", "sales_per_customer")
 
 summary_numeric <- df %>%
@@ -96,10 +81,10 @@ summary_numeric <- df %>%
     .groups  = "drop"
   )
 
-cat("[Thanh Phúc] Bảng thống kê mô tả biến liên tục:\n")
+cat("Bảng thống kê mô tả biến liên tục:\n")
 print(summary_numeric)
 
-# --- 1b. Phân bố biến phân loại ---
+#  1b. Phân bố biến phân loại
 cat_cols <- c("store_type", "assortment", "promo", "state_holiday",
               "school_holiday", "day_of_week")
 
@@ -114,15 +99,13 @@ summary_categorical <- lapply(cat_cols, function(col) {
     select(`Biến`, `Giá trị`, `Số lượng`, `Tỷ lệ %`)
 }) %>% bind_rows()
 
-cat("\n[Thanh Phúc] Phân bố biến phân loại:\n")
+cat("\nPhân bố biến phân loại:\n")
 print(summary_categorical)
 
-# =============================================================================
 # PHẦN 2: PHÂN TÍCH PHÂN PHỐI
-# =============================================================================
-cat("\n━━━ PHẦN 2: PHÂN TÍCH PHÂN PHỐI ━━━\n")
+cat("\n PHẦN 2: PHÂN TÍCH PHÂN PHỐI \n")
 
-# --- 2a. Thống kê phân phối ---
+#  2a. Thống kê phân phối
 skew_sales <- skewness(df$sales)
 kurt_sales <- kurtosis(df$sales)
 skew_cust  <- skewness(df$customers)
@@ -144,7 +127,7 @@ dist_stats <- tibble(
                    format(shapiro_cust$p.value, digits = 4), "—")
 )
 
-cat("[Thanh Phúc] Kiểm tra phân phối chuẩn:\n")
+cat("Kiểm tra phân phối chuẩn:\n")
 print(dist_stats)
 
 if (abs(skew_sales) > 1) {
@@ -152,7 +135,7 @@ if (abs(skew_sales) > 1) {
   cat("→ Sau log: skewness =", round(skew_log_s, 3), " (cải thiện đáng kể)\n")
 }
 
-# --- 2b. Histogram Sales + mean/median ---
+#  2b. Histogram Sales + mean/median
 mean_s <- mean(df$sales)
 median_s <- median(df$sales)
 
@@ -180,7 +163,7 @@ eda_p1 <- ggplot(df, aes(x = sales)) +
   scale_x_continuous(labels = comma) +
   theme_rossmann()
 
-# --- 2c. QQ Plot ---
+#  2c. QQ Plot
 eda_p2 <- ggplot(df, aes(sample = sales)) +
   stat_qq(color = COLORS$primary, alpha = 0.15, size = 0.4) +
   stat_qq_line(color = COLORS$danger, linewidth = 1) +
@@ -192,7 +175,7 @@ eda_p2 <- ggplot(df, aes(sample = sales)) +
   ) +
   theme_rossmann()
 
-# --- 2d. Log(Sales) vs Normal ---
+#  2d. Log(Sales) vs Normal
 eda_p3 <- ggplot(df, aes(x = log_sales)) +
   geom_histogram(aes(y = after_stat(density)), bins = 50,
                  fill = COLORS$success, alpha = 0.55, color = "white", linewidth = 0.2) +
@@ -210,7 +193,7 @@ eda_p3 <- ggplot(df, aes(x = log_sales)) +
   ) +
   theme_rossmann()
 
-# --- 2e. Phân phối Customers ---
+#  2e. Phân phối Customers
 eda_p4 <- ggplot(df, aes(x = customers)) +
   geom_histogram(aes(y = after_stat(density)), bins = 50,
                  fill = "#00ACC1", alpha = 0.6, color = "white", linewidth = 0.2) +
@@ -227,23 +210,21 @@ eda_p4 <- ggplot(df, aes(x = customers)) +
   scale_x_continuous(labels = comma) +
   theme_rossmann()
 
-# =============================================================================
 # PHẦN 3: PHÂN TÍCH THEO NHÓM
-# =============================================================================
-cat("\n━━━ PHẦN 3: PHÂN TÍCH THEO NHÓM ━━━\n")
+cat("\n PHẦN 3: PHÂN TÍCH THEO NHÓM \n")
 
-# --- 3a. Thống kê theo nhóm ---
+#  3a. Thống kê theo nhóm
 stats_storetype  <- get_summary_stats(df, store_type)
 stats_promo      <- get_summary_stats(df, promo)
 stats_assortment <- get_summary_stats(df, assortment)
 stats_dow        <- get_summary_stats(df, day_of_week)
 
-cat("[Thanh Phúc] Sales theo StoreType:\n"); print(stats_storetype)
-cat("\n[Thanh Phúc] Sales theo Promo:\n");     print(stats_promo)
-cat("\n[Thanh Phúc] Sales theo Assortment:\n"); print(stats_assortment)
-cat("\n[Thanh Phúc] Sales theo DayOfWeek:\n");  print(stats_dow)
+cat("Sales theo StoreType:\n"); print(stats_storetype)
+cat("\nSales theo Promo:\n");     print(stats_promo)
+cat("\nSales theo Assortment:\n"); print(stats_assortment)
+cat("\nSales theo DayOfWeek:\n");  print(stats_dow)
 
-# --- 3b. Holiday ---
+#  3b. Holiday
 stats_holiday <- df %>%
   group_by(state_holiday) %>%
   summarise(n = n(), mean_sales = round(mean(sales)), median_sales = round(median(sales)),
@@ -255,10 +236,10 @@ stats_school <- df %>%
   summarise(n = n(), mean_sales = round(mean(sales)), median_sales = round(median(sales)),
             mean_cust = round(mean(customers)), .groups = "drop")
 
-cat("\n[Thanh Phúc] Sales theo Holiday:\n"); print(stats_holiday)
-cat("\n[Thanh Phúc] Sales theo SchoolHoliday:\n"); print(stats_school)
+cat("\nSales theo Holiday:\n"); print(stats_holiday)
+cat("\nSales theo SchoolHoliday:\n"); print(stats_school)
 
-# --- 3c. CompetitionDistance ---
+#  3c. CompetitionDistance
 stats_comp <- df %>%
   mutate(dist_group = cut(competition_distance,
                            breaks = c(0, 1000, 5000, 10000, Inf),
@@ -267,9 +248,9 @@ stats_comp <- df %>%
   summarise(n = n(), mean_sales = round(mean(sales)), median_sales = round(median(sales)),
             .groups = "drop")
 
-cat("\n[Thanh Phúc] Sales theo khoảng cách đối thủ:\n"); print(stats_comp)
+cat("\nSales theo khoảng cách đối thủ:\n"); print(stats_comp)
 
-# --- 3d. Biểu đồ: Density Sales theo StoreType ---
+#  3d. Biểu đồ: Density Sales theo StoreType
 storetype_labels <- c(
   "a" = "Type A\n(Cửa hàng phổ thông)",
   "b" = "Type B\n(Trung tâm mua sắm)",
@@ -291,7 +272,7 @@ eda_p5 <- ggplot(df, aes(x = sales, fill = store_type)) +
   ) +
   theme_rossmann() + theme(legend.position = "none")
 
-# --- 3e. Promo impact theo StoreType ---
+#  3e. Promo impact theo StoreType
 promo_impact <- df %>%
   group_by(store_type, promo) %>%
   summarise(mean_sales = mean(sales), se = sd(sales) / sqrt(n()), .groups = "drop")
@@ -319,7 +300,7 @@ eda_p6 <- ggplot(promo_impact, aes(x = store_type, y = mean_sales, fill = factor
   ) +
   theme_rossmann()
 
-# --- 3f. Heatmap DayOfWeek × Month ---
+#  3f. Heatmap DayOfWeek × Month
 heatmap_data <- df %>%
   group_by(day_of_week, month) %>%
   summarise(avg_sales = mean(sales), .groups = "drop") %>%
@@ -342,7 +323,7 @@ eda_p7 <- ggplot(heatmap_data, aes(x = factor(month), y = day_label, fill = avg_
   ) +
   theme_rossmann() + theme(panel.grid = element_blank())
 
-# --- 3g. Holiday impact ---
+#  3g. Holiday impact
 holiday_comp <- bind_rows(
   df %>% mutate(type = ifelse(state_holiday != "none", "Ngày lễ", "Ngày thường"),
                 cat = "State Holiday") %>%
@@ -370,7 +351,7 @@ eda_p8 <- ggplot(holiday_comp, aes(x = type, y = mean_sales, fill = type)) +
   ) +
   theme_rossmann() + theme(legend.position = "none")
 
-# --- 3h. Assortment boxplot ---
+#  3h. Assortment boxplot
 eda_p9 <- ggplot(df, aes(x = assortment, y = sales, fill = assortment)) +
   geom_boxplot(alpha = 0.7, outlier.alpha = 0.08, outlier.size = 0.5) +
   stat_summary(fun = mean, geom = "point", shape = 18, size = 3, color = COLORS$danger) +
@@ -382,7 +363,7 @@ eda_p9 <- ggplot(df, aes(x = assortment, y = sales, fill = assortment)) +
        x = "Assortment", y = "Sales (EUR)", fill = "Assortment") +
   theme_rossmann()
 
-# --- 3i. Sales per Customer theo StoreType ---
+#  3i. Sales per Customer theo StoreType
 eda_p10 <- ggplot(df, aes(x = store_type, y = sales_per_customer, fill = store_type)) +
   geom_violin(alpha = 0.6, color = "white") +
   geom_boxplot(width = 0.15, fill = "white", alpha = 0.8, outlier.size = 0.3) +
@@ -392,10 +373,8 @@ eda_p10 <- ggplot(df, aes(x = store_type, y = sales_per_customer, fill = store_t
        x = "Loại cửa hàng", y = "Sales per Customer (EUR)") +
   theme_rossmann() + theme(legend.position = "none")
 
-# =============================================================================
 # PHẦN 4: TƯƠNG QUAN
-# =============================================================================
-cat("\n━━━ PHẦN 4: TƯƠNG QUAN ━━━\n")
+cat("\n PHẦN 4: TƯƠNG QUAN \n")
 
 cor_vars <- c("sales", "customers", "competition_distance",
               "sales_per_customer", "month", "is_weekend")
@@ -405,7 +384,7 @@ numeric_for_cor <- df %>%
   mutate(across(everything(), as.numeric))
 
 cor_matrix <- cor(numeric_for_cor, use = "complete.obs")
-cat("[Thanh Phúc] Ma trận tương quan:\n")
+cat("Ma trận tương quan:\n")
 print(round(cor_matrix, 3))
 
 # Tương quan mạnh nhất
@@ -416,13 +395,11 @@ cor_flat <- as.data.frame(as.table(cor_matrix)) %>%
   distinct(abs_cor, .keep_all = TRUE) %>%
   head(5)
 
-cat("\n[Thanh Phúc] Top 5 cặp tương quan mạnh nhất:\n")
+cat("\nTop 5 cặp tương quan mạnh nhất:\n")
 print(cor_flat)
 
-# =============================================================================
 # PHẦN 5: PHÂN TÍCH OUTLIER
-# =============================================================================
-cat("\n━━━ PHẦN 5: PHÂN TÍCH OUTLIER ━━━\n")
+cat("\n PHẦN 5: PHÂN TÍCH OUTLIER \n")
 
 outlier_summary <- df %>%
   group_by(store) %>%
@@ -434,10 +411,10 @@ outlier_summary <- df %>%
   ) %>%
   arrange(desc(pct))
 
-cat("[Thanh Phúc] Tổng outlier:", sum(df$is_outlier, na.rm = TRUE),
+cat("Tổng outlier:", sum(df$is_outlier, na.rm = TRUE),
     "trên", nrow(df), "dòng",
     "(", round(sum(df$is_outlier, na.rm = TRUE)/nrow(df)*100, 1), "%)\n")
-cat("[Thanh Phúc] Top 5 store nhiều outlier nhất:\n")
+cat("Top 5 store nhiều outlier nhất:\n")
 print(head(outlier_summary, 5))
 
 eda_p11 <- ggplot(outlier_summary, aes(x = reorder(factor(store), -pct), y = pct)) +
@@ -450,9 +427,7 @@ eda_p11 <- ggplot(outlier_summary, aes(x = reorder(factor(store), -pct), y = pct
   theme_rossmann() +
   theme(axis.text.x = element_text(size = 6, angle = 90, vjust = 0.5))
 
-# =============================================================================
 # PHẦN 6: MONTHLY TREND (BỔ SUNG)
-# =============================================================================
 monthly_stats <- df %>%
   group_by(month) %>%
   summarise(
@@ -485,10 +460,8 @@ eda_p12 <- ggplot(monthly_stats, aes(x = factor(month))) +
   ) +
   theme_rossmann()
 
-# =============================================================================
 # LƯU KẾT QUẢ + BIỂU ĐỒ
-# =============================================================================
-cat("\n━━━ LƯU KẾT QUẢ ━━━\n")
+cat("\n LƯU KẾT QUẢ \n")
 
 # Lưu biểu đồ EDA
 eda_plots <- list(eda_p1, eda_p2, eda_p3, eda_p4, eda_p5, eda_p6,
@@ -522,6 +495,6 @@ saveRDS(list(
   monthly_stats       = monthly_stats
 ), here("output", "tables", "eda_results.rds"))
 
-cat("[Thanh Phúc] ✅ EDA hoàn tất!\n")
-cat("[Thanh Phúc] ✅ 12 biểu đồ EDA → output/figures/eda_p*.png\n")
-cat("[Thanh Phúc] ✅ Kết quả → output/tables/eda_results.rds\n")
+cat("✅ EDA hoàn tất!\n")
+cat("✅ 12 biểu đồ EDA → output/figures/eda_p*.png\n")
+cat("✅ Kết quả → output/tables/eda_results.rds\n")

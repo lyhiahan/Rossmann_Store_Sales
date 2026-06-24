@@ -1,24 +1,16 @@
-# =============================================================================
-# QUỐC ANH — UTILITY FUNCTIONS (Dùng chung cả nhóm)
+﻿# QUỐC ANH — UTILITY FUNCTIONS (Dùng chung cả nhóm)
 # File: R/utils.R
-# Người phụ trách: Quốc Anh (Nhóm trưởng)
-# Mô tả: Các hàm tiện ích Quốc Anh viết, cả nhóm gọi
-# =============================================================================
-# CHÚ Ý: Chỉ Quốc Anh được chỉnh sửa file này!
-# Các TV khác: chỉ GỌI các hàm, KHÔNG sửa.
-# =============================================================================
+# Người phụ trách: Quốc Anh 
 
 library(dplyr)
 library(lubridate)
 library(janitor)
 library(here)
 
-# =============================================================================
 # HÀM 1: clean_rossmann()
 # Đóng gói pipeline — chạy được cho CẢ train.csv VÀ test.csv
 # ⚠️ KHÔNG tính median/IQR bên trong (tránh Data Leakage)
 #    → Truyền stats từ bên ngoài (train_stats) nếu cần
-# =============================================================================
 clean_rossmann <- function(data_path,
                            store_path = here("data", "raw", "store.csv"),
                            store_range = 1:50,
@@ -104,8 +96,6 @@ clean_rossmann <- function(data_path,
     )
 
   # sales_per_customer — CHỈ khi có cột sales
-  # ⚠️ CHÚ Ý: Biến này CHỈ dùng cho trực quan hóa (Thanh Phúc/Gia Hân)
-  #    TUYỆT ĐỐI KHÔNG đưa vào model (Target Leakage: sales/customers → dự đoán sales)
   if (has_sales) {
     df <- df %>%
       mutate(sales_per_customer = ifelse(customers > 0,
@@ -136,9 +126,7 @@ clean_rossmann <- function(data_path,
   return(df)
 }
 
-# =============================================================================
 # HÀM 2: get_summary_stats() — thống kê mô tả theo nhóm
-# =============================================================================
 get_summary_stats <- function(df, group_var) {
   df %>%
     group_by({{ group_var }}) %>%
@@ -153,9 +141,7 @@ get_summary_stats <- function(df, group_var) {
     )
 }
 
-# =============================================================================
 # HÀM 3: mock_data() — dữ liệu giả để test khi chờ pipeline
-# =============================================================================
 mock_data <- function(n = 1000, seed = 42) {
   set.seed(seed)
   tibble(
@@ -183,7 +169,7 @@ mock_data <- function(n = 1000, seed = 42) {
   )
 }
 
-cat("[Quốc Anh] ✅ Utils loaded:\n")
+cat("✅ Utils loaded:\n")
 cat("  • clean_rossmann(data_path, has_sales=TRUE/FALSE, train_stats=NULL)\n")
 cat("  • get_summary_stats(df, group_var)\n")
 cat("  • mock_data(n, seed)\n")

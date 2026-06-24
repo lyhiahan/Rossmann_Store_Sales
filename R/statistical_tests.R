@@ -1,6 +1,6 @@
-# KIỂM ĐỊNH THỐNG KÊ (STATISTICAL TESTING)
+﻿# KIỂM ĐỊNH THỐNG KÊ (STATISTICAL TESTING)
 # File: R/statistical_tests.R
-# Người phụ trách: 
+# Người phụ trách: Gia Hân
 # Mô tả: ANOVA + Kruskal-Wallis, t-test + Wilcoxon, Correlation
 # Kiểm tra giả định phân phối chuẩn TRƯỚC khi chạy kiểm định
 
@@ -158,7 +158,7 @@ if (ttest_promo$p.value < 0.05 & wilcox_result$p.value < 0.05) {
 # 2e. Khoảng tin cậy 95% cho chênh lệch trung bình
 cat("\n e) Khoảng tin cậy 95% (CI) cho chênh lệch doanh thu \n")
 cat("Theo lý thuyết ước lượng khoảng: CI bổ sung cho ước lượng điểm\n")
-cat("→ 95% CI cho (µ_promo=1 − µ_promo=0):\n")
+cat("→ 95% CI cho (µ_promo=0 − µ_promo=1):\n")
 cat("   [", round(ttest_promo$conf.int[1], 2), ",",
     round(ttest_promo$conf.int[2], 2), "] EUR\n")
 if (ttest_promo$conf.int[1] > 0 | ttest_promo$conf.int[2] < 0) {

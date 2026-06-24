@@ -1,4 +1,4 @@
-## ----setup, include=FALSE-----------------------------------------------------
+﻿## setup, include=FALSE
 knitr::opts_chunk$set(
   echo = TRUE,
   message = FALSE,
@@ -9,7 +9,7 @@ knitr::opts_chunk$set(
 )
 
 
-## ----load-env-----------------------------------------------------------------
+## load-env
 library(dplyr)
 library(ggplot2)
 library(tidyverse)
@@ -35,7 +35,7 @@ MauCuaHang <- c("a" = "#2196F3", "b" = "#E53935", "c" = "#4CAF50", "d" = "#FF980
 MauKhuyenMai <- c("0" = "#90A4AE", "1" = "#E53935")
 
 
-## ----plot-1-------------------------------------------------------------------
+## plot-1
 DoanhThuTBTheoThang <- DuLieu %>%
   mutate(Thang = floor_date(date, "month")) %>%
   group_by(Thang) %>%
@@ -59,7 +59,7 @@ ggsave(here("output", "figures", "p1_monthly_trend.png"), BieuDo1,
        width = 10, height = 5, dpi = 150)
 
 
-## ----plot-2-------------------------------------------------------------------
+## plot-2
 DuLieuNgayLe <- DuLieu %>%
   mutate(LoaiNgay = case_when(
       state_holiday != "none" ~ "Ngày lễ quốc gia (State Holiday)",
@@ -92,7 +92,7 @@ BieuDo2 <- ggplotly(BieuDo2_gg, tooltip = "text") %>%
 BieuDo2
 
 
-## ----plot-3-------------------------------------------------------------------
+## plot-3
 DuLieuSo <- DuLieu %>%
   select(sales, customers, competition_distance, sales_per_customer,
          month, week_of_year, is_weekend) %>%
@@ -126,7 +126,7 @@ ggsave(here("output", "figures", "p3_correlation.png"), BieuDo3,
        width = 10, height = 5, dpi = 150)
 
 
-## ----plot-4, fig.width=11, fig.height=6---------------------------------------
+## plot-4, fig.width=11, fig.height=6
 DuLieuKhongKM <- DuLieu %>%
   filter(day_of_week != 7) %>%
   filter(promo == 0) %>%
@@ -169,7 +169,7 @@ ggsave(here("output", "figures", "p4_dumbbell.png"), BieuDo4,
        width = 11, height = 6, dpi = 150)
 
 
-## ----plot-5, fig.width=11, fig.height=7---------------------------------------
+## plot-5, fig.width=11, fig.height=7
 DuLieuChiTieu <- DuLieu %>%
   mutate(
     NhanCoCau = ifelse(assortment == "a", "Basic\n(Cơ bản)", "Extended\n(Mở rộng)"),
@@ -203,7 +203,7 @@ ggsave(here("output", "figures", "p5_spc_boxplot.png"), BieuDo5,
        width = 11, height = 7, dpi = 150)
 
 
-## ----plot-6, fig.width=11, fig.height=6---------------------------------------
+## plot-6, fig.width=11, fig.height=6
 DuLieuCanhTranh <- DuLieu %>%
   mutate(
     NhomCanhTranh = case_when(
@@ -251,7 +251,7 @@ print(BieuDo6)
 ggsave(here("output", "figures", "p6_competition_duration.png"), BieuDo6, width = 11, height = 6, dpi = 150)
 
 
-## ----plot-7, fig.width=11, fig.height=6---------------------------------------
+## plot-7, fig.width=11, fig.height=6
 DuLieuKhuyenMai <- DuLieu %>%
   mutate(
     TrangThaiKM = case_when(
@@ -315,7 +315,7 @@ ggsave(here("output", "figures", "p7_promo_interaction.png"), BieuDo7,
        width = 11, height = 6, dpi = 150)
 
 
-## ----plot-8a------------------------------------------------------------------
+## plot-8a
 DuLieuGanNhanNgoaiLe <- DuLieu %>%
   mutate(NhanNgoaiLe = ifelse(is_outlier, "Ngoại lệ (Outlier)", "Bình thường (Normal)"))
 
@@ -337,7 +337,7 @@ ggsave(here("output", "figures", "p8a_outlier_distribution.png"), BieuDo8A,
        width = 10, height = 5, dpi = 150)
 
 
-## ----plot-8b------------------------------------------------------------------
+## plot-8b
 TyLeNgoaiLeTheoThang <- DuLieu %>%
   group_by(month) %>%
   summarise(
@@ -368,7 +368,7 @@ ggsave(here("output", "figures", "p8b_outlier_month.png"), BieuDo8B,
        width = 10, height = 5, dpi = 150)
 
 
-## ----plot-9, fig.width=12, fig.height=7---------------------------------------
+## plot-9, fig.width=12, fig.height=7
 HoSoCuaHang <- DuLieu %>%
   group_by(store, store_type, assortment) %>%
   summarise(
@@ -421,7 +421,7 @@ ggsave(here("output", "figures", "p9_bubble_store_performance.png"), BieuDo9,
        width = 12, height = 7, dpi = 150)
 
 
-## ----plot-11, fig.width=11, fig.height=10-------------------------------------
+## plot-11, fig.width=11, fig.height=10
 HieuSuatCuaHang <- DuLieu %>%
   group_by(store, store_type) %>%
   summarise(DoanhThuTB = mean(sales), .groups = "drop") %>%

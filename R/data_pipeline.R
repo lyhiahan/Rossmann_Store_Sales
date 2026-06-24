@@ -1,12 +1,8 @@
-# =============================================================================
 # Đường ống dữ liệu (Data Pipeline) — Doanh thu cửa hàng Rossmann
-# File   : R/data_pipeline.R
-# Tác giả: Quốc Anh (Kỹ sư dữ liệu)
+# Tác giả: Quốc Anh 
 # Mô tả  : Đường ống không rò rỉ: chia TRƯỚC → tính toán thống kê trên tập train → áp dụng cho cả hai
-# Lưu ý  : Thành viên khác sử dụng readRDS(here("data","processed","df_clean.rds"))
-# =============================================================================
 
-# ── Thiết lập thư mục làm việc & đặt lại thư mục gốc của dự án cho gói 'here' ──
+#  Thiết lập thư mục làm việc & đặt lại thư mục gốc của dự án cho gói 'here'
 get_sourced_file <- function() {
   for (i in seq_len(sys.nframe())) {
     ofile <- sys.frame(i)$ofile
@@ -27,11 +23,11 @@ library(readr)
 library(lubridate)
 library(janitor)
 
-step <- function(n, msg) cat(sprintf("\n── Bước %d: %s ──\n", n, msg))
-log_pipeline  <- function(msg)    cat(sprintf("   [pipeline] %s\n", msg))
+step <- function(n, msg) cat(sprintf("\n Bước %d: %s \n", n, msg))
+log_pipeline  <- function(msg)    cat(sprintf("   %s\n", msg))
 
 
-# ── Bước 1: Đọc dữ liệu (Ingest) ────────────────────────────────────────────────
+#  Bước 1: Đọc dữ liệu (Ingest)
 step(1, "Đọc dữ liệu thô")
 
 train_raw <- read_csv(here("data", "raw", "train.csv"), show_col_types = FALSE)
@@ -44,7 +40,7 @@ na_pct <- colMeans(is.na(store_raw)) * 100
 if (any(na_pct > 0)) { cat("   Tỷ lệ NA (%) trong store_raw:\n"); print(round(na_pct[na_pct > 0], 2)) }
 
 
-# ── Bước 2: Tích hợp & Lọc dữ liệu (Merge & Filter) ───────────────────────────
+#  Bước 2: Tích hợp & Lọc dữ liệu (Merge & Filter)
 step(2, "Tích hợp & Lọc")
 
 df_base <- train_raw %>%
@@ -57,7 +53,7 @@ df_base <- train_raw %>%
 log_pipeline(sprintf("Sau khi tích hợp + lọc: %s dòng", format(nrow(df_base), big.mark=",")))
 
 
-# ── Bước 3: Làm sạch & Đồng bộ kiểu dữ liệu (Clean & Type-Cast) ────────────────
+#  Bước 3: Làm sạch & Đồng bộ kiểu dữ liệu (Clean & Type-Cast)
 step(3, "Làm sạch & Đồng bộ kiểu dữ liệu")
 
 n_before <- nrow(df_base)
@@ -90,7 +86,7 @@ log_pipeline(sprintf("Đã loại bỏ %d dòng nhiễu (đóng cửa / doanh th
             n_before - nrow(df_base), format(nrow(df_base), big.mark=",")))
 
 
-# ── Bước 4: Chia tập Train / Validation ───────────────────────────────────────
+#  Bước 4: Chia tập Train / Validation
 step(4, "Chia tập TRƯỚC khi tính toán thống kê [chống rò rỉ dữ liệu]")
 
 set.seed(42)
@@ -105,7 +101,7 @@ log_pipeline(sprintf("Val  : %s dòng (%.1f%%)", format(nrow(val_raw_split),   b
             nrow(val_raw_split)   / n_total * 100))
 
 
-# ── Bước 5: Kỹ nghệ đặc trưng (Sử dụng thống kê trên tập train) ────────────────
+#  Bước 5: Kỹ nghệ đặc trưng (Sử dụng thống kê trên tập train)
 step(5, "Xử lý dữ liệu thiếu & Tạo đặc trưng [thống kê trên tập train]")
 
 median_comp_dist <- median(train_raw_split$competition_distance, na.rm = TRUE)
@@ -158,7 +154,7 @@ log_pipeline(sprintf("Số giá trị NA còn lại — train: %d | val: %d",
             sum(is.na(train_data)), sum(is.na(val_data))))
 
 
-# ── Bước 6: Xuất dữ liệu (Export) ─────────────────────────────────────────────
+#  Bước 6: Xuất dữ liệu (Export)
 step(6, "Xuất dữ liệu")
 
 saveRDS(df_clean,   here("data", "processed", "df_clean.rds"))
@@ -176,22 +172,22 @@ log_pipeline("Đã lưu: df_clean / train_data / val_data (.rds + .csv)")
 log_pipeline("Đã lưu: train_stats.rds  (trung vị & IQR chỉ tính từ tập train)")
 
 
-# ── Tóm tắt ───────────────────────────────────────────────────────────────────
+#  Tóm tắt
 cat(sprintf("
 ┌─────────────────────────────────────────────┐
-│          Tóm tắt đường ống dữ liệu         │
+│   Tóm tắt đường ống dữ liệu                 │
 ├──────────────────────────┬──────────────────┤
-│ Số dòng dữ liệu thô      │ %16s │
-│ Sau khi lọc & làm sạch   │ %16s │
-│ Đã loại bỏ dòng nhiễu    │ %16s │
-│ Số đặc trưng (cột)       │ %16d │
-│ Tập Train (70%%)          │ %16s │
-│ Tập Val   (30%%)          │ %16s │
-│ Ngoại lệ — tập train     │ %16d │
-│ Ngoại lệ — tập val       │ %16d │
-│ Trung vị CompDist(train) │ %16.1f │
-│ Số lượng cửa hàng        │ %16s │
-│ Khoảng thời gian         │ 2014-08 → 2015-07 │
+│ Số dòng dữ liệu thô      │ %16s             │
+│ Sau khi lọc & làm sạch   │ %16s             │
+│ Đã loại bỏ dòng nhiễu    │ %16s             │
+│ Số đặc trưng (cột)       │ %16d             │
+│ Tập Train (70%%)         │ %16s             │
+│ Tập Val   (30%%)         │ %16s             │
+│ Ngoại lệ — tập train     │ %16d             │
+│ Ngoại lệ — tập val       │ %16d             │
+│ Trung vị CompDist(train) │ %16.1f           │
+│ Số lượng cửa hàng        │ %16s             │
+│ Khoảng thời gian         │ 2014-08 → 2015-07│
 └──────────────────────────┴──────────────────┘
 ",
   format(nrow(train_raw),  big.mark=","),
@@ -206,4 +202,4 @@ cat(sprintf("
   "1 – 50"
 ))
 
-cat("[pipeline] HOÀN TẤT — Rò rỉ dữ liệu = 0 (ZERO)\n")
+cat("HOÀN TẤT — Rò rỉ dữ liệu = 0 (ZERO)\n")

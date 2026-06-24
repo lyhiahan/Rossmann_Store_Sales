@@ -1,10 +1,8 @@
-# =============================================================================
 # THÀNH TÀI — MODEL EVALUATION & COMPARISON
 # File: R/evaluation.R
 # Người phụ trách: Thành Tài
 # Mô tả: Đánh giá, so sánh 3 mô hình hồi quy (LR, RF, XGBoost),
 #         tạo bảng metrics, vẽ 4 biểu đồ trực quan hóa kết quả
-# =============================================================================
 # CHÚ Ý: Chỉ Thành Tài được chỉnh sửa file này!
 # Input : output/tables/predictions.rds   (Đức Thắng tạo)
 #         output/tables/feature_importance.rds (Đức Thắng tạo)
@@ -13,9 +11,8 @@
 #         output/figures/p_actual_vs_predicted.png
 #         output/figures/p_residuals.png
 #         output/figures/p_feature_importance.png
-# =============================================================================
 
-# ── Thiết lập thư mục làm việc & đặt lại thư mục gốc của dự án cho gói 'here' ──
+#  Thiết lập thư mục làm việc & đặt lại thư mục gốc của dự án cho gói 'here'
 get_sourced_file <- function() {
   # 1. Kiểm tra nếu chạy bằng source()
   for (i in seq_len(sys.nframe())) {
@@ -46,34 +43,22 @@ library(kableExtra)
 library(Metrics)
 library(here)
 
-# ── Nạp thiết lập chung (theme_rossmann, COLORS, packages) từ Quốc Anh ─────
 source(here("R", "00_setup.R"))
-
-cat("╔══════════════════════════════════════════════════════════╗\n")
-cat("║  THÀNH TÀI — MODEL EVALUATION & COMPARISON             ║\n")
-cat("╚══════════════════════════════════════════════════════════╝\n\n")
-
-# =============================================================================
-# 1. ĐỌC KẾT QUẢ TỪ ĐỨC THẮNG (predictions & feature importance)
-# =============================================================================
-cat("━━━ 1. ĐỌC DỮ LIỆU ĐẦU VÀO ━━━\n")
+cat(" 1. ĐỌC DỮ LIỆU ĐẦU VÀO \n")
 
 preds <- readRDS(here("output", "tables", "predictions.rds"))
 fi    <- readRDS(here("output", "tables", "feature_importance.rds"))
 
 actual <- preds$actual
 
-cat("[Thành Tài] Đã đọc predictions.rds:", length(actual), "quan sát\n")
-cat("[Thành Tài] Đã đọc feature_importance.rds\n")
+cat("Đã đọc predictions.rds:", length(actual), "quan sát\n")
+cat("Đã đọc feature_importance.rds\n")
 cat("  - RF features :", nrow(fi$rf), "biến\n")
 cat("  - XGB features:", nrow(fi$xgb), "biến\n")
 
-# =============================================================================
 # 2. ĐỊNH NGHĨA HÀM ĐÁNH GIÁ (Metrics Functions)
-# =============================================================================
 
 # Hàm tính RMSPE (Root Mean Squared Percentage Error)
-# Đây là thước đo chính thức của cuộc thi Kaggle Rossmann.
 # Loại bỏ các quan sát có actual = 0 để tránh lỗi chia cho 0.
 calc_rmspe <- function(actual, predicted) {
   mask <- actual > 0
@@ -87,10 +72,8 @@ calc_r2 <- function(actual, predicted) {
   1 - sum((actual - predicted)^2) / sum((actual - mean(actual))^2)
 }
 
-# =============================================================================
 # 3. BẢNG SO SÁNH 3 MÔ HÌNH (Metrics Comparison Table)
-# =============================================================================
-cat("\n━━━ 2. BẢNG SO SÁNH HIỆU SUẤT ━━━\n")
+cat("\n 2. BẢNG SO SÁNH HIỆU SUẤT \n")
 
 # Tính 4 chỉ số đánh giá cho mỗi mô hình:
 #   - RMSE:  phạt nặng các sai số lớn
@@ -122,14 +105,12 @@ results <- tibble(
 ) %>%
   arrange(RMSE)  # Sắp xếp theo RMSE tăng dần (mô hình tốt nhất lên đầu)
 
-cat("\n── Bảng so sánh metrics ──\n")
+cat("\n Bảng so sánh metrics \n")
 print(results)
 
 
-# =============================================================================
 # 4. BIỂU ĐỒ 1: Bar Chart So sánh Metrics (facet_wrap)
-# =============================================================================
-cat("\n━━━ 3. VẼ BIỂU ĐỒ SO SÁNH ━━━\n")
+cat("\n 3. VẼ BIỂU ĐỒ SO SÁNH \n")
 
 # Chuyển bảng results sang dạng dài (long format) để vẽ facet_wrap
 results_long <- results %>%
@@ -138,7 +119,6 @@ results_long <- results %>%
     names_to  = "Metric",
     values_to = "Value"
   ) %>%
-  # Sắp xếp thứ tự hiển thị các metrics trên biểu đồ
   mutate(Metric = factor(Metric, levels = c("RMSE", "MAE", "R2", "RMSPE")))
 
 p_metrics <- ggplot(results_long, aes(x = Model, y = Value, fill = Model)) +
@@ -158,13 +138,10 @@ p_metrics <- ggplot(results_long, aes(x = Model, y = Value, fill = Model)) +
 print(p_metrics)
 ggsave(here("output", "figures", "p_metrics_comparison.png"), p_metrics,
        width = 10, height = 6, dpi = 150)
-cat("[Thành Tài] Đã lưu: output/figures/p_metrics_comparison.png\n")
+cat("Đã lưu: output/figures/p_metrics_comparison.png\n")
 
-# =============================================================================
 # 5. BIỂU ĐỒ 2: Actual vs Predicted — Scatter Plot (facet_wrap)
-# =============================================================================
 
-# Gom kết quả dự đoán của 3 mô hình vào 1 data frame duy nhất
 comparison_df <- bind_rows(
   tibble(Actual = actual, Predicted = preds$lm,  Model = "Linear Regression"),
   tibble(Actual = actual, Predicted = preds$rf,  Model = "Random Forest"),
@@ -193,11 +170,9 @@ p_pred <- ggplot(comparison_df, aes(x = Actual, y = Predicted, color = Model)) +
 print(p_pred)
 ggsave(here("output", "figures", "p_actual_vs_predicted.png"), p_pred,
        width = 12, height = 4, dpi = 150)
-cat("[Thành Tài] Đã lưu: output/figures/p_actual_vs_predicted.png\n")
+cat("Đã lưu: output/figures/p_actual_vs_predicted.png\n")
 
-# =============================================================================
 # 6. BIỂU ĐỒ 3: Residual Histogram — Phân phối sai số (facet_wrap)
-# =============================================================================
 
 # Tính residual (sai số) = Actual - Predicted
 # Mô hình tốt: residual phân phối chuẩn, tập trung quanh 0
@@ -221,12 +196,10 @@ p_resid <- ggplot(comparison_df, aes(x = Residual, fill = Model)) +
 print(p_resid)
 ggsave(here("output", "figures", "p_residuals.png"), p_resid,
        width = 12, height = 4, dpi = 150)
-cat("[Thành Tài] Đã lưu: output/figures/p_residuals.png\n")
+cat("Đã lưu: output/figures/p_residuals.png\n")
 
-# =============================================================================
 # 7. BIỂU ĐỒ 4: Feature Importance — Top 10 (RF + XGBoost cạnh nhau)
-# =============================================================================
-cat("\n━━━ 4. FEATURE IMPORTANCE ━━━\n")
+cat("\n 4. FEATURE IMPORTANCE \n")
 
 # Random Forest — sắp xếp theo Importance (Impurity) giảm dần
 fi_rf_top10 <- head(fi$rf, 10)
@@ -254,25 +227,22 @@ p_fi_xgb <- ggplot(fi_xgb_top10,
   ) +
   theme_rossmann()
 
-# Ghép 2 biểu đồ cạnh nhau bằng grid.arrange
 p_fi_combined <- grid.arrange(p_fi_rf, p_fi_xgb, ncol = 2,
                                top = "So sánh Feature Importance — RF vs XGBoost")
 
 ggsave(here("output", "figures", "p_feature_importance.png"), p_fi_combined,
        width = 14, height = 5, dpi = 150)
-cat("[Thành Tài] Đã lưu: output/figures/p_feature_importance.png\n")
+cat("Đã lưu: output/figures/p_feature_importance.png\n")
 
 # In ra top 5 features chung giữa 2 mô hình
 common_top5 <- intersect(
   head(fi$rf$Feature, 5),
   head(fi$xgb$Feature, 5)
 )
-cat("[Thành Tài] Top features chung (RF ∩ XGB):", paste(common_top5, collapse = ", "), "\n")
+cat("Top features chung (RF ∩ XGB):", paste(common_top5, collapse = ", "), "\n")
 
-# =============================================================================
 # 8. LƯU KẾT QUẢ ĐÁNH GIÁ
-# =============================================================================
-cat("\n━━━ 5. LƯU KẾT QUẢ ━━━\n")
+cat("\n 5. LƯU KẾT QUẢ \n")
 
 saveRDS(list(
   results        = results,
@@ -281,33 +251,24 @@ saveRDS(list(
   fi_xgb         = fi$xgb
 ), here("output", "tables", "eval_results.rds"))
 
-cat("[Thành Tài] ✅ Đã lưu: output/tables/eval_results.rds\n")
-cat("[Thành Tài] ✅ Biểu đồ đã xuất:\n")
+cat("✅ Đã lưu: output/tables/eval_results.rds\n")
+cat("✅ Biểu đồ đã xuất:\n")
 cat("   • p_metrics_comparison.png    — So sánh 4 chỉ số (RMSE, MAE, R², RMSPE)\n")
 cat("   • p_actual_vs_predicted.png   — Scatter Actual vs Predicted\n")
 cat("   • p_residuals.png             — Phân phối sai số (Residuals)\n")
 cat("   • p_feature_importance.png    — Top 10 Feature Importance (RF + XGB)\n")
 
-# =============================================================================
 # 9. TÓM TẮT KEY METRICS CHO SLIDE
-# =============================================================================
 best_model <- results %>% slice(1)
-
-cat("\n╔══════════════════════════════════════════════════╗\n")
-cat("║   KEY METRICS — MODEL EVALUATION (cho Slide)    ║\n")
-cat("╠══════════════════════════════════════════════════╣\n")
-cat(sprintf("║ Mô hình tốt nhất : %-29s║\n", best_model$Model))
-cat(sprintf("║ RMSE              : %-29s║\n", round(best_model$RMSE, 2)))
-cat(sprintf("║ MAE               : %-29s║\n", round(best_model$MAE, 2)))
-cat(sprintf("║ R²                : %-29s║\n", round(best_model$R2, 4)))
-cat(sprintf("║ RMSPE (Kaggle)    : %-29s║\n", round(best_model$RMSPE, 4)))
-cat(sprintf("║ Số quan sát (val) : %-29s║\n", length(actual)))
-cat("╠══════════════════════════════════════════════════╣\n")
-cat(sprintf("║ Top features      : %-29s║\n",
+cat(sprintf(" Mô hình tốt nhất : %-29s\n", best_model$Model))
+cat(sprintf(" RMSE              : %-29s\n", round(best_model$RMSE, 2)))
+cat(sprintf(" MAE               : %-29s\n", round(best_model$MAE, 2)))
+cat(sprintf(" R²                : %-29s\n", round(best_model$R2, 4)))
+cat(sprintf(" RMSPE (Kaggle)    : %-29s\n", round(best_model$RMSPE, 4)))
+cat(sprintf("Số quan sát (val) : %-29s\n", length(actual)))
+cat(sprintf("Top features      : %-29s\n",
             paste(head(common_top5, 3), collapse = ", ")))
-cat("╚══════════════════════════════════════════════════╝\n")
 
-# In thêm thông số Logistic Regression nếu Đức Thắng đã chạy và lưu kết quả
 logit_path <- here("output", "tables", "logit_results.rds")
 if (file.exists(logit_path)) {
   logit_res <- readRDS(logit_path)
@@ -318,16 +279,12 @@ if (file.exists(logit_path)) {
   rec  <- logit_metrics_df$Value[logit_metrics_df$Metric == "Recall"]
   f1   <- logit_metrics_df$Value[logit_metrics_df$Metric == "F1-score"]
   
-  cat("\n╔══════════════════════════════════════════════════╗\n")
-  cat("║   KEY METRICS — LOGISTIC REGRESSION (cho Slide)  ║\n")
-  cat("╠══════════════════════════════════════════════════╣\n")
-  cat(sprintf("║ Mô hình          : %-29s║\n", "Logistic Regression"))
-  cat(sprintf("║ Mục tiêu         : %-29s║\n", "Phân loại Doanh số Cao (>=10k)"))
-  cat(sprintf("║ Accuracy         : %-29s║\n", round(acc, 4)))
-  cat(sprintf("║ Precision        : %-29s║\n", round(prec, 4)))
-  cat(sprintf("║ Recall           : %-29s║\n", round(rec, 4)))
-  cat(sprintf("║ F1-score         : %-29s║\n", round(f1, 4)))
-  cat("╚══════════════════════════════════════════════════╝\n")
+  cat(sprintf(" Mô hình          : %-29s\n", "Logistic Regression"))
+  cat(sprintf(" Mục tiêu         : %-29s\n", "Phân loại Doanh số Cao (>=10k)"))
+  cat(sprintf(" Accuracy         : %-29s\n", round(acc, 4)))
+  cat(sprintf(" Precision        : %-29s\n", round(prec, 4)))
+  cat(sprintf(" Recall           : %-29s\n", round(rec, 4)))
+  cat(sprintf(" F1-score         : %-29s\n", round(f1, 4)))
 }
 
-cat("\n[Thành Tài] ✅ Model Evaluation hoàn tất!\n")
+cat("\n✅ Model Evaluation hoàn tất!\n")
