@@ -3207,4 +3207,5 @@ cat("   • p_metrics_comparison.png    — So sánh 4 chỉ số (RMSE, MAE, R�
 cat("   • p_actual_vs_predicted.png   — Scatter Actual vs Predicted\n")
 cat("   • p_residuals.png             — Phân phối sai số (Residuals)\n")
 cat("   • p_feature_importance.png    — Top 10 Feature Importance (RF + XGB)\n")
+```
 ---
