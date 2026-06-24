@@ -1,0 +1,3 @@
+"Model","Current_Number","Best_Number","Recommended_Number","Best_RMSE","Recommended_RMSE","Reason"
+"Random Forest",200,200,100,484.95920264432,486.441585396188,"Smallest tree count within 1% of best validation RMSE; balances accuracy and training time."
+"XGBoost",500,775,455,403.712766594547,407.712617908675,"CV RMSE gần như phẳng sau 500 rounds; chọn điểm sớm nhất trong vùng 1% tốt nhất: 455 rounds."
