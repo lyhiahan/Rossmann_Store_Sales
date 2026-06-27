@@ -1,4 +1,4 @@
-﻿# THANH PHÚC — EXPLORATORY DATA ANALYSIS (EDA)
+# THANH PHÚC — EXPLORATORY DATA ANALYSIS (EDA)
 # Người phụ trách: Thanh Phúc
 # Mô tả: Thống kê mô tả, phân tích phân phối, phân tích nhóm, biểu đồ EDA
 

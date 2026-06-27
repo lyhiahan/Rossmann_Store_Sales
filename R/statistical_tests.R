@@ -1,4 +1,4 @@
-﻿# KIỂM ĐỊNH THỐNG KÊ (STATISTICAL TESTING)
+# KIỂM ĐỊNH THỐNG KÊ (STATISTICAL TESTING)
 # File: R/statistical_tests.R
 # Người phụ trách: Gia Hân
 # Mô tả: ANOVA + Kruskal-Wallis, t-test + Wilcoxon, Correlation
@@ -28,12 +28,12 @@ cat("Shapiro-Wilk p-value:", format(shapiro_result$p.value, digits = 4), "\n")
 is_normal <- shapiro_result$p.value > 0.05 & abs(skew_sales) < 1
 
 if (!is_normal) {
-  cat("\n⚠️ Dữ liệu Sales LỆCH PHẢI (Skewness =", round(skew_sales, 2), ")\n")
+  cat("\n Dữ liệu Sales LỆCH PHẢI (Skewness =", round(skew_sales, 2), ")\n")
   cat("→ ANOVA/t-test truyền thống CÓ THỂ không phù hợp\n")
   cat("→ Bổ sung kiểm định PHI THAM SỐ (Kruskal-Wallis, Wilcoxon) làm đối chứng\n")
   cat("→ Thử Log-transform: log(sales) để giảm skewness\n")
 } else {
-  cat("✓ Dữ liệu gần phân phối chuẩn — ANOVA/t-test hợp lệ\n")
+  cat(" Dữ liệu gần phân phối chuẩn — ANOVA/t-test hợp lệ\n")
 }
 
 # Log-transform
@@ -42,66 +42,66 @@ skew_log <- moments::skewness(train_df$log_sales)
 cat("\nSkewness sau log-transform:", round(skew_log, 3),
     "(giảm từ", round(skew_sales, 3), ")\n")
 
-# 1. ANOVA + KRUSKAL-WALLIS: Sales ~ StoreType
-cat("\n1. KIỂM ĐỊNH ANOVA: sales ~ store_type\n")
+# 1. KIỂM ĐỊNH DOANH THU THEO LOẠI CỬA HÀNG: Sales ~ StoreType
+cat("\n1. KIỂM ĐỊNH DOANH THU THEO LOẠI CỬA HÀNG: sales ~ store_type\n")
 cat("H0: Doanh thu trung bình giống nhau giữa các loại cửa hàng\n")
 cat("H1: Ít nhất một loại cửa hàng có doanh thu khác biệt\n\n")
 
-# 1a. ANOVA truyền thống
-cat(" a) ANOVA (parametric) \n")
-anova_fit     <- aov(sales ~ store_type, data = train_df)
-anova_summary <- summary(anova_fit)
-print(anova_summary)
-
-p_anova <- anova_summary[[1]][["Pr(>F)"]][1]
-cat("\np-value (ANOVA):", format(p_anova, digits = 4), "\n")
-
-# Post-hoc Tukey
-tukey_result <- NULL
-if (p_anova < 0.05) {
-  cat("→ Có sự khác biệt có ý nghĩa thống kê (p < 0.05)\n")
-  tukey_result <- TukeyHSD(anova_fit)
-  print(tukey_result)
-}
-
-# 1b. ANOVA trên log(sales)
-cat("\n b) ANOVA trên log(sales) (giảm skewness) \n")
-anova_log     <- aov(log_sales ~ store_type, data = train_df)
-anova_log_sum <- summary(anova_log)
-p_anova_log   <- anova_log_sum[[1]][["Pr(>F)"]][1]
-cat("p-value (ANOVA log):", format(p_anova_log, digits = 4), "\n")
-
-# 1c. Kruskal-Wallis (phi tham số — đối chứng)
-cat("\n c) Kruskal-Wallis (non-parametric — đối chứng) \n")
-kw_result <- kruskal.test(sales ~ store_type, data = train_df)
-print(kw_result)
-cat("→ Kruskal-Wallis p-value:", format(kw_result$p.value, digits = 4), "\n")
-
-if (p_anova < 0.05 & kw_result$p.value < 0.05) {
-  cat("→ ✓ Cả ANOVA và Kruskal-Wallis đều xác nhận sự khác biệt → KẾT QUẢ ĐÁNG TIN CẬY\n")
-}
-
-# 1d. Levene's test (kiểm tra phương sai đồng nhất)
-cat("\n d) Levene's test (giả định phương sai đồng nhất) \n")
-cat("Giả định ANOVA: phương sai giữa các nhóm phải đồng nhất\n")
+# 1a. Kiểm tra giả định phương sai đồng nhất (Levene's Test)
+cat(" a) Levene's test (Kiểm tra phương sai đồng nhất)\n")
 levene_result <- car::leveneTest(sales ~ store_type, data = train_df)
 print(levene_result)
 p_levene <- levene_result$`Pr(>F)`[1]
-cat("→ Levene's p-value:", format(p_levene, digits = 4), "\n")
+cat("→ p-value (Levene):", format(p_levene, scientific = TRUE, digits = 4), "\n")
 
+# Tính sẵn ANOVA model để dùng khi cần hoặc lưu kết quả
+anova_fit <- aov(sales ~ store_type, data = train_df)
+anova_summary <- summary(anova_fit)
+tukey_result <- NULL
 welch_anova <- NULL
-if (p_levene < 0.05) {
-  cat("→ ⚠️ Phương sai KHÔNG đồng nhất (p < 0.05)\n")
-  cat("→ Bổ sung Welch ANOVA (không yêu cầu phương sai đồng nhất)\n")
-  welch_anova <- oneway.test(sales ~ store_type, data = train_df, var.equal = FALSE)
-  cat("→ Welch ANOVA F-statistic:", round(welch_anova$statistic, 2), "\n")
-  cat("→ Welch ANOVA p-value:", format(welch_anova$p.value, digits = 4), "\n")
+
+# 1b. Kiểm định Tham số (Parametric) theo luồng
+if (p_levene >= 0.05) {
+  cat("\n b) Phương sai ĐỒNG NHẤT (p >= 0.05) → Sử dụng ANOVA truyền thống\n")
+  print(anova_summary)
+  p_parametric <- anova_summary[[1]][["Pr(>F)"]][1]
+  cat("→ p-value (ANOVA):", format(p_parametric, scientific = TRUE, digits = 4), "\n")
+  
+  if (p_parametric < 0.05) {
+    cat("→ Có sự khác biệt ý nghĩa (p < 0.05). Phân tích Post-hoc Tukey:\n")
+    tukey_result <- TukeyHSD(anova_fit)
+    print(tukey_result)
+  }
 } else {
-  cat("→ ✓ Phương sai đồng nhất → ANOVA truyền thống hợp lệ\n")
+  cat("\n b) Phương sai KHÔNG ĐỒNG NHẤT (p < 0.05) → Sử dụng Welch ANOVA\n")
+  welch_anova <- oneway.test(sales ~ store_type, data = train_df, var.equal = FALSE)
+  print(welch_anova)
+  p_parametric <- welch_anova$p.value
+  cat("→ p-value (Welch):", format(p_parametric, scientific = TRUE, digits = 4), "\n")
+  
+  if (p_parametric < 0.05) {
+    cat("→ Có sự khác biệt ý nghĩa (p < 0.05). Phân tích Post-hoc Games-Howell (dành cho phương sai không đồng nhất):\n")
+    if (!requireNamespace("rstatix", quietly = TRUE)) {
+      cat("Vui lòng cài đặt thư viện 'rstatix' bằng lệnh: install.packages('rstatix')\n")
+    } else {
+      gh_result <- rstatix::games_howell_test(sales ~ store_type, data = train_df)
+      print(gh_result)
+    }
+  }
 }
 
-# 1e. Effect size (Eta-squared) cho ANOVA
-cat("\n e) Effect size (Eta-squared) cho ANOVA \n")
+# 1c. Kiểm định Phi tham số (Kruskal-Wallis) làm đối chứng
+cat("\n c) Kruskal-Wallis (Kiểm định phi tham số — Đối chứng)\n")
+kw_result <- kruskal.test(sales ~ store_type, data = train_df)
+print(kw_result)
+cat("→ p-value (Kruskal-Wallis):", format(kw_result$p.value, scientific = TRUE, digits = 4), "\n")
+
+if (p_parametric < 0.05 & kw_result$p.value < 0.05) {
+  cat("→ ✓ Cả kiểm định tham số và phi tham số đều xác nhận sự khác biệt → KẾT QUẢ ĐÁNG TIN CẬY\n")
+}
+
+# 1d. Effect size (Eta-squared)
+cat("\n d) Effect size (Eta-squared) cho ANOVA \n")
 cat("p-value cho biết CÓ khác biệt hay không, Eta² cho biết MỨC ĐỘ khác biệt\n")
 eta_result <- effectsize::eta_squared(anova_fit)
 print(eta_result)
@@ -169,8 +169,8 @@ if (ttest_promo$conf.int[1] > 0 | ttest_promo$conf.int[2] < 0) {
 cat("→ Diễn giải: Ta 95% tin tưởng chênh lệch doanh thu thực sự\n")
 cat("   giữa ngày KM và không KM nằm trong khoảng trên.\n")
 
-# 📝 Diễn giải p-value đúng theo lý thuyết XSTK
-cat("\n📝 LƯU Ý VỀ P-VALUE (theo lý thuyết XSTK):\n")
+# Diễn giải p-value đúng theo lý thuyết XSTK
+cat("\n LƯU Ý VỀ P-VALUE (theo lý thuyết XSTK):\n")
 cat("   • p-value KHÔNG phải xác suất H₀ đúng\n")
 cat("   • p-value = P(quan sát dữ liệu cực đoan | H₀ đúng)\n")
 cat("   • p < α (0.05): Bác bỏ H₀ — có ý nghĩa thống kê\n")
@@ -251,7 +251,7 @@ stat_tests_results <- list(
   is_normal          = is_normal,
   # ANOVA + Kruskal-Wallis + Levene + Eta²
   anova_storetype    = anova_summary,
-  anova_log_summary  = anova_log_sum,
+
   tukey_storetype    = tukey_result,
   kruskal_wallis     = kw_result,
   levene_test        = levene_result,
@@ -274,10 +274,10 @@ stat_tests_results <- list(
 )
 saveRDS(stat_tests_results, here("output", "tables", "stat_tests.rds"))
 
-cat("\n✅ Kiểm định thống kê hoàn tất!\n")
-cat("✅ Normality check + Parametric + Non-parametric đối chứng\n")
-cat("✅ Levene's test + Welch ANOVA (phương sai đồng nhất)\n")
-cat("✅ Effect size: Cohen's d (Welch) + Eta² (ANOVA)\n")
-cat("✅ Khoảng tin cậy 95%: Welch CI + Bootstrap CI + CLT CI\n")
-cat("✅ Diễn giải p-value đúng theo lý thuyết XSTK\n")
-cat("✅ Đã lưu: output/tables/stat_tests.rds\n")
+cat("\n Kiểm định thống kê hoàn tất!\n")
+cat(" Normality check + Parametric + Non-parametric đối chứng\n")
+cat(" Levene's test + Welch ANOVA (phương sai đồng nhất)\n")
+cat(" Effect size: Cohen's d (Welch) + Eta² (ANOVA)\n")
+cat(" Khoảng tin cậy 95%: Welch CI + Bootstrap CI + CLT CI\n")
+cat(" Diễn giải p-value đúng theo lý thuyết XSTK\n")
+cat(" Đã lưu: output/tables/stat_tests.rds\n")
