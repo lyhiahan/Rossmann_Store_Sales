@@ -1,4 +1,4 @@
-﻿# QUỐC ANH — UTILITY FUNCTIONS (Dùng chung cả nhóm)
+# QUỐC ANH — UTILITY FUNCTIONS (Dùng chung cả nhóm)
 # File: R/utils.R
 # Người phụ trách: Quốc Anh 
 

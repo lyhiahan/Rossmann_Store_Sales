@@ -1,6 +1,6 @@
-# THANH PHÚC — EXPLORATORY DATA ANALYSIS (EDA)
-# Người phụ trách: Thanh Phúc
-# Mô tả: Thống kê mô tả, phân tích phân phối, phân tích nhóm, biểu đồ EDA
+# STATISTICAL DESCRIPTIVE & DISTRIBUTION ANALYSIS
+# Người phụ trách: 
+# Mô tả: Thống kê mô tả, kiểm định phân phối chuẩn, chẩn đoán outlier, khớp chéo dữ liệu
 
 library(dplyr)
 library(tidyr)
@@ -158,7 +158,7 @@ eda_p1 <- ggplot(df, aes(x = sales)) +
     subtitle = paste0("Skewness = ", round(skew_sales, 2), " | Kurtosis = ", round(kurt_sales, 2),
                       " → Lệch phải: do đột biến doanh số ngày lễ Giáng sinh & khuyến mãi"),
     x = "Doanh số (EUR/ngày/cửa hàng)", y = "Mật độ",
-    caption = "Nguồn: Rossmann Store Sales dataset | Xử lý: Thanh Phúc"
+    caption = "Nguồn: Rossmann Store Sales dataset | Xử lý: "
   ) +
   scale_x_continuous(labels = comma) +
   theme_rossmann()

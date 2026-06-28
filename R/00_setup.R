@@ -1,4 +1,4 @@
-﻿# 00_setup.R — Thiết lập dùng chung (Thư viện + Theme + Thư mục)
+# 00_setup.R — Thiết lập dùng chung (Thư viện + Theme + Thư mục)
 # Tác giả: Quốc Anh  
 #  Thiết lập thư mục làm việc & đặt lại thư mục gốc của dự án cho gói 'here'
 get_sourced_file <- function() {
