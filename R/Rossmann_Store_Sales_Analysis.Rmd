@@ -320,7 +320,7 @@ cat("   sales_per_customer: CHỈ cho EDA, KHÔNG dùng trong model\n")
 
 ---
 
-# 3. Exploratory Data Analysis (EDA) & Data Pipeline
+# 3. Exploratory Data Analysis (EDA)
 
 ## 3.1 Quy trình xử lý dữ liệu (Data Pipeline)
 
