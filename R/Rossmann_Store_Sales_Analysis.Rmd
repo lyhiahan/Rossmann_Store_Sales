@@ -2015,577 +2015,572 @@ print(BieuDo9)
 
 # 6. Modeling & Hyperparameter Tuning
 
-```{r modeling}
-# DATA MODELING
-# (ML Engineer)
-# Mô tả: 3 mô hình dự đoán doanh số: Linear Regression, Random Forest, XGBoost
-#         Có hyperparameter tuning cho RF và XGBoost
-# Input:  data/processed/train_data.rds
-#         data/processed/val_data.rds
-# Output: output/tables/models.rds            → trained models
-#         output/tables/predictions.rds        → predictions + actual
-#         output/tables/feature_importance.rds → RF + XGBoost importance
-#         output/tables/logit_results.rds      → Logistic Regression classification results
-
+```{r}
 library(dplyr)
-library(caret)
-library(ranger)
-library(xgboost)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+library(scales)
 library(here)
-library(rpart)
-library(rpart.plot)
 
-cat(" DATA MODELING\n")
+theme_set(theme_minimal(base_size = 12))
 
-# (readRDS)
-cat(" TASK 2: ĐỌC DỮ LIỆU TRAIN/VAL \n")
+path_tables <- here("output", "tables")
+path_figures <- here("output", "figures")
 
+color_models <- c(
+  "Linear Regression" = "#1E88E5",
+  "Random Forest" = "#43A047",
+  "XGBoost" = "#FB8C00"
+)
+```
+
+```{r load-results, include=FALSE}
 train_data <- readRDS(here("data", "processed", "train_data.rds"))
-test_data  <- readRDS(here("data", "processed", "val_data.rds"))
+val_data <- readRDS(here("data", "processed", "val_data.rds"))
+models <- readRDS(file.path(path_tables, "models.rds"))
+preds <- readRDS(file.path(path_tables, "predictions.rds"))
+feature_importance <- readRDS(file.path(path_tables, "feature_importance.rds"))
+logit_results <- readRDS(file.path(path_tables, "logit_results.rds"))
 
-cat(" Đã đọc train_data.rds:", nrow(train_data), "dòng,",
-    ncol(train_data), "cột\n")
-cat(" Đã đọc val_data.rds:  ", nrow(test_data), "dòng,",
-    ncol(test_data), "cột\n")
+actual <- preds$actual
 
-# Kiểm tra dữ liệu input
-stopifnot("sales" %in% names(train_data))
-stopifnot("sales" %in% names(test_data))
-cat("Sales range (train):", range(train_data$sales), "\n")
-cat("Sales range (val):  ", range(test_data$sales), "\n")
-
-# TASK 1: prepare_features() — Encode categorical, chọn features
-cat("\n TASK 1: CHUẨN BỊ FEATURES \n")
-
-# Danh sách features cho modeling
-# KHÔNG bao gồm sales_per_customer (Target Leakage: sales/customers → dự đoán sales)
-# competition_open_months: -1 = không có đối thủ (mô hình cây tự xử lý)
-feature_cols <- c("customers", "day_of_week", "promo", "state_holiday",
-                  "school_holiday", "store_type", "assortment",
-                  "competition_distance", "promo2", "month",
-                  "week_of_year", "is_weekend",
-                  "competition_open_months", "has_competition")
-
-cat(" sales_per_customer ĐÃ BỊ LOẠI khỏi features (Target Leakage)\n")
-cat("ℹ customers được giữ để phục vụ phân tích khi đã biết số khách; nếu dự báo tương lai nên loại bỏ.\n")
-cat("Số features đầu vào:", length(feature_cols), "\n")
-
-# Hàm encode categorical → numeric cho Random Forest và XGBoost
-prepare_features <- function(df, feature_cols, factor_levels = NULL) {
-  available_cols <- feature_cols[feature_cols %in% names(df)]
-
-  if (length(available_cols) < length(feature_cols)) {
-    missing <- setdiff(feature_cols, names(df))
-    cat(" Cột không tồn tại (bỏ qua):", paste(missing, collapse = ", "), "\n")
-  }
-
-  df_features <- df %>% select(all_of(available_cols))
-
-  for (col in names(df_features)) {
-    if (is.factor(df_features[[col]])) {
-      char_vals <- as.character(df_features[[col]])
-      num_vals <- suppressWarnings(as.numeric(char_vals))
-      if (all(is.na(char_vals) | !is.na(num_vals))) {
-        df_features[[col]] <- num_vals
-      } else {
-        ref_levels <- if (!is.null(factor_levels) && col %in% names(factor_levels)) {
-          factor_levels[[col]]
-        } else {
-          levels(df_features[[col]])
-        }
-        df_features[[col]] <- as.numeric(factor(char_vals, levels = ref_levels))
-      }
-    }
-  }
-
-  return(as.data.frame(df_features))
+calc_rmse <- function(actual, predicted) sqrt(mean((actual - predicted)^2))
+calc_mae <- function(actual, predicted) mean(abs(actual - predicted))
+calc_r2 <- function(actual, predicted) {
+  1 - sum((actual - predicted)^2) / sum((actual - mean(actual))^2)
 }
-
-# Áp dụng prepare_features cho train và val
-train_factor_levels <- lapply(
-  train_data[intersect(feature_cols, names(train_data))],
-  function(x) if (is.factor(x)) levels(x) else NULL
-)
-train_factor_levels <- train_factor_levels[!vapply(train_factor_levels, is.null, logical(1))]
-
-train_X <- prepare_features(train_data, feature_cols, train_factor_levels)
-train_y <- train_data$sales
-test_X  <- prepare_features(test_data, feature_cols, train_factor_levels)
-test_y  <- test_data$sales
-
-common_cols <- intersect(names(train_X), names(test_X))
-train_X <- train_X[, common_cols]
-test_X  <- test_X[, common_cols]
-
-cat(" Features đã encode:", ncol(train_X), "biến\n")
-cat("Features:", paste(names(train_X), collapse = ", "), "\n")
-cat("Train X:", nrow(train_X), "dòng | Val X:", nrow(test_X), "dòng\n")
-
-# TASK 3: MÔ HÌNH 1 — LINEAR REGRESSION + summary()
-cat("\n TASK 3: MÔ HÌNH 1 — LINEAR REGRESSION \n")
-cat("========== MODEL 1: LINEAR REGRESSION ==========\n")
-
-lm_features <- intersect(feature_cols, names(train_data))
-lm_formula <- as.formula(paste("sales ~", paste(lm_features, collapse = " + ")))
-cat("LM Formula:", deparse(lm_formula), "\n")
-
-model_lm <- lm(lm_formula, data = train_data)
-
-cat("--- LM Summary ---\n")
-lm_summary <- summary(model_lm)
-print(lm_summary)
-
-cat("LM R²:", round(lm_summary$r.squared, 4), "\n")
-cat("LM Adjusted R²:", round(lm_summary$adj.r.squared, 4), "\n")
-cat("LM Residual SE:", round(lm_summary$sigma, 2), "\n")
-
-# Predictions trên validation set
-pred_lm <- predict(model_lm, newdata = test_data)
-pred_lm <- pmax(pred_lm, 0)  # Sales không thể âm
-
-cat(" LR predictions — range:", round(range(pred_lm), 2), "\n")
-
-# TASK 3B: LOGISTIC REGRESSION — HIGH SALES CLASSIFICATION
-cat("\n TASK 3B: LOGISTIC REGRESSION — HIGH SALES CLASSIFICATION \n")
-cat("========== MODEL 1B: LOGISTIC REGRESSION ==========\n")
-
-# Logistic Regression không dự đoán trực tiếp sales, mà dự đoán xác suất
-# một quan sát thuộc nhóm doanh thu cao (high_sales = 1).
-sales_threshold <- 10000
-
-train_data$high_sales <- ifelse(train_data$sales >= sales_threshold, 1, 0)
-test_data$high_sales  <- ifelse(test_data$sales >= sales_threshold, 1, 0)
-
-cat("Sales threshold:", sales_threshold, "\n")
-
-cat("Train high_sales distribution:\n")
-print(table(train_data$high_sales))
-
-cat("Val high_sales distribution:\n")
-print(table(test_data$high_sales))
-
-logit_features <- intersect(feature_cols, names(train_data))
-missing_logit_features <- setdiff(feature_cols, logit_features)
-if (length(missing_logit_features) > 0) {
-  cat(" Logistic features không tồn tại (bỏ qua):",
-      paste(missing_logit_features, collapse = ", "), "\n")
-}
-
-leakage_cols <- c("sales", "sales_per_customer", "high_sales")
-logit_features <- setdiff(logit_features, leakage_cols)
-
-logit_formula <- as.formula(paste("high_sales ~", paste(logit_features, collapse = " + ")))
-cat("Logistic Regression Formula:", deparse(logit_formula), "\n")
-
-model_logit <- glm(logit_formula, data = train_data, family = binomial)
-
-cat("--- Logistic Regression Summary ---\n")
-logit_summary <- summary(model_logit)
-print(logit_summary)
-
-logit_odds_ratio <- exp(coef(model_logit))
-cat("--- Odds Ratio: exp(coef(model_logit)) ---\n")
-print(logit_odds_ratio)
-
-pred_logit_prob <- predict(model_logit, newdata = test_data, type = "response")
-pred_logit_class <- ifelse(pred_logit_prob >= 0.5, 1, 0)
-
-cat(" Logistic predicted probabilities — range:",
-    round(range(pred_logit_prob), 4), "\n")
-cat(" Logistic class threshold: 0.5\n")
-
-logit_actual <- test_data$high_sales
-logit_confusion_matrix <- table(
-  Actual = factor(logit_actual, levels = c(0, 1)),
-  Predicted = factor(pred_logit_class, levels = c(0, 1))
-)
-
-cat("--- Logistic Confusion Matrix ---\n")
-print(logit_confusion_matrix)
-
-tn <- logit_confusion_matrix["0", "0"]
-fp <- logit_confusion_matrix["0", "1"]
-fn <- logit_confusion_matrix["1", "0"]
-tp <- logit_confusion_matrix["1", "1"]
-
-logit_accuracy <- (tp + tn) / sum(logit_confusion_matrix)
-logit_precision <- ifelse((tp + fp) == 0, NA, tp / (tp + fp))
-logit_recall <- ifelse((tp + fn) == 0, NA, tp / (tp + fn))
-logit_f1 <- ifelse(
-  is.na(logit_precision) || is.na(logit_recall) || (logit_precision + logit_recall) == 0,
-  NA,
-  2 * logit_precision * logit_recall / (logit_precision + logit_recall)
-)
-logit_f1_display <- ifelse(is.na(logit_f1), "N/A", round(logit_f1, 4))
-
-logit_metrics <- data.frame(
-  Metric = c("Accuracy", "Precision", "Recall", "F1-score"),
-  Value = c(logit_accuracy, logit_precision, logit_recall, logit_f1)
-)
-
-cat(sprintf("Logistic Accuracy:  %.4f\n", logit_accuracy))
-cat(sprintf("Logistic Precision: %.4f\n", logit_precision))
-cat(sprintf("Logistic Recall:    %.4f\n", logit_recall))
-cat("Logistic F1-score: ", logit_f1_display, "\n")
-
-# TASK 4: MÔ HÌNH 2 — RANDOM FOREST (ranger) + importance + TUNING
-cat("\n TASK 4: MÔ HÌNH 2 — RANDOM FOREST + TUNING \n")
-cat("========== MODEL 2: RANDOM FOREST (ranger) ==========\n")
-
-# Hyperparameter Tuning: thử nhiều giá trị mtry
-n_features <- ncol(train_X)
-mtry_candidates <- unique(c(
-  max(1, floor(n_features / 3)),     # p/3 (regression default)
-  max(1, floor(sqrt(n_features))),    # sqrt(p)
-  max(1, floor(n_features / 2))      # p/2
-))
-
-cat("Tuning mtry: thử", length(mtry_candidates), "giá trị:",
-    paste(mtry_candidates, collapse = ", "), "\n")
-
-best_oob_rmse <- Inf
-best_mtry <- mtry_candidates[1]
-
-for (m in mtry_candidates) {
-  set.seed(42)
-  rf_temp <- ranger(
-    sales ~ .,
-    data       = cbind(train_X, sales = train_y),
-    num.trees  = 200,
-    mtry       = m,
-    importance = "impurity",
-    seed       = 42,
-    verbose    = FALSE
-  )
-  oob_rmse <- sqrt(rf_temp$prediction.error)
-  cat("  mtry =", m, "→ OOB RMSE:", round(oob_rmse, 2),
-      "| OOB R²:", round(rf_temp$r.squared, 4), "\n")
-  if (oob_rmse < best_oob_rmse) {
-    best_oob_rmse <- oob_rmse
-    best_mtry <- m
-  }
-}
-
-cat(" Best mtry:", best_mtry, "(OOB RMSE:", round(best_oob_rmse, 2), ")\n")
-
-# Train final RF với best mtry
-set.seed(42)
-model_rf <- ranger(
-  sales ~ .,
-  data       = cbind(train_X, sales = train_y),
-  num.trees  = 200,
-  mtry       = best_mtry,
-  importance = "impurity",                   # Gini importance
-  seed       = 42,
-  verbose    = TRUE
-)
-
-cat("RF OOB Prediction Error (MSE):", round(model_rf$prediction.error, 2), "\n")
-cat("RF OOB R²:", round(model_rf$r.squared, 4), "\n")
-cat("RF Num Trees:", model_rf$num.trees, "\n")
-cat("RF Mtry:", model_rf$mtry, "\n")
-
-# Predictions trên validation set
-pred_rf <- predict(model_rf, data = test_X)$predictions
-pred_rf <- pmax(pred_rf, 0)
-
-cat(" RF predictions — range:", round(range(pred_rf), 2), "\n")
-
-# Feature Importance (RF)
-rf_importance <- data.frame(
-  Feature    = names(model_rf$variable.importance),
-  Importance = model_rf$variable.importance,
-  row.names  = NULL
-) %>% arrange(desc(Importance))
-
-cat("--- Top 5 features (Random Forest) ---\n")
-print(head(rf_importance, 5))
-
-# TASK 5: MÔ HÌNH 3 — XGBOOST + xgb.cv() + GRID SEARCH
-cat("\n TASK 5: MÔ HÌNH 3 — XGBOOST + GRID SEARCH \n")
-cat("========== MODEL 3: XGBOOST ==========\n")
-
-# Tạo DMatrix
-dtrain <- xgb.DMatrix(data = as.matrix(train_X), label = train_y)
-dtest  <- xgb.DMatrix(data = as.matrix(test_X),  label = test_y)
-
-# Grid Search: thử nhiều tổ hợp hyperparameters
-param_grid <- expand.grid(
-  max_depth = c(4, 6, 8),
-  eta       = c(0.05, 0.1, 0.2)
-)
-
-cat("Grid Search:", nrow(param_grid), "tổ hợp hyperparameters\n")
-
-best_cv_rmse <- Inf
-best_params  <- NULL
-best_nrounds_final <- 100
-
-for (i in seq_len(nrow(param_grid))) {
-  params_i <- list(
-    objective        = "reg:squarederror",
-    max_depth        = param_grid$max_depth[i],
-    eta              = param_grid$eta[i],
-    subsample        = 0.8,
-    colsample_bytree = 0.8,
-    min_child_weight = 5,
-    gamma            = 0,
-    lambda           = 1
-  )
-
-  set.seed(42)
-  cv_i <- xgb.cv(
-    params                = params_i,
-    data                  = dtrain,
-    nrounds               = 500,
-    nfold                 = 5,
-    early_stopping_rounds = 20,
-    print_every_n         = 100,
-    verbose               = 0
-  )
-
-  best_iter_i <- cv_i$best_iteration
-  if (is.null(best_iter_i) ||
-      length(best_iter_i) == 0 ||
-      is.na(best_iter_i[1]) ||
-      best_iter_i[1] <= 0) {
-    eval_log_i <- cv_i$evaluation_log
-    if (!is.null(eval_log_i)) {
-      rmse_col_i <- grep("test.*rmse.*mean", names(eval_log_i), value = TRUE)
-      if (length(rmse_col_i) > 0) {
-        best_iter_i <- which.min(eval_log_i[[rmse_col_i[1]]])
-      } else {
-        best_iter_i <- 100
-      }
-    } else {
-      best_iter_i <- 100
-    }
-  }
-
-  eval_log_i <- cv_i$evaluation_log
-  rmse_col_i <- grep("test.*rmse.*mean", names(eval_log_i), value = TRUE)
-  if (length(rmse_col_i) > 0) {
-    cv_rmse_i <- eval_log_i[[rmse_col_i[1]]][best_iter_i]
-  } else {
-    cv_rmse_i <- Inf
-  }
-
-  cat("  max_depth =", param_grid$max_depth[i],
-      "| eta =", param_grid$eta[i],
-      "| nrounds =", best_iter_i,
-      "| CV RMSE:", round(cv_rmse_i, 2), "\n")
-
-  if (cv_rmse_i < best_cv_rmse) {
-    best_cv_rmse <- cv_rmse_i
-    best_params  <- params_i
-    best_nrounds_final <- best_iter_i
-  }
-}
-
-cat("\n Best XGBoost Params:\n")
-cat("  max_depth:", best_params$max_depth, "\n")
-cat("  eta:", best_params$eta, "\n")
-cat("  subsample:", best_params$subsample, "\n")
-cat("  colsample_bytree:", best_params$colsample_bytree, "\n")
-cat("  min_child_weight:", best_params$min_child_weight, "\n")
-cat("  Best nrounds (CV):", best_nrounds_final, "\n")
-cat("  Best CV RMSE:", round(best_cv_rmse, 2), "\n")
-
-# Train final model với best params
-cat("\n--- Training Final XGBoost Model ---\n")
-model_xgb <- xgb.train(
-  params        = best_params,
-  data          = dtrain,
-  nrounds       = best_nrounds_final,
-  evals         = list(train = dtrain, val = dtest),
-  print_every_n = 50,
-  verbose       = 1
-)
-
-# TASK 6: predict() trên validation set (3 models)
-cat("\n TASK 6: PREDICTIONS TRÊN VALIDATION SET \n")
-
-# XGBoost predictions
-pred_xgb <- predict(model_xgb, newdata = dtest)
-pred_xgb <- pmax(pred_xgb, 0)
-
-cat(" XGBoost predictions — range:", round(range(pred_xgb), 2), "\n")
-
-# Feature Importance (XGBoost)
-xgb_importance <- xgb.importance(model = model_xgb)
-cat("--- Top 5 features (XGBoost) ---\n")
-print(head(xgb_importance, 5))
-
-cat("\n XGBOOST EXPLAINABILITY TREES \n")
-
-if (!exists("model_xgb") || !inherits(model_xgb, "xgb.Booster")) {
-  stop("model_xgb chưa tồn tại hoặc không phải xgb.Booster.")
-}
-
-dir.create(here("output", "figures"), recursive = TRUE, showWarnings = FALSE)
-
-xgb_train_prediction <- predict(model_xgb, newdata = dtrain)
-
-surrogate_features <- c(
-  "customers", "promo", "competition_distance",
-  "competition_open_months", "assortment",
-  "store_type", "day_of_week"
-)
-surrogate_features <- intersect(surrogate_features, names(train_X))
-
-surrogate_train_data <- train_X[, surrogate_features, drop = FALSE]
-surrogate_train_data$xgb_predicted_sales <- xgb_train_prediction
-
-surrogate_formula <- as.formula(
-  paste("xgb_predicted_sales ~", paste(surrogate_features, collapse = " + "))
-)
-
-set.seed(42)
-model_xgb_surrogate <- rpart(
-  formula = surrogate_formula,
-  data = surrogate_train_data,
-  method = "anova",
-  control = rpart.control(maxdepth = 4, minsplit = 80, cp = 0.002)
-)
-
-png(
-  here("output", "figures", "surrogate_tree_explain_xgboost.png"),
-  width = 2400, height = 1500, res = 180
-)
-rpart.plot(
-  model_xgb_surrogate,
-  type = 2,
-  extra = 101,
-  fallen.leaves = TRUE,
-  box.palette = "Blues",
-  shadow.col = "gray",
-  branch.lty = 3,
-  faclen = 0,
-  tweak = 1.15,
-  main = "Surrogate Tree Explaining XGBoost Sales Predictions"
-)
-dev.off()
-cat(" Đã lưu: output/figures/surrogate_tree_explain_xgboost.png\n")
-
-cat("\n═══ GHI CHÚ GIẢI THÍCH XGBOOST ═══\n")
-cat("• XGBoost là mô hình chính dùng để đánh giá hiệu năng.\n")
-cat("• Không thể biểu diễn toàn bộ XGBoost bằng một cây duy nhất vì XGBoost gồm nhiều booster trees.\n")
-cat("• Cây surrogate chỉ dùng để minh họa logic dự đoán tổng quát.\n")
-cat("• Khi đưa vào slide, không nên dùng hình full XGBoost tree vì quá phức tạp và khó đọc.\n")
-
-# Tổng kết predictions
-cat("\n═══ TỔNG KẾT PREDICTIONS ═══\n")
-cat("Actual range:      ", round(range(test_y), 2), "\n")
-cat("LR predictions:    ", round(range(pred_lm), 2), "\n")
-cat("RF predictions:    ", round(range(pred_rf), 2), "\n")
-cat("XGBoost predictions:", round(range(pred_xgb), 2), "\n")
-
-# Tính metrics để kiểm tra
-rmse_lm  <- sqrt(mean((test_y - pred_lm)^2))
-rmse_rf  <- sqrt(mean((test_y - pred_rf)^2))
-rmse_xgb <- sqrt(mean((test_y - pred_xgb)^2))
-
-mae_lm  <- mean(abs(test_y - pred_lm))
-mae_rf  <- mean(abs(test_y - pred_rf))
-mae_xgb <- mean(abs(test_y - pred_xgb))
-
-# RMSPE — metric chính của cuộc thi Rossmann trên Kaggle
 calc_rmspe <- function(actual, predicted) {
   mask <- actual > 0
   sqrt(mean(((actual[mask] - predicted[mask]) / actual[mask])^2))
 }
 
-rmspe_lm  <- calc_rmspe(test_y, pred_lm)
-rmspe_rf  <- calc_rmspe(test_y, pred_rf)
-rmspe_xgb <- calc_rmspe(test_y, pred_xgb)
+model_results <- data.frame(
+  Model = c("Linear Regression", "Random Forest", "XGBoost"),
+  RMSE = c(calc_rmse(actual, preds$lm), calc_rmse(actual, preds$rf), calc_rmse(actual, preds$xgb)),
+  MAE = c(calc_mae(actual, preds$lm), calc_mae(actual, preds$rf), calc_mae(actual, preds$xgb)),
+  R2 = c(calc_r2(actual, preds$lm), calc_r2(actual, preds$rf), calc_r2(actual, preds$xgb)),
+  RMSPE = c(calc_rmspe(actual, preds$lm), calc_rmspe(actual, preds$rf), calc_rmspe(actual, preds$xgb))
+) |>
+  arrange(RMSE)
 
-# R²
-calc_r2 <- function(actual, predicted) {
-  1 - sum((actual - predicted)^2) / sum((actual - mean(actual))^2)
-}
+baseline_rmse <- model_results$RMSE[model_results$Model == "Linear Regression"]
+baseline_mae <- model_results$MAE[model_results$Model == "Linear Regression"]
+baseline_rmspe <- model_results$RMSPE[model_results$Model == "Linear Regression"]
 
-r2_lm  <- calc_r2(test_y, pred_lm)
-r2_rf  <- calc_r2(test_y, pred_rf)
-r2_xgb <- calc_r2(test_y, pred_xgb)
+model_results_report <- model_results |>
+  mutate(
+    Rank = row_number(),
+    RMSE_Improvement_vs_LR = (baseline_rmse - RMSE) / baseline_rmse * 100,
+    MAE_Improvement_vs_LR = (baseline_mae - MAE) / baseline_mae * 100,
+    RMSPE_Improvement_vs_LR = (baseline_rmspe - RMSPE) / baseline_rmspe * 100
+  ) |>
+  select(Rank, Model, RMSE, MAE, R2, RMSPE,
+         RMSE_Improvement_vs_LR, MAE_Improvement_vs_LR, RMSPE_Improvement_vs_LR)
 
-cat("\n═══ METRICS TRÊN VALIDATION SET ═══\n")
-cat(sprintf("%-20s RMSE: %10.2f | MAE: %10.2f | R²: %.4f | RMSPE: %.4f\n",
-            "Linear Regression", rmse_lm, mae_lm, r2_lm, rmspe_lm))
-cat(sprintf("%-20s RMSE: %10.2f | MAE: %10.2f | R²: %.4f | RMSPE: %.4f\n",
-            "Random Forest", rmse_rf, mae_rf, r2_rf, rmspe_rf))
-cat(sprintf("%-20s RMSE: %10.2f | MAE: %10.2f | R²: %.4f | RMSPE: %.4f\n",
-            "XGBoost", rmse_xgb, mae_xgb, r2_xgb, rmspe_xgb))
-cat(" Best (RMSE):", c("LR", "RF", "XGB")[which.min(c(rmse_lm, rmse_rf, rmse_xgb))], "\n")
-cat(" Best (RMSPE):", c("LR", "RF", "XGB")[which.min(c(rmspe_lm, rmspe_rf, rmspe_xgb))], "\n")
-
-# TASK 7: saveRDS() — models + predictions + feature importance
-cat("\n TASK 7: LƯU KẾT QUẢ \n")
-
-dir.create(here("output", "tables"), recursive = TRUE, showWarnings = FALSE)
-
-# Lưu trained models
-saveRDS(
-  list(lm = model_lm, rf = model_rf, xgb = model_xgb, logit = model_logit),
-  here("output", "tables", "models.rds")
-)
-cat(" Đã lưu: output/tables/models.rds (LM + RF + XGBoost + Logistic)\n")
-
-# đánh giá)
-saveRDS(
-  list(
-    lm = pred_lm,
-    rf = pred_rf,
-    xgb = pred_xgb,
-    actual = test_y,
-    logit_prob = pred_logit_prob,
-    logit_class = pred_logit_class,
-    high_sales_actual = logit_actual
-  ),
-  here("output", "tables", "predictions.rds")
-)
-cat(" Đã lưu: output/tables/predictions.rds (predictions + actual)\n")
-
-# vẽ biểu đồ)
-saveRDS(
-  list(rf = rf_importance, xgb = xgb_importance),
-  here("output", "tables", "feature_importance.rds")
-)
-cat(" Đã lưu: output/tables/feature_importance.rds (RF + XGBoost)\n")
-
-# Lưu kết quả Logistic Regression riêng cho phân loại high_sales
-saveRDS(
-  list(
-    model_logit = model_logit,
-    logit_metrics = logit_metrics,
-    logit_confusion_matrix = logit_confusion_matrix,
-    logit_odds_ratio = logit_odds_ratio
-  ),
-  here("output", "tables", "logit_results.rds")
-)
-cat(" Đã lưu: output/tables/logit_results.rds (model_logit + metrics + confusion matrix + odds ratio)\n")
-
-# TÓM TẮT
-cat("\n TÓM TẮT MODELING\n")
-cat("Model 1: Linear Regression\n")
-cat("  → R²:", round(r2_lm, 4), "| RMSE:", round(rmse_lm, 2), "\n")
-cat("Model 1B: Logistic Regression (high_sales)\n")
-cat("  → Accuracy:", round(logit_accuracy, 4), "| F1:", logit_f1_display, "\n")
-cat("Model 2: Random Forest (ranger, 200 trees, mtry =", best_mtry, ")\n")
-cat("  → OOB R²:", round(model_rf$r.squared, 4), "| RMSE:", round(rmse_rf, 2), "\n")
-cat("Model 3: XGBoost (nrounds =", best_nrounds_final, ")\n")
-cat("  → CV Best | RMSE:", round(rmse_xgb, 2), "\n")
-cat(" Best Model:", c("Linear Regression", "Random Forest", "XGBoost")[which.min(c(rmse_lm, rmse_rf, rmse_xgb))], "\n")
-cat("Features:", ncol(train_X), "biến (sales_per_customer loại bỏ)\n")
-cat("Train:", format(nrow(train_X), big.mark = ","), "| Val:", format(nrow(test_X), big.mark = ","), "\n")
-cat("Tuning: RF mtry grid + XGB grid search (9 combos)\n")
-cat("Output files:\n")
-cat("   output/tables/models.rds\n")
-cat("   output/tables/predictions.rds\n")
-cat("   output/tables/feature_importance.rds\n")
-cat("   output/tables/logit_results.rds\n")
-
-cat(" MODELING HOÀN TẤT!\n")
+pred_compare <- bind_rows(
+  data.frame(Actual = actual, Predicted = preds$lm, Model = "Linear Regression"),
+  data.frame(Actual = actual, Predicted = preds$rf, Model = "Random Forest"),
+  data.frame(Actual = actual, Predicted = preds$xgb, Model = "XGBoost")
+) |>
+  mutate(
+    Residual = Actual - Predicted,
+    Model = factor(Model, levels = c("Linear Regression", "Random Forest", "XGBoost"))
+  )
 ```
+
+## 6.1. Mục tiêu mô hình hóa
+
+Mục tiêu của phần Data Modeling là xây dựng các mô hình dự đoán doanh số hằng ngày của các cửa hàng Rossmann. Kết quả dự đoán có thể hỗ trợ ra quyết định quản trị về nhân sự, tồn kho, khuyến mãi và vận hành cửa hàng.
+
+Báo cáo trình bày hai hướng mô hình:
+
+- **Hồi quy**: dự đoán trực tiếp doanh số `sales`.
+- **Phân loại**: dự đoán ngày có doanh số cao thông qua biến `high_sales`.
+
+Trong nhóm hồi quy, ba mô hình được xây dựng và so sánh là Linear Regression, Random Forest và XGBoost. Linear Regression đóng vai trò mô hình nền, Random Forest đại diện cho ensemble bagging, còn XGBoost đại diện cho boosting.
+
+## 6.2. Dữ liệu sử dụng cho mô hình
+
+### 6.2.1. Biến mục tiêu
+
+Bài toán hồi quy sử dụng biến mục tiêu là `sales`, tức doanh số hằng ngày của cửa hàng.
+
+Bài toán phân loại sử dụng biến `high_sales`. Biến này được tạo theo ngưỡng doanh số 10.000 EUR:
+
+```{r target-definition}
+sales_threshold <- 10000
+
+target_summary <- data.frame(
+  Bai_toan = c("Hồi quy", "Phân loại"),
+  Bien_muc_tieu = c("sales", "high_sales"),
+  Y_nghia = c(
+    "Dự đoán trực tiếp doanh số hằng ngày",
+    "Nhận diện ngày có doanh số cao"
+  ),
+  Cach_xac_dinh = c(
+    "Giá trị sales có sẵn trong dữ liệu",
+    "high_sales = 1 nếu sales >= 10000 EUR, ngược lại = 0"
+  )
+)
+
+kable(target_summary, caption = "Biến mục tiêu của các bài toán modeling")
+```
+
+```{r high-sales-distribution}
+high_sales_train <- ifelse(train_data$sales >= sales_threshold, 1, 0)
+high_sales_val <- ifelse(val_data$sales >= sales_threshold, 1, 0)
+
+high_sales_distribution <- bind_rows(
+  data.frame(Tap_du_lieu = "Train", high_sales = high_sales_train),
+  data.frame(Tap_du_lieu = "Validation", high_sales = high_sales_val)
+) |>
+  count(Tap_du_lieu, high_sales) |>
+  group_by(Tap_du_lieu) |>
+  mutate(Ty_le = n / sum(n)) |>
+  ungroup()
+
+kable(high_sales_distribution, digits = 4,
+      caption = "Phân phối biến high_sales trên train và validation")
+```
+
+### 6.2.2. Biến đầu vào
+
+Mô hình sử dụng 14 biến đầu vào, chia thành 5 nhóm chính: khách hàng, khuyến mãi, thời gian, đặc điểm cửa hàng và cạnh tranh.
+
+```{r feature-table}
+feature_table <- data.frame(
+  Nhom_bien = c(
+    "Khách hàng",
+    "Thời gian", "Khuyến mãi", "Ngày lễ",
+    "Ngày lễ", "Đặc điểm cửa hàng", "Đặc điểm cửa hàng",
+    "Cạnh tranh", "Khuyến mãi", "Thời gian",
+    "Thời gian", "Thời gian", "Cạnh tranh", "Cạnh tranh"
+  ),
+  Bien = c(
+    "customers", "day_of_week", "promo", "state_holiday",
+    "school_holiday", "store_type", "assortment",
+    "competition_distance", "promo2", "month",
+    "week_of_year", "is_weekend",
+    "competition_open_months", "has_competition"
+  ),
+  Y_nghia = c(
+    "Số lượng khách trong ngày",
+    "Thứ trong tuần",
+    "Trạng thái khuyến mãi",
+    "Ngày lễ nhà nước",
+    "Kỳ nghỉ học",
+    "Loại hình cửa hàng",
+    "Danh mục hàng hóa",
+    "Khoảng cách đến đối thủ gần nhất",
+    "Cửa hàng có tham gia Promo2 hay không",
+    "Tháng trong năm",
+    "Tuần trong năm",
+    "Ngày cuối tuần hay ngày thường",
+    "Số tháng đối thủ đã mở cửa",
+    "Có đối thủ cạnh tranh hay không"
+  )
+)
+
+kable(feature_table, caption = "14 biến đầu vào sử dụng trong mô hình")
+```
+
+Biến `sales_per_customer` bị loại bỏ vì được tính trực tiếp từ `sales / customers`. Nếu đưa biến này vào mô hình, mô hình sẽ nhìn thấy thông tin gần như trực tiếp từ biến mục tiêu, gây **rò rỉ dữ liệu** và làm kết quả đánh giá bị lạc quan giả tạo.
+
+### 6.2.3. Phân chia dữ liệu
+
+```{r split-summary}
+split_summary <- data.frame(
+  Tap_du_lieu = c("Training set", "Validation set"),
+  So_quan_sat = c(nrow(train_data), nrow(val_data)),
+  So_bien = c(ncol(train_data), ncol(val_data)),
+  Vai_tro = c(
+    "Huấn luyện mô hình và lựa chọn tham số",
+    "Đánh giá hiệu suất trên dữ liệu chưa dùng để train"
+  )
+)
+
+kable(split_summary, caption = "Tóm tắt tập train và validation")
+```
+
+Training set được dùng để học quan hệ giữa các biến đầu vào và doanh số. Validation set được giữ độc lập để kiểm tra khả năng tổng quát hóa của mô hình trên dữ liệu chưa từng thấy trong quá trình huấn luyện.
+
+## 6.3. Phương pháp đánh giá mô hình
+
+### 6.3.1. Chỉ số đánh giá mô hình hồi quy
+
+```{r regression-metrics-definition}
+regression_metrics <- data.frame(
+  Chi_so = c("RMSE", "MAE", "R2"),
+  Ten_day_du = c(
+    "Root Mean Squared Error",
+    "Mean Absolute Error",
+    "Coefficient of Determination"
+  ),
+  Y_nghia = c(
+    "Đo sai số bình phương trung bình gốc; phạt nặng các sai số lớn; càng thấp càng tốt",
+    "Đo sai lệch tuyệt đối trung bình; dễ diễn giải theo đơn vị doanh số; càng thấp càng tốt",
+    "Tỷ lệ biến thiên của doanh số được mô hình giải thích; càng cao càng tốt"
+  )
+)
+
+kable(regression_metrics, caption = "Chỉ số đánh giá mô hình hồi quy")
+```
+
+Ngoài ba chỉ số trên, báo cáo còn tính RMSPE để đo sai số tương đối, phù hợp với bài toán Rossmann vì sai số trên cửa hàng doanh số cao và thấp cần được đặt trong tỷ lệ phần trăm.
+
+### 6.3.2. Chỉ số đánh giá mô hình phân loại
+
+```{r classification-metrics-definition}
+classification_metrics <- data.frame(
+  Chi_so = c("Accuracy", "Precision", "Recall", "F1-score", "Confusion Matrix"),
+  Y_nghia = c(
+    "Tỷ lệ dự đoán đúng trên tổng số quan sát",
+    "Trong các ngày dự đoán là doanh số cao, tỷ lệ ngày thực sự cao",
+    "Trong các ngày thực sự doanh số cao, tỷ lệ mô hình nhận diện được",
+    "Trung bình điều hòa của Precision và Recall",
+    "Bảng so sánh nhãn thực tế và nhãn dự đoán"
+  )
+)
+
+kable(classification_metrics, caption = "Chỉ số đánh giá mô hình phân loại high_sales")
+```
+
+Trong bài toán nhận diện ngày doanh số cao, Recall quan trọng vì doanh nghiệp không muốn bỏ sót các ngày có nhu cầu lớn. Precision cũng cần được theo dõi để tránh cảnh báo quá nhiều ngày không thật sự cao.
+
+## 6.4. Xây dựng mô hình
+
+### 6.4.1. Linear Regression
+
+Linear Regression được dùng làm mô hình nền để so sánh. Mô hình giả định quan hệ giữa doanh số và các biến đầu vào có dạng tuyến tính:
+
+$$
+Sales = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + ... + \beta_p X_p + \epsilon
+$$
+
+```{r linear-regression-summary}
+model_lm <- models$lm
+lm_summary <- summary(model_lm)
+lm_perf <- model_results_report |> filter(Model == "Linear Regression")
+
+cat("Số biến dự đoán:", length(coef(model_lm)) - 1, "\n")
+cat("Training R2:", round(lm_summary$r.squared, 4), "\n")
+cat("Adjusted R2:", round(lm_summary$adj.r.squared, 4), "\n")
+cat("Residual Std. Error:", round(lm_summary$sigma, 2), "\n")
+
+kable(lm_perf, digits = 4,
+      caption = "Kết quả Linear Regression trên validation set")
+```
+
+Ưu điểm của Linear Regression là đơn giản, dễ hiểu và dễ diễn giải hệ số. Hạn chế là mô hình khó xử lý các quan hệ phi tuyến và tương tác phức tạp giữa các biến, vì vậy hiệu suất dự báo thấp hơn các mô hình cây.
+
+### 6.4.2. Logistic Regression
+
+Logistic Regression được sử dụng cho bài toán phân loại ngày có doanh số cao. Biến mục tiêu `high_sales` được xác định bằng ngưỡng 10.000 EUR:
+
+$$
+high\_sales =
+\begin{cases}
+1, & sales \ge 10000 \\
+0, & sales < 10000
+\end{cases}
+$$
+
+```{r logistic-regression-results}
+logit_metrics <- logit_results$logit_metrics
+logit_confusion <- as.data.frame.matrix(logit_results$logit_confusion_matrix)
+logit_confusion$Actual <- rownames(logit_confusion)
+logit_confusion <- logit_confusion |> select(Actual, everything())
+
+kable(logit_metrics, digits = 4,
+      caption = "Chỉ số đánh giá Logistic Regression")
+kable(logit_confusion,
+      caption = "Confusion Matrix của Logistic Regression")
+```
+
+```{r logistic-odds-ratio}
+odds_ratio <- data.frame(
+  Term = names(logit_results$logit_odds_ratio),
+  Odds_Ratio = as.numeric(logit_results$logit_odds_ratio)
+) |>
+  filter(!is.na(Odds_Ratio), Term != "(Intercept)") |>
+  mutate(Abs_Log_OR = abs(log(Odds_Ratio))) |>
+  arrange(desc(Abs_Log_OR)) |>
+  slice_head(n = 10) |>
+  select(Term, Odds_Ratio)
+
+kable(odds_ratio, digits = 4,
+      caption = "Top yếu tố ảnh hưởng đến khả năng đạt doanh số cao")
+```
+
+Kết quả Logistic Regression có ý nghĩa quản trị vì giúp nhận diện những ngày có xác suất doanh số cao. Các yếu tố như `customers`, `promo`, `store_type` và ngày trong tuần có ảnh hưởng rõ đến khả năng đạt ngưỡng 10.000 EUR. Doanh nghiệp có thể dùng thông tin này để chuẩn bị nhân sự và tồn kho trước các ngày nhu cầu cao.
+
+### 6.4.3. Random Forest
+
+Random Forest là mô hình ensemble dạng bagging. Mô hình tạo nhiều cây quyết định trên các mẫu bootstrap khác nhau, mỗi cây chỉ xem xét một tập con biến tại mỗi lần chia. Dự đoán cuối cùng là trung bình dự đoán của nhiều cây.
+
+```{r random-forest-summary}
+model_rf <- models$rf
+rf_perf <- model_results_report |> filter(Model == "Random Forest")
+
+cat("mtry:", model_rf$mtry, "\n")
+cat("num.trees:", model_rf$num.trees, "\n")
+cat("OOB R2:", round(model_rf$r.squared, 4), "\n")
+cat("OOB Prediction Error:", round(model_rf$prediction.error, 2), "\n")
+
+kable(rf_perf, digits = 4,
+      caption = "Kết quả Random Forest trên validation set")
+```
+
+Tham số `mtry` quy định số biến được xem xét tại mỗi lần tách node. Trong mô hình cuối cùng, `mtry = 7` được chọn từ quá trình tuning vì cho OOB RMSE tốt nhất trong các giá trị thử nghiệm.
+
+Riêng tham số `num.trees`, báo cáo không chọn tùy ý mà thực hiện khảo sát nhiều mức số cây. Mục đích là kiểm tra khi tăng số cây thì validation RMSE có tiếp tục giảm hay không, đồng thời đánh giá trade-off giữa độ chính xác và thời gian huấn luyện.
+
+Tiêu chí lựa chọn:
+
+- **Best_Number**: số cây cho validation RMSE thấp nhất.
+- **Recommended_Number**: số cây nhỏ nhất có RMSE nằm trong vùng 1% so với RMSE tốt nhất.
+- Nếu mục tiêu là tối ưu sai số tuyệt đối, dùng Best_Number.
+- Nếu mục tiêu là mô hình gọn hơn và train nhanh hơn, dùng Recommended_Number.
+
+```{r rf-tree-analysis-table}
+rf_tree_analysis <- read.csv(file.path(path_tables, "rf_tree_number_analysis.csv"))
+
+kable(rf_tree_analysis, digits = 4,
+      caption = "Khảo sát số cây của Random Forest")
+```
+
+```{r rf-oob-validation-plot, echo=FALSE, fig.cap="OOB RMSE và Validation RMSE theo số cây Random Forest"}
+knitr::include_graphics(file.path(path_figures, "rf_oob_vs_validation_rmse.png"))
+```
+
+Bảng khảo sát cho thấy validation RMSE giảm mạnh từ 50 lên 100-200 cây, sau đó gần như bão hòa. Số cây **200** cho validation RMSE thấp nhất, nên phù hợp nếu ưu tiên hiệu suất dự đoán. Tuy nhiên, **100 cây** vẫn nằm trong vùng 1% của kết quả tốt nhất và train nhanh hơn, nên phù hợp khi cần mô hình gọn và dễ lặp lại trong quá trình báo cáo.
+
+### 6.4.4. XGBoost
+
+XGBoost là mô hình boosting, trong đó các cây được huấn luyện tuần tự. Mỗi cây mới có nhiệm vụ sửa phần sai số còn lại của tập hợp cây trước đó. Cách học này giúp XGBoost khai thác pattern phức tạp và thường đạt hiệu suất cao trên dữ liệu dạng bảng.
+
+```{r xgboost-summary}
+model_xgb <- models$xgb
+xgb_perf <- model_results_report |> filter(Model == "XGBoost")
+
+xgb_params_table <- data.frame(
+  Tham_so = c("max_depth", "eta", "subsample", "colsample_bytree", "min_child_weight", "nrounds"),
+  Gia_tri = c(6, 0.05, 0.8, 0.8, 5, 500)
+)
+
+kable(xgb_params_table, caption = "Bộ tham số XGBoost sử dụng cho mô hình cuối cùng")
+kable(xgb_perf, digits = 4,
+      caption = "Kết quả XGBoost trên validation set")
+```
+
+Quá trình Grid Search thử nhiều tổ hợp `max_depth` và `eta`, kết hợp với `subsample`, `colsample_bytree`, `min_child_weight` để kiểm soát overfitting. Cấu hình tốt nhất trong mô hình chính là `max_depth = 6`, `eta = 0.05`, `subsample = 0.8`, `colsample_bytree = 0.8`, `min_child_weight = 5`, `nrounds = 500`.
+
+Trong XGBoost, `nrounds` chính là số cây boosting được thêm tuần tự vào mô hình. Nếu `nrounds` quá nhỏ, mô hình có thể underfit; nếu quá lớn, mô hình train chậm hơn và có nguy cơ học quá kỹ tập train. Vì vậy, báo cáo khảo sát learning curve của XGBoost bằng cross-validation để xác định vùng số vòng boosting hợp lý.
+
+```{r xgb-round-analysis-table}
+xgb_curve <- read.csv(file.path(path_tables, "xgb_nrounds_learning_curve.csv"))
+xgb_curve_sample <- xgb_curve |>
+  filter(iter == 1 | iter %% 50 == 0 | iter == which.min(test_rmse_mean)) |>
+  arrange(iter)
+
+kable(xgb_curve_sample, digits = 4,
+      caption = "Learning curve XGBoost theo một số mốc nrounds")
+```
+
+```{r xgb-round-analysis-plot, echo=FALSE, fig.cap="CV RMSE theo số vòng boosting của XGBoost"}
+knitr::include_graphics(file.path(path_figures, "xgb_nrounds_rmse_curve.png"))
+```
+
+Learning curve cho thấy CV RMSE giảm nhanh ở các vòng đầu, sau đó giảm chậm dần và gần như bão hòa. Điểm tốt nhất nằm quanh **775 rounds**, nhưng **455 rounds** đã nằm trong vùng 1% của CV RMSE tốt nhất. Mô hình chính sử dụng **500 rounds**, nằm gần mức khuyến nghị và giữ được cân bằng giữa hiệu suất, tốc độ train và rủi ro overfit.
+
+XGBoost cho kết quả tốt nhất vì các cây sau liên tục sửa sai số của các cây trước. Mô hình này xử lý tốt quan hệ phi tuyến, tương tác biến và các pattern doanh số theo khuyến mãi, ngày trong tuần, loại cửa hàng và lượng khách.
+
+### 6.4.5. Tổng hợp khảo sát số cây và lựa chọn cuối cùng
+
+Phần khảo sát số cây được thực hiện cho hai mô hình cây chính:
+
+- Random Forest: khảo sát `num.trees`.
+- XGBoost: khảo sát `nrounds`, tức số cây boosting.
+
+```{r tree-recommendation-section}
+tree_recommendation <- read.csv(file.path(path_tables, "tree_number_recommendation_summary.csv"))
+
+kable(tree_recommendation, digits = 4,
+      caption = "Tổng hợp Best_Number và Recommended_Number cho mô hình cây")
+```
+
+```{r tree-recommendation-plot, echo=FALSE, fig.cap="So sánh số cây/vòng boosting tốt nhất và khuyến nghị"}
+knitr::include_graphics(file.path(path_figures, "tree_number_recommendation_summary.png"))
+```
+
+Kết luận phù hợp với mục tiêu báo cáo:
+
+- **Random Forest**: `200` cây là cấu hình có RMSE validation thấp nhất; `100` cây là cấu hình khuyến nghị nếu cần train nhanh vì vẫn nằm trong vùng 1% của điểm tốt nhất.
+- **XGBoost**: `775` rounds là điểm CV RMSE tốt nhất; `455` rounds là điểm sớm nhất trong vùng 1% tốt nhất; `500` rounds được dùng trong mô hình chính vì gần mức khuyến nghị và ổn định về hiệu suất.
+- Nhìn chung, tăng số cây sau một ngưỡng nhất định không tạo cải thiện lớn về sai số, trong khi làm mô hình chậm và phức tạp hơn.
+
+## 6.5. So sánh kết quả các mô hình
+
+```{r model-comparison-table}
+kable(model_results_report, digits = 4,
+      caption = "Tổng hợp hiệu suất các mô hình hồi quy trên validation set")
+```
+
+```{r model-comparison-plot}
+model_results_long <- model_results |>
+  select(Model, RMSE, MAE, RMSPE) |>
+  pivot_longer(cols = c(RMSE, MAE, RMSPE), names_to = "Metric", values_to = "Value")
+
+ggplot(model_results_long, aes(x = reorder(Model, Value), y = Value, fill = Model)) +
+  geom_col(alpha = 0.9, width = 0.7) +
+  facet_wrap(~ Metric, scales = "free_y") +
+  coord_flip() +
+  scale_fill_manual(values = color_models) +
+  labs(
+    title = "So sánh RMSE, MAE và RMSPE trên validation set",
+    subtitle = "Giá trị càng thấp càng tốt",
+    x = NULL,
+    y = "Metric value"
+  ) +
+  theme(legend.position = "none")
+```
+
+```{r r2-comparison-plot}
+ggplot(model_results, aes(x = reorder(Model, R2), y = R2, fill = Model)) +
+  geom_col(alpha = 0.9, width = 0.65) +
+  coord_flip() +
+  scale_fill_manual(values = color_models) +
+  labs(
+    title = "So sánh R² trên validation set",
+    subtitle = "Giá trị càng cao càng tốt",
+    x = NULL,
+    y = "R2"
+  ) +
+  theme(legend.position = "none")
+```
+
+```{r actual-vs-predicted}
+ggplot(pred_compare, aes(x = Actual, y = Predicted, color = Model)) +
+  geom_point(alpha = 0.28, size = 0.9) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray35") +
+  facet_wrap(~ Model) +
+  scale_color_manual(values = color_models) +
+  labs(
+    title = "Actual vs Predicted trên validation set",
+    subtitle = "Điểm càng gần đường chéo 45 độ thì dự đoán càng chính xác",
+    x = "Sales thực tế",
+    y = "Sales dự đoán"
+  ) +
+  theme(legend.position = "none")
+```
+
+Kết quả cho thấy Linear Regression là mô hình nền nhưng có sai số cao hơn. Random Forest cải thiện đáng kể vì bắt được quan hệ phi tuyến. XGBoost là mô hình có hiệu suất tốt nhất, thể hiện qua RMSE và RMSPE thấp nhất, R² cao nhất.
+
+Các mô hình cây tốt hơn hồi quy tuyến tính vì doanh số bán lẻ không chỉ phụ thuộc tuyến tính vào từng biến riêng lẻ. Tác động của `promo`, `day_of_week`, `store_type`, `customers` và `competition_distance` có nhiều ngưỡng và tương tác, phù hợp hơn với mô hình cây.
+
+## 6.6. Phân tích Feature Importance
+
+Feature Importance giúp xác định các biến có ảnh hưởng mạnh đến dự đoán doanh số. Báo cáo so sánh importance của Random Forest và XGBoost để kiểm tra các yếu tố quan trọng có nhất quán hay không.
+
+### 6.6.1. Random Forest Feature Importance
+
+```{r rf-importance}
+rf_importance <- feature_importance$rf |>
+  arrange(desc(Importance)) |>
+  slice_head(n = 10)
+
+kable(rf_importance, digits = 2,
+      caption = "Top 10 biến quan trọng theo Random Forest")
+```
+
+```{r rf-importance-plot}
+ggplot(rf_importance, aes(x = reorder(Feature, Importance), y = Importance)) +
+  geom_col(fill = color_models[["Random Forest"]], alpha = 0.85) +
+  coord_flip() +
+  labs(
+    title = "Feature Importance - Random Forest",
+    x = NULL,
+    y = "Importance"
+  )
+```
+
+### 6.6.2. XGBoost Feature Importance
+
+```{r xgb-importance}
+xgb_importance <- feature_importance$xgb |>
+  arrange(desc(Gain)) |>
+  slice_head(n = 10)
+
+kable(xgb_importance, digits = 4,
+      caption = "Top 10 biến quan trọng theo XGBoost")
+```
+
+```{r xgb-importance-plot}
+ggplot(xgb_importance, aes(x = reorder(Feature, Gain), y = Gain)) +
+  geom_col(fill = color_models[["XGBoost"]], alpha = 0.85) +
+  coord_flip() +
+  labs(
+    title = "Feature Importance - XGBoost",
+    x = NULL,
+    y = "Gain"
+  )
+```
+
+Các biến quan trọng có ý nghĩa kinh doanh rõ ràng:
+
+- `customers`: lượng khách là động lực trực tiếp của doanh số.
+- `promo`: khuyến mãi làm tăng khả năng mua hàng và doanh thu ngày.
+- `day_of_week`: doanh số thay đổi theo chu kỳ tuần.
+- `store_type`: loại cửa hàng phản ánh quy mô và hành vi mua sắm khác nhau.
+- `assortment`: danh mục hàng hóa ảnh hưởng đến khả năng bán hàng.
+- `competition_distance`: khoảng cách đối thủ có thể làm thay đổi sức hút của cửa hàng.
+
+## 6.7. Nhận xét và hàm ý quản trị
+
+Từ kết quả modeling, có thể rút ra một số hàm ý quản trị:
+
+- **Quản lý nhân sự**: các ngày dự báo doanh số cao nên bố trí thêm nhân viên bán hàng, thu ngân và kho.
+- **Quản lý tồn kho**: dự báo doanh số giúp chuẩn bị hàng hóa trước các ngày nhu cầu cao, tránh thiếu hàng.
+- **Tối ưu khuyến mãi**: `promo` là biến quan trọng, cho thấy khuyến mãi có tác động thực tế đến doanh số.
+- **Lập kế hoạch theo thời gian**: `day_of_week`, `month` và `week_of_year` giúp nhận diện chu kỳ bán hàng.
+- **Chiến lược theo cửa hàng**: `store_type`, `assortment` và `competition_distance` gợi ý cần có chiến lược riêng cho từng nhóm cửa hàng.
+- **Ứng dụng vận hành**: XGBoost có thể dùng làm mô hình dự báo chính để hỗ trợ lập kế hoạch bán hàng hằng ngày.
+
+## 6.8. Hạn chế của mô hình
+
+Mô hình hiện tại vẫn có một số hạn chế:
+
+- Mô hình phụ thuộc nhiều vào biến `customers`. Nếu dự báo tương lai khi chưa biết số khách, cần xây dựng phiên bản không sử dụng biến này.
+- Chưa có tập test độc lập hoàn toàn ngoài train/validation split.
+- XGBoost và Random Forest có độ chính xác cao hơn nhưng khó diễn giải hơn Linear Regression.
+- Dữ liệu chưa bao gồm các yếu tố bên ngoài như thời tiết, sự kiện địa phương, đối thủ mới, hay hành vi khách hàng theo khu vực.
+- Một số kết quả có thể thay đổi nếu mở rộng dữ liệu sang nhiều cửa hàng hơn hoặc giai đoạn thời gian dài hơn.
+
+## 6.9. Kết luận phần Data Modeling
+
+Phần Data Modeling đã xây dựng bốn mô hình phục vụ hai mục tiêu:
+
+- Linear Regression: mô hình nền cho bài toán hồi quy.
+- Logistic Regression: mô hình phân loại ngày doanh số cao.
+- Random Forest: mô hình ensemble cải thiện khả năng dự báo nhờ xử lý quan hệ phi tuyến.
+- XGBoost: mô hình có hiệu suất tốt nhất trong nhóm hồi quy.
+
+```{r final-conclusion}
+best_model <- model_results[1, ]
+tree_recommendation <- read.csv(file.path(path_tables, "tree_number_recommendation_summary.csv"))
+
+cat("Mô hình hồi quy tốt nhất:", best_model$Model, "\n")
+cat("RMSE:", round(best_model$RMSE, 2), "\n")
+cat("MAE:", round(best_model$MAE, 2), "\n")
+cat("R2:", round(best_model$R2, 4), "\n")
+cat("RMSPE:", round(best_model$RMSPE, 4), "\n")
+
+kable(tree_recommendation, digits = 4,
+      caption = "Tổng hợp lựa chọn số cây/vòng boosting")
+```
+
+Kết luận chung: **XGBoost** nên được chọn làm mô hình dự báo doanh số chính vì đạt hiệu suất tốt nhất trên validation set. Random Forest là phương án thay thế ổn định và dễ giải thích hơn. Logistic Regression bổ sung góc nhìn phân loại, giúp nhận diện các ngày có doanh số cao để hỗ trợ lập kế hoạch nhân sự, tồn kho và khuyến mãi.
 
 ***
 
@@ -2861,276 +2856,4 @@ cat("   • p_ts_ets_forecast.png   — ETS Forecast vs Actual\n")
 cat("   • p_ts_comparison.png     — So sánh ARIMA vs ETS\n")
 ```
 
-***
-
-# 8. Model Evaluation & Comparison
-
-```{r evaluation}
-# MODEL EVALUATION & COMPARISON
-# File: R/evaluation.R
-# 
-# Mô tả: Đánh giá, so sánh 3 mô hình hồi quy (LR, RF, XGBoost),
-#         tạo bảng metrics, vẽ 4 biểu đồ trực quan hóa kết quả
-# Input : output/tables/predictions.rds   
-#         output/tables/feature_importance.rds 
-# Output: output/tables/eval_results.rds
-#         output/figures/p_metrics_comparison.png
-#         output/figures/p_actual_vs_predicted.png
-#         output/figures/p_residuals.png
-#         output/figures/p_feature_importance.png
-# get_sourced_file <- function() {
-#   # 1. Kiểm tra nếu chạy bằng source()
-#   for (i in seq_len(sys.nframe())) {
-#     ofile <- sys.frame(i)$ofile
-#     if (!is.null(ofile)) return(ofile)
-#   }
-#   # 2. Kiểm tra nếu chạy trong RStudio line-by-line
-#   if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
-#     path <- rstudioapi::getActiveDocumentContext()$path
-#     if (!is.null(path) && path != "") return(path)
-#   }
-#   return(NULL)
-# }
-# sourced_file <- get_sourced_file()
-# if (!is.null(sourced_file)) {
-#   setwd(dirname(dirname(sourced_file)))
-# }
-if ("package:here" %in% search()) detach("package:here", unload = TRUE)
-if (isNamespaceLoaded("here")) unloadNamespace("here")
-
-library(dplyr)
-library(tidyr)
-library(tibble)
-library(ggplot2)
-library(gridExtra)
-library(knitr)
-library(kableExtra)
-library(Metrics)
-library(here)
-
-# 
-# source(here("R", "00_setup.R"))
-
-cat(" 1. ĐỌC DỮ LIỆU ĐẦU VÀO \n")
-
-preds <- readRDS(here("output", "tables", "predictions.rds"))
-fi    <- readRDS(here("output", "tables", "feature_importance.rds"))
-
-actual <- preds$actual
-
-cat("Đã đọc predictions.rds:", length(actual), "quan sát\n")
-cat("Đã đọc feature_importance.rds\n")
-cat("  - RF features :", nrow(fi$rf), "biến\n")
-cat("  - XGB features:", nrow(fi$xgb), "biến\n")
-
-# 2. ĐỊNH NGHĨA HÀM ĐÁNH GIÁ (Metrics Functions)
-
-# Hàm tính RMSPE (Root Mean Squared Percentage Error)
-# Đây là thước đo chính thức của cuộc thi Kaggle Rossmann.
-# Loại bỏ các quan sát có actual = 0 để tránh lỗi chia cho 0.
-calc_rmspe <- function(actual, predicted) {
-  mask <- actual > 0
-  sqrt(mean(((actual[mask] - predicted[mask]) / actual[mask])^2))
-}
-
-# Hàm tính R² (Coefficient of Determination)
-# Đo lường tỷ lệ phương sai của doanh số được giải thích bởi mô hình.
-# R² = 1 là hoàn hảo, R² = 0 là mô hình không tốt hơn trung bình.
-calc_r2 <- function(actual, predicted) {
-  1 - sum((actual - predicted)^2) / sum((actual - mean(actual))^2)
-}
-
-# 3. BẢNG SO SÁNH 3 MÔ HÌNH (Metrics Comparison Table)
-cat("\n 2. BẢNG SO SÁNH HIỆU SUẤT \n")
-
-# Tính 4 chỉ số đánh giá cho mỗi mô hình:
-#   - RMSE:  phạt nặng các sai số lớn
-#   - MAE:   trung bình trị tuyệt đối sai số
-#   - R²:    tỷ lệ phương sai giải thích được
-#   - RMSPE: thước đo chính của Kaggle Rossmann
-results <- tibble(
-  Model = c("Linear Regression", "Random Forest", "XGBoost"),
-  RMSE  = c(
-    rmse(actual, preds$lm),
-    rmse(actual, preds$rf),
-    rmse(actual, preds$xgb)
-  ),
-  MAE = c(
-    mae(actual, preds$lm),
-    mae(actual, preds$rf),
-    mae(actual, preds$xgb)
-  ),
-  R2 = c(
-    calc_r2(actual, preds$lm),
-    calc_r2(actual, preds$rf),
-    calc_r2(actual, preds$xgb)
-  ),
-  RMSPE = c(
-    calc_rmspe(actual, preds$lm),
-    calc_rmspe(actual, preds$rf),
-    calc_rmspe(actual, preds$xgb)
-  )
-) %>%
-  arrange(RMSE)  # Sắp xếp theo RMSE tăng dần (mô hình tốt nhất lên đầu)
-
-cat("\n Bảng so sánh metrics \n")
-print(
-  kable(results,
-        caption = "Bảng so sánh hiệu suất 3 mô hình",
-        digits  = c(0, 2, 2, 4, 4)) %>%
-    kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
-)
-
-# 4. BIỂU ĐỒ 1: Bar Chart So sánh Metrics (facet_wrap)
-cat("\n 3. VẼ BIỂU ĐỒ SO SÁNH \n")
-
-# Chuyển bảng results sang dạng dài (long format) để vẽ facet_wrap
-results_long <- results %>%
-  pivot_longer(
-    cols      = c(RMSE, MAE, R2, RMSPE),
-    names_to  = "Metric",
-    values_to = "Value"
-  ) %>%
-  # Sắp xếp thứ tự hiển thị các metrics trên biểu đồ
-  mutate(Metric = factor(Metric, levels = c("RMSE", "MAE", "R2", "RMSPE")))
-
-p_metrics <- ggplot(results_long, aes(x = Model, y = Value, fill = Model)) +
-  geom_col(alpha = 0.85, width = 0.7) +
-  geom_text(aes(label = round(Value, 3)), vjust = -0.3, size = 3.2) +
-  facet_wrap(~Metric, scales = "free_y") +
-  labs(
-    title    = "So sánh hiệu suất 3 mô hình hồi quy",
-    subtitle = "RMSE & MAE: càng thấp càng tốt | R²: càng cao càng tốt | RMSPE: Kaggle metric",
-    x = NULL, y = "Giá trị"
-  ) +
-  scale_fill_manual(values = COLORS$models) +
-  theme_rossmann() +
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle = 15, hjust = 1))
-
-print(p_metrics)
-ggsave(here("output", "figures", "p_metrics_comparison.png"), p_metrics,
-       width = 10, height = 6, dpi = 150)
-cat("Đã lưu: output/figures/p_metrics_comparison.png\n")
-
-# 5. BIỂU ĐỒ 2: Actual vs Predicted — Scatter Plot (facet_wrap)
-
-# Gom kết quả dự đoán của 3 mô hình vào 1 data frame duy nhất
-comparison_df <- bind_rows(
-  tibble(Actual = actual, Predicted = preds$lm,  Model = "Linear Regression"),
-  tibble(Actual = actual, Predicted = preds$rf,  Model = "Random Forest"),
-  tibble(Actual = actual, Predicted = preds$xgb, Model = "XGBoost")
-) %>%
-  mutate(Model = factor(Model, levels = c("Linear Regression", "Random Forest", "XGBoost")))
-
-# Biểu đồ phân tán: mỗi điểm = 1 quan sát trong tập val
-# Đường chéo 45° (dashed) = dự đoán hoàn hảo
-# Điểm càng bám sát đường chéo → mô hình càng chính xác
-p_pred <- ggplot(comparison_df, aes(x = Actual, y = Predicted, color = Model)) +
-  geom_point(alpha = 0.2, size = 0.6) +
-  geom_abline(slope = 1, intercept = 0, linetype = "dashed",
-              color = "black", linewidth = 0.5) +
-  facet_wrap(~Model) +
-  labs(
-    title    = "Actual vs Predicted — 3 mô hình hồi quy",
-    subtitle = "Đường chéo = dự đoán hoàn hảo | Điểm bám sát đường chéo = chính xác",
-    x = "Giá trị thực (EUR)",
-    y = "Giá trị dự đoán (EUR)"
-  ) +
-  scale_color_manual(values = COLORS$models) +
-  theme_rossmann() +
-  theme(legend.position = "none")
-
-print(p_pred)
-ggsave(here("output", "figures", "p_actual_vs_predicted.png"), p_pred,
-       width = 12, height = 4, dpi = 150)
-cat("Đã lưu: output/figures/p_actual_vs_predicted.png\n")
-
-# 6. BIỂU ĐỒ 3: Residual Histogram — Phân phối sai số (facet_wrap)
-
-# Tính residual (sai số) = Actual - Predicted
-# Mô hình tốt: residual phân phối chuẩn, tập trung quanh 0
-comparison_df <- comparison_df %>%
-  mutate(Residual = Actual - Predicted)
-
-p_resid <- ggplot(comparison_df, aes(x = Residual, fill = Model)) +
-  geom_histogram(bins = 50, alpha = 0.75, color = "white", linewidth = 0.2) +
-  facet_wrap(~Model, scales = "free_y") +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "black", linewidth = 0.5) +
-  labs(
-    title    = "Phân phối sai số (Residuals) — 3 mô hình",
-    subtitle = "Phân phối càng hẹp và tập trung quanh 0 → mô hình càng tốt",
-    x = "Residual (Actual − Predicted)",
-    y = "Tần suất"
-  ) +
-  scale_fill_manual(values = COLORS$models) +
-  theme_rossmann() +
-  theme(legend.position = "none")
-
-print(p_resid)
-ggsave(here("output", "figures", "p_residuals.png"), p_resid,
-       width = 12, height = 4, dpi = 150)
-cat("Đã lưu: output/figures/p_residuals.png\n")
-
-# 7. BIỂU ĐỒ 4: Feature Importance — Top 10 (RF + XGBoost cạnh nhau)
-cat("\n 4. FEATURE IMPORTANCE \n")
-
-# Random Forest — sắp xếp theo Importance (Impurity) giảm dần
-fi_rf_top10 <- head(fi$rf, 10)
-p_fi_rf <- ggplot(fi_rf_top10,
-                  aes(x = reorder(Feature, Importance), y = Importance)) +
-  geom_col(fill = COLORS$models[["Random Forest"]], alpha = 0.85) +
-  coord_flip() +
-  labs(
-    title = "Top 10 Feature Importance",
-    subtitle = "Random Forest (Impurity-based)",
-    x = NULL, y = "Importance"
-  ) +
-  theme_rossmann()
-
-# XGBoost — sắp xếp theo Gain giảm dần
-fi_xgb_top10 <- head(fi$xgb, 10)
-p_fi_xgb <- ggplot(fi_xgb_top10,
-                   aes(x = reorder(Feature, Gain), y = Gain)) +
-  geom_col(fill = COLORS$models[["XGBoost"]], alpha = 0.85) +
-  coord_flip() +
-  labs(
-    title = "Top 10 Feature Importance",
-    subtitle = "XGBoost (Gain-based)",
-    x = NULL, y = "Gain"
-  ) +
-  theme_rossmann()
-
-# Ghép 2 biểu đồ cạnh nhau bằng grid.arrange
-p_fi_combined <- grid.arrange(p_fi_rf, p_fi_xgb, ncol = 2,
-                               top = "So sánh Feature Importance — RF vs XGBoost")
-
-ggsave(here("output", "figures", "p_feature_importance.png"), p_fi_combined,
-       width = 14, height = 5, dpi = 150)
-cat("Đã lưu: output/figures/p_feature_importance.png\n")
-
-# In ra top 5 features chung giữa 2 mô hình
-common_top5 <- intersect(
-  head(fi$rf$Feature, 5),
-  head(fi$xgb$Feature, 5)
-)
-cat("Top features chung (RF ∩ XGB):", paste(common_top5, collapse = ", "), "\n")
-
-# 8. LƯU KẾT QUẢ ĐÁNH GIÁ
-cat("\n 5. LƯU KẾT QUẢ \n")
-
-saveRDS(list(
-  results        = results,
-  comparison_df  = comparison_df,
-  fi_rf          = fi$rf,
-  fi_xgb         = fi$xgb
-), here("output", "tables", "eval_results.rds"))
-
-cat(" Đã lưu: output/tables/eval_results.rds\n")
-cat(" Biểu đồ đã xuất:\n")
-cat("   • p_metrics_comparison.png    — So sánh 4 chỉ số (RMSE, MAE, R², RMSPE)\n")
-cat("   • p_actual_vs_predicted.png   — Scatter Actual vs Predicted\n")
-cat("   • p_residuals.png             — Phân phối sai số (Residuals)\n")
-cat("   • p_feature_importance.png    — Top 10 Feature Importance (RF + XGB)\n")
-```
 ***
