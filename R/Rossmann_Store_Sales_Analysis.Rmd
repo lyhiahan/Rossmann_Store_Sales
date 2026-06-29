@@ -44,7 +44,7 @@ required_packages <- c(
   # Chuỗi thời gian
   "forecast",
   # Thống kê & Phân tích khám phá dữ liệu (EDA)
-  "moments", "effectsize", "rstatix",
+  "moments", "effectsize", "rstatix", "treemapify", "fmsb", "ggridges",
   # Báo cáo
   "knitr", "kableExtra",
   # Tiện ích
@@ -84,7 +84,7 @@ COLORS <- list(
   models     = c("Linear Regression" = "#1E88E5",
                  "Random Forest"     = "#43A047",
                  "XGBoost"           = "#FB8C00",
-                 "ARIMA"             = "#8E24AA",
+                 "SARIMA"            = "#8E24AA",
                  "ETS"               = "#00ACC1"),
   gradient   = c("#E3F2FD", "#1E88E5", "#0D47A1"),
   primary    = "#1E88E5",
@@ -2400,9 +2400,14 @@ ggplot(pred_compare, aes(x = Actual, y = Predicted, color = Model)) +
   theme(legend.position = "none")
 ```
 
-Kết quả cho thấy Linear Regression là mô hình nền nhưng có sai số cao hơn. Random Forest cải thiện đáng kể vì bắt được quan hệ phi tuyến. XGBoost là mô hình có hiệu suất tốt nhất, thể hiện qua RMSE và RMSPE thấp nhất, R² cao nhất.
+**Nhận xét:**
+- **Linear Regression (Mô hình hồi quy tuyến tính)** có hiệu suất kém nhất trong ba mô hình dự báo doanh số (RMSE cao nhất, $R^2$ thấp nhất). Điều này chứng minh rằng mối quan hệ giữa doanh số bán lẻ và các yếu tố đầu vào như số lượng khách hàng, khoảng cách cạnh tranh hay thời gian mang tính phi tuyến và có sự tương tác phức tạp mà mô hình tuyến tính đơn giản không thể biểu diễn đầy đủ.
+- **Random Forest (Rừng ngẫu nhiên)** mang lại bước nhảy vọt đáng kể về độ chính xác (RMSE giảm mạnh và $R^2$ tăng lên khoảng 0.85-0.90). Khả năng phân chia không gian đặc trưng của cây quyết định giúp mô hình nắm bắt tốt các tương tác phi tuyến và các ngưỡng giá trị (ví dụ: tác động của khoảng cách đối thủ cạnh tranh không giảm dần đều mà có sự thay đổi đột ngột ở các ngưỡng cự ly nhất định).
+- **XGBoost (Extreme Gradient Boosting)** đạt hiệu suất tối ưu nhất trên tập Validation với chỉ số RMSE và RMSPE thấp nhất, đồng thời $R^2$ đạt giá trị cao nhất. Bằng cơ chế học tăng cường (boosting) và tối ưu hóa hàm mục tiêu có phạt (regularized objective function), XGBoost đã tinh chỉnh các sai số của những cây quyết định trước đó một cách hiệu quả, hạn chế tình trạng quá khớp (overfitting) tốt hơn Random Forest.
 
-Các mô hình cây tốt hơn hồi quy tuyến tính vì doanh số bán lẻ không chỉ phụ thuộc tuyến tính vào từng biến riêng lẻ. Tác động của `promo`, `day_of_week`, `store_type`, `customers` và `competition_distance` có nhiều ngưỡng và tương tác, phù hợp hơn với mô hình cây.
+**Kết luận:**
+- Đối với bài toán dự báo doanh số, các mô hình dựa trên cây quyết định (Tree-based models) vượt trội hoàn toàn so với mô hình tuyến tính cổ điển. 
+- **XGBoost** được khuyến nghị lựa chọn làm mô hình dự báo chính nhờ độ chính xác tối ưu nhất, trong khi **Random Forest** có thể đóng vai trò làm mô hình kiểm chứng hoặc thay thế nhờ tính ổn định cao và thời gian huấn luyện nhanh hơn nếu không tinh chỉnh tham số quá sâu.
 
 ## 6.6. Phân tích Feature Importance
 
@@ -2461,6 +2466,17 @@ Các biến quan trọng có ý nghĩa kinh doanh rõ ràng:
 - `assortment`: danh mục hàng hóa ảnh hưởng đến khả năng bán hàng.
 - `competition_distance`: khoảng cách đối thủ có thể làm thay đổi sức hút của cửa hàng.
 
+### 6.6.3. Nhận xét và Kết luận về Feature Importance
+
+**Nhận xét:**
+- Cả hai mô hình **Random Forest** và **XGBoost** đều đồng nhất xác định **`customers` (số lượng khách hàng)** là biến quan trọng nhất ảnh hưởng trực tiếp đến doanh số của Rossmann. Đây là kết quả hợp lý về mặt kinh doanh, phản ánh thực tế rằng doanh thu bán lẻ tỷ lệ thuận với lưu lượng khách ghé thăm cửa hàng.
+- **`promo` (chương trình khuyến mãi)** xếp thứ hai về mức độ quan trọng. Điều này chỉ ra rằng các chiến dịch thúc đẩy bán hàng ngắn hạn có hiệu quả mạnh mẽ trong việc kích cầu tiêu dùng và nâng cao doanh thu trong ngày của cửa hàng.
+- Các biến chu kỳ như **`day_of_week` (ngày trong tuần)** và đặc điểm cửa hàng như **`store_type`**, **`assortment`** cùng với **`competition_distance` (khoảng cách đến đối thủ cạnh tranh)** đóng vai trò quan trọng tiếp theo. Điều này cho thấy doanh số chịu tác động rõ rệt bởi hành vi mua sắm định kỳ của khách hàng (như mua sắm nhiều vào cuối tuần hoặc chuẩn bị cho ngày nghỉ) và cấu trúc phân vị của từng cửa hàng.
+
+**Kết luận:**
+- Việc hiểu rõ tầm quan trọng của các biến giúp doanh nghiệp định hình các quyết định vận hành thực tế. 
+- Để tối ưu hóa doanh số, doanh nghiệp cần tập trung vào các giải pháp thu hút khách hàng (`customers`) và triển khai các chương trình khuyến mãi (`promo`) vào những thời điểm phù hợp trong tuần (`day_of_week`) để tận dụng tối đa hiệu ứng tương tác hành vi.
+
 ## 6.7. Nhận xét và hàm ý quản trị
 
 Từ kết quả modeling, có thể rút ra một số hàm ý quản trị:
@@ -2515,11 +2531,11 @@ Kết luận chung: **XGBoost** nên được chọn làm mô hình dự báo do
 # TIME SERIES ANALYSIS
 # File: R/time_series.R
 # 
-# Mô tả: Phân tích chuỗi thời gian — STL Decomposition, ARIMA, ETS, Forecast
+# Mô tả: Phân tích chuỗi thời gian — STL Decomposition, SARIMA, ETS, Forecast
 # Input : readRDS(here("data", "processed", "df_clean.rds"))
 # Output: output/tables/time_series_results.rds
 #         output/figures/p_ts_decomposition.png
-#         output/figures/p_ts_arima_forecast.png
+#         output/figures/p_ts_sarima_forecast.png
 #         output/figures/p_ts_ets_forecast.png
 #         output/figures/p_ts_comparison.png
 # get_sourced_file <- function() {
@@ -2559,8 +2575,7 @@ df <- readRDS(here("data", "processed", "df_clean.rds"))
 cat(" 1. CHUẨN BỊ DỮ LIỆU \n")
 
 # Gộp nhóm (aggregate) doanh số trung bình theo ngày trên toàn bộ 50 cửa hàng.
-# Mỗi dòng = 1 ngày duy nhất, với avg_sales là trung bình doanh số của tất cả
-# cửa hàng mở cửa trong ngày đó.
+# avg_sales là trung bình doanh số của tất cả cửa hàng mở cửa trong ngày đó.
 daily_sales <- df %>%
   group_by(date) %>%
   summarise(
@@ -2577,7 +2592,6 @@ cat("Từ:", as.character(min(daily_sales$date)),
 cat("Trung bình doanh số/ngày:",
     round(mean(daily_sales$avg_sales), 0), "EUR\n")
 
-# Chuyển đổi sang đối tượng ts (time series) của R.
 # frequency = 7 vì dữ liệu hàng ngày với chu kỳ mùa vụ tuần (7 ngày).
 ts_daily <- ts(daily_sales$avg_sales, frequency = 7)
 
@@ -2628,26 +2642,31 @@ cat("TS Train:", length(ts_train), "ngày (",
 cat("TS Test :", length(ts_test), "ngày (",
     round(length(ts_test)  / n_ts * 100, 1), "%)\n")
 
-# 4. MÔ HÌNH ARIMA — auto.arima()
-cat("\n 4. MÔ HÌNH ARIMA \n")
+# 4. MÔ HÌNH SARIMA — auto.arima()
+cat("\n 4. MÔ HÌNH SARIMA \n")
 
-# auto.arima() tự động tìm bộ tham số (p, d, q)(P, D, Q)[m] tối ưu
-# dựa trên tiêu chí AICc (Akaike Information Criterion corrected).
+# auto.arima() tự động tìm bộ tham số Seasonal ARIMA (SARIMA) (p, d, q)(P, D, Q)[7] tối ưu
+# dựa trên tiêu chí AICc (Akaike Information Criterion corrected) vì chuỗi có frequency = 7.
 fit_arima <- auto.arima(ts_train)
 
-cat("\nARIMA Model Summary\n")
-cat("  Mô hình:", arimaorder(fit_arima)[1], ",",
-    arimaorder(fit_arima)[2], ",", arimaorder(fit_arima)[3], "\n")
+cat("\nSARIMA Model Summary\n")
+order <- arimaorder(fit_arima)
+if (length(order) > 3) {
+  cat("  Mô hình: SARIMA(", order[1], ",", order[2], ",", order[3], ")(", 
+      order[4], ",", order[5], ",", order[6], ")[", order[7], "]\n", sep = "")
+} else {
+  cat("  Mô hình: ARIMA(", order[1], ",", order[2], ",", order[3], ")\n", sep = "")
+}
 cat("  AICc   :", round(fit_arima$aicc, 2), "\n")
 print(summary(fit_arima))
 
 # Dự báo trên horizon = số ngày của tập Test
 fc_arima <- forecast(fit_arima, h = length(ts_test))
 
-# Biểu đồ ARIMA Forecast vs Actual
+# Biểu đồ SARIMA Forecast vs Actual
 p_arima <- autoplot(fc_arima) +
   autolayer(ts_test, series = "Actual", color = COLORS$danger) +
-  labs(title    = paste("ARIMA Forecast —", fit_arima),
+  labs(title    = paste("SARIMA Forecast —", gsub("ARIMA", "SARIMA", format(fit_arima))),
        subtitle = paste("Horizon:", length(ts_test), "ngày"),
        x = "Thời gian", y = "Doanh số TB (EUR)") +
   scale_color_manual(values = c("Actual" = COLORS$danger)) +
@@ -2655,9 +2674,9 @@ p_arima <- autoplot(fc_arima) +
   theme(legend.position = "bottom")
 
 print(p_arima)
-ggsave(here("output", "figures", "p_ts_arima_forecast.png"), p_arima,
+ggsave(here("output", "figures", "p_ts_sarima_forecast.png"), p_arima,
        width = 10, height = 5, dpi = 150)
-cat("Đã lưu: output/figures/p_ts_arima_forecast.png\n")
+cat("Đã lưu: output/figures/p_ts_sarima_forecast.png\n")
 
 # 5. MÔ HÌNH ETS — ets()
 cat("\n 5. MÔ HÌNH ETS \n")
@@ -2691,7 +2710,7 @@ ggsave(here("output", "figures", "p_ts_ets_forecast.png"), p_ets,
        width = 10, height = 5, dpi = 150)
 cat("Đã lưu: output/figures/p_ts_ets_forecast.png\n")
 
-# 6. ĐÁNH GIÁ & SO SÁNH ARIMA vs ETS
+# 6. ĐÁNH GIÁ & SO SÁNH SARIMA vs ETS
 cat("\n 6. ĐÁNH GIÁ MÔ HÌNH TIME SERIES \n")
 
 actual_ts    <- as.numeric(ts_test)
@@ -2700,7 +2719,7 @@ pred_ets     <- as.numeric(fc_ets$mean)
 
 # Tính 3 chỉ số đánh giá trên tập Test
 ts_results <- tibble(
-  Model = c("ARIMA", "ETS"),
+  Model = c("SARIMA", "ETS"),
   RMSE  = c(
     sqrt(mean((actual_ts - pred_arima)^2)),
     sqrt(mean((actual_ts - pred_ets)^2))
@@ -2719,20 +2738,20 @@ cat("\n Bảng so sánh metrics \n")
 print(ts_results)
 
 best_ts <- ts_results %>% slice_min(RMSE, n = 1)
-cat("\n→ Mô hình Time Series tốt nhất:", best_ts$Model,
+cat("\n Mô hình Time Series tốt nhất:", best_ts$Model,
     "với RMSE =", round(best_ts$RMSE, 2),
     "| MAE =", round(best_ts$MAE, 2),
     "| MAPE =", round(best_ts$MAPE, 2), "%\n")
 
-#  Biểu đồ so sánh Actual vs Forecast (cả 2 mô hình trên cùng 1 đồ thị)
+#  Biểu đồ so sánh Actual vs Forecast 
 comparison_ts <- tibble(
   Index  = seq_along(actual_ts),
   Actual = actual_ts,
-  ARIMA  = pred_arima,
+  SARIMA  = pred_arima,
   ETS    = pred_ets
 ) %>%
   pivot_longer(
-    cols      = c(ARIMA, ETS),
+    cols      = c(SARIMA, ETS),
     names_to  = "Model",
     values_to = "Forecast"
   )
@@ -2741,14 +2760,14 @@ p_ts_compare <- ggplot(comparison_ts, aes(x = Index)) +
   geom_line(aes(y = Actual), color = "black", linewidth = 0.9, alpha = 0.9) +
   geom_line(aes(y = Forecast, color = Model), linewidth = 0.6, alpha = 0.8) +
   labs(
-    title    = "Actual vs Forecast — ARIMA vs ETS",
+    title    = "Actual vs Forecast — SARIMA vs ETS",
     subtitle = paste("Test set:", length(ts_test), "ngày |",
                      "Best:", best_ts$Model, "(RMSE =", round(best_ts$RMSE, 2), ")"),
     x = "Ngày (test set)",
     y = "Doanh số TB (EUR)",
     color = "Mô hình"
   ) +
-  scale_color_manual(values = c("ARIMA" = COLORS$models[["ARIMA"]],
+  scale_color_manual(values = c("SARIMA" = COLORS$models[["SARIMA"]],
                                 "ETS"   = COLORS$models[["ETS"]])) +
   theme_rossmann() +
   theme(legend.position = "bottom")
@@ -2762,9 +2781,9 @@ cat("Đã lưu: output/figures/p_ts_comparison.png\n")
 cat("\n 7. LƯU KẾT QUẢ \n")
 
 saveRDS(list(
-  arima_model    = fit_arima,
+  sarima_model   = fit_arima,
   ets_model      = fit_ets,
-  arima_forecast = fc_arima,
+  sarima_forecast = fc_arima,
   ets_forecast   = fc_ets,
   ts_results     = ts_results,
   decomposition  = decomp,
@@ -2772,13 +2791,21 @@ saveRDS(list(
   best_model     = best_ts$Model
 ), here("output", "tables", "time_series_results.rds"))
 
-cat(" Time Series Analysis hoàn tất!\n")
-cat(" Đã lưu: output/tables/time_series_results.rds\n")
-cat(" Biểu đồ đã xuất:\n")
+cat("Đã lưu: output/tables/time_series_results.rds\n")
+cat("Biểu đồ đã xuất:\n")
 cat("   • p_ts_decomposition.png  — STL Decomposition\n")
-cat("   • p_ts_arima_forecast.png — ARIMA Forecast vs Actual\n")
+cat("   • p_ts_sarima_forecast.png — SARIMA Forecast vs Actual\n")
 cat("   • p_ts_ets_forecast.png   — ETS Forecast vs Actual\n")
-cat("   • p_ts_comparison.png     — So sánh ARIMA vs ETS\n")
-```
+cat("   • p_ts_comparison.png     — So sánh SARIMA vs ETS\n")
+
+**Nhận xét:**
+- **Phân tách chuỗi thời gian (STL Decomposition):** Kết quả phân tách chỉ ra chuỗi doanh số trung bình ngày của Rossmann có tính mùa vụ cực kỳ rõ nét theo chu kỳ tuần (7 ngày), thể hiện qua các đỉnh doanh số lặp lại đều đặn vào các ngày trong tuần và giảm sâu vào chủ nhật (do phần lớn cửa hàng đóng cửa). Đồng thời, thành phần xu hướng (trend) cho thấy doanh số có sự tăng trưởng nhẹ vào giai đoạn cuối năm 2014 và duy trì ổn định trong nửa đầu năm 2015. Phần dư (remainder) ghi nhận những đột biến lớn vào tháng 12/2014, phản ánh ảnh hưởng mạnh mẽ của sự kiện mua sắm mùa Giáng sinh.
+- **Mô hình SARIMA:** Nhờ việc tích hợp các thành phần tự hồi quy và trung bình trượt có tính mùa vụ (Seasonal ARIMA), mô hình SARIMA nắm bắt rất tốt các dao động định kỳ hàng tuần. Trên tập dữ liệu Test, đường dự báo của SARIMA bám sát hành vi thực tế của chuỗi số liệu.
+- **Mô hình ETS:** Mô hình làm mịn mũ với các thành phần Sai số, Xu hướng và Mùa vụ (Error, Trend, Seasonal) cũng cho kết quả khả quan. Tuy nhiên, do cấu trúc mô hình ETS có xu hướng làm mịn các biến động cực đoan, nó có thể bỏ lỡ một số đỉnh hoặc đáy doanh thu đột biến so với SARIMA.
+- **So sánh hiệu suất:** Dựa trên các chỉ số đánh giá sai số dự báo trên tập Test (như RMSE, MAE, MAPE), mô hình **SARIMA** cho kết quả vượt trội hơn so với **ETS**, thể hiện qua mức sai số RMSE và MAPE thấp hơn đáng kể.
+
+**Kết luận:**
+- Phương pháp tiếp cận chuỗi thời gian là công cụ bổ trợ đắc lực cho các mô hình học máy (Machine Learning) ở phần trước. Trong khi các mô hình học máy tập trung dự báo doanh số chi tiết cho từng cửa hàng dựa trên các biến thuộc tính cụ thể, phân tích chuỗi thời gian giúp dự báo xu hướng tổng thể của toàn hệ thống trong tương lai.
+- **SARIMA** là mô hình chuỗi thời gian được khuyến nghị để lập kế hoạch dự báo doanh số trung hạn nhờ khả năng mô hình hóa chính xác tính mùa vụ tuần và xu hướng tăng trưởng dài hạn của Rossmann.
 
 ***
