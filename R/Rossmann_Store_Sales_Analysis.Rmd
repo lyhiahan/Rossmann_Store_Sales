@@ -651,84 +651,9 @@ gridExtra::grid.arrange(p_qq, p_log, ncol = 2)
 **Ứng dụng thực tế**: Q-Q Plot uốn cong mạnh ở hai đầu cho thấy doanh số thực tế không tuân theo phân phối chuẩn. Nếu đưa biến mục tiêu này trực tiếp vào mô hình hồi quy tuyến tính cổ điển, các giả định về sai số sẽ bị vi phạm. Phép biến đổi Log-scale giúp phân phối đối xứng hơn rất nhiều (skewness giảm mạnh), cải thiện độ ổn định và tính dự báo của mô hình hồi quy tuyến tính.
 
 
-### 3.2.3 Phân tích Biến động theo Tháng và Ngày trong tuần
+### 3.2.3 Tỷ lệ Giao dịch Ngoại lai theo từng Cửa hàng
 
-```{r seasonal-day-month, echo=TRUE, fig.cap="Hình 5: Heatmap Month × Day of Week"}
-heatmap_data <- DuLieu %>%
-  group_by(day_of_week, month) %>%
-  summarise(avg_sales = mean(sales), .groups = "drop") %>%
-  mutate(day_label = factor(day_of_week, levels = 1:7,
-                            labels = c("T2","T3","T4","T5","T6","T7","CN")))
-
-p_heatmap <- ggplot(heatmap_data, aes(x = factor(month), y = day_label, fill = avg_sales)) +
-  geom_tile(color = "white", linewidth = 0.6) +
-  geom_text(aes(label = scales::comma(round(avg_sales))), size = 2.6,
-            color = "white", fontface = "bold") +
-  scale_fill_gradientn(colors = c("#1E88E5", "white", "#E53935"), labels = scales::comma, name = "DS TB (EUR)") +
-  scale_x_discrete(labels = c("1"="T1","2"="T2","3"="T3","4"="T4",
-                               "5"="T5","6"="T6","7"="T7","8"="T8",
-                               "9"="T9","10"="T10","11"="T11","12"="T12")) +
-  labs(
-    title    = "Heatmap: Doanh số TB (EUR) theo Ngày trong tuần × Tháng",
-    subtitle = "T12 đỉnh cao nhất | T2 cao nhất tuần | CN đóng cửa",
-    x = "Tháng", y = "Ngày trong tuần"
-  ) +
-  GiaoDienRossmann + theme(panel.grid = element_blank())
-print(p_heatmap)
-```
-
-```{r interactive-static-plot, echo=TRUE, fig.cap="Hình 6: Biểu đồ đường Doanh số trung bình theo Tháng"}
-monthly_avg <- DuLieu |>
-  dplyr::group_by(year, month) |>
-  dplyr::summarise(avg_sales = mean(sales), .groups = "drop") |>
-  dplyr::mutate(date_label = as.Date(paste(year, month, "01", sep = "-")))
-
-ggplot2::ggplot(monthly_avg, ggplot2::aes(x = date_label, y = avg_sales)) +
-  ggplot2::geom_line(color = "#2196F3", linewidth = 1.2) +
-  ggplot2::geom_point(color = "#2196F3", size = 3) +
-  ggplot2::geom_text(ggplot2::aes(label = scales::comma(round(avg_sales))),
-    vjust = -1, size = 3
-  ) +
-  ggplot2::scale_x_date(date_labels = "%b %Y", date_breaks = "2 months") +
-  ggplot2::labs(
-    title = "Doanh số Trung bình theo Tháng",
-    x = NULL, y = "Doanh số TB (EUR)"
-  ) +
-  GiaoDienRossmann
-```
-
-**Ứng dụng thực tế**: Heatmap cho thấy doanh thu tăng mạnh vào đầu tuần (thứ Hai) và giảm dần về cuối tuần, ngoại trừ thứ Bảy. Chủ nhật là ngày có doanh số thấp nhất do luật đóng cửa cửa hàng của Đức (Ladenschlussgesetz) bắt buộc hầu hết các cửa hàng phải đóng cửa, ngoại trừ một số cửa hàng đặt tại ga tàu hoặc sân bay (chủ yếu là Store Type `b`).
-
-
-### 3.2.4 Xu hướng Doanh số theo Thời gian (Time Series Trend)
-
-```{r ts-trend, fig.cap="Hình 7: Xu hướng doanh số trung bình theo thời gian"}
-DoanhThuTBTheoThang <- DuLieu %>%
-  mutate(Thang = floor_date(date, "month")) %>%
-  group_by(Thang) %>%
-  summarise(DoanhThuTrungBinh = mean(sales), .groups = "drop")
-
-BieuDo1_Trend <- ggplot(DoanhThuTBTheoThang, aes(x = Thang, y = DoanhThuTrungBinh)) +
-  geom_line(color = "#2196F3", linewidth = 1) +
-  geom_point(color = "#E53935", size = 3) +
-  geom_text(aes(label = scales::comma(round(DoanhThuTrungBinh))), vjust = -1, size = 3.5, fontface = "bold") +
-  labs(
-    title    = "Xu hướng doanh số trung bình theo tháng",
-    subtitle = "Store 1–50 | 08/2014 – 07/2015",
-    x = "Tháng", y = "Doanh số trung bình (EUR)"
-  ) +
-  scale_x_date(date_labels = "%m/%Y", date_breaks = "1 month") +
-  scale_y_continuous(labels = scales::comma, expand = expansion(mult = c(0.1, 0.15))) +
-  GiaoDienRossmann
-print(BieuDo1_Trend)
-```
-
-**Ứng dụng thực tế**: Biểu đồ chuỗi thời gian cho thấy doanh thu biến động theo chu kỳ tuần và tháng rất rõ rệt. Đỉnh doanh số lớn nhất diễn ra vào **tháng 12/2014**, phản ánh làn sóng mua sắm trước thềm Giáng sinh (Weihnachtsgeschäft). Doanh thu cũng tăng nhẹ vào tháng 3-4/2015 tương ứng dịp lễ Phục sinh.
-
-
-### 3.2.5 Tỷ lệ Giao dịch Ngoại lai theo từng Cửa hàng
-
-```{r outlier-plot, echo=TRUE, fig.cap="Hình 8: Tỷ lệ giao dịch ngoại lai theo từng cửa hàng"}
+```{r outlier-plot, echo=TRUE, fig.cap="Hình 5: Tỷ lệ giao dịch ngoại lai theo từng cửa hàng"}
 outliers_by_store <- DuLieu %>%
   group_by(store) %>%
   summarise(
