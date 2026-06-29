@@ -146,6 +146,7 @@ cat("-> Lưu ý: Eta2 =", round(eta_val, 4), "nghĩa là store_type giải thíc
 
 # 2. KIỂM ĐỊNH TÁC ĐỘNG KHUYẾN MÃI: sales ~ promo (Welch t-test + Wilcoxon)
 
+# 2. KIỂM ĐỊNH t-test: sales ~ promo
 cat("\n2. KIỂM ĐỊNH t-test: sales ~ promo\n")
 cat("H0: Khuyến mãi không ảnh hưởng đến doanh thu\n")
 cat("H1: Khuyến mãi có ảnh hưởng đến doanh thu\n\n")
