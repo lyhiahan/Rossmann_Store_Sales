@@ -146,66 +146,60 @@ cat("-> Lưu ý: Eta2 =", round(eta_val, 4), "nghĩa là store_type giải thíc
 
 # 2. KIỂM ĐỊNH TÁC ĐỘNG KHUYẾN MÃI: sales ~ promo (Welch t-test + Wilcoxon)
 
-cat("2. KIỂM ĐỊNH TÁC ĐỘNG KHUYẾN MÃI: sales ~ promo\n")
-
-cat("H0: Khuyến mãi không ảnh hưởng đến doanh thu (mu_KM = mu_thuong)\n")
+# 2. KIỂM ĐỊNH t-test: sales ~ promo
+cat("\n2. KIỂM ĐỊNH t-test: sales ~ promo\n")
+cat("H0: Khuyến mãi không ảnh hưởng đến doanh thu\n")
 cat("H1: Khuyến mãi có ảnh hưởng đến doanh thu\n\n")
+
+# 2a. Kiểm tra giả định phương sai đồng nhất (Levene's Test)
+cat(" a) Levene's test (Kiểm tra phương sai đồng nhất)\n")
+levene_promo <- car::leveneTest(sales ~ promo, data = train_df)
+print(levene_promo)
+p_levene_promo <- levene_promo$`Pr(>F)`[1]
+cat("→ p-value (Levene):", format(p_levene_promo, scientific = TRUE, digits = 4), "\n")
+
+# 2b. Kiểm định Tham số (Parametric) theo luồng
+if (p_levene_promo >= 0.05) {
+  cat("\n b) Phương sai ĐỒNG NHẤT (p >= 0.05) → Sử dụng Student's t-test\n")
+  ttest_promo <- t.test(sales ~ promo, data = train_df, var.equal = TRUE)
+} else {
+  cat("\n b) Phương sai KHÔNG ĐỒNG NHẤT (p < 0.05) → Sử dụng Welch t-test\n")
+  ttest_promo <- t.test(sales ~ promo, data = train_df, var.equal = FALSE)
+}
+print(ttest_promo)
+p_parametric_promo <- ttest_promo$p.value
 
 promo_yes <- train_df %>% filter(promo == 1) %>% pull(sales)
 promo_no  <- train_df %>% filter(promo == 0) %>% pull(sales)
+cat("\nMean Sales (Promo=1):", round(mean(promo_yes), 0), "EUR\n")
+cat("Mean Sales (Promo=0):", round(mean(promo_no), 0), "EUR\n")
+cat("Chênh lệch:", round(mean(promo_yes) - mean(promo_no), 0), "EUR",
+    "(+", round((mean(promo_yes)/mean(promo_no) - 1) * 100, 1), "%)\n")
 
-cat("Doanh thu trung bình:\n")
-cat("  Promo = 1:", round(mean(promo_yes), 0), "EUR  (n =", length(promo_yes), ")\n")
-cat("  Promo = 0:", round(mean(promo_no),  0), "EUR  (n =", length(promo_no),  ")\n")
-cat("  Chenh lech:", round(mean(promo_yes) - mean(promo_no), 0), "EUR",
-    "(+", round((mean(promo_yes) / mean(promo_no) - 1) * 100, 1), "%)\n\n")
-
-#2a. Welch t-test
-cat("a) Welch t-test (tham số, không yêu cầu phương sai đồng nhất)\n")
-ttest_promo <- t.test(sales ~ promo, data = train_df)
-print(ttest_promo)
-
-# CI: R tính theo chiều (Promo=0 - Promo=1) nên âm; diễn giải theo chiều dương
-cat("\n-> 95% CI cho (Promo=1 - Promo=0): [",
-    round(abs(ttest_promo$conf.int[2]), 2), ",",
-    round(abs(ttest_promo$conf.int[1]), 2), "] EUR\n")
-cat("   Tức: Promo=1 cao hơn Promo=0 từ",
-    round(abs(ttest_promo$conf.int[2]), 2), "đến",
-    round(abs(ttest_promo$conf.int[1]), 2), "EUR (với độ tin cậy 95%)\n")
-
+cat("\n Khoảng tin cậy 95% (CI) cho chênh lệch doanh thu:\n")
+cat("   [", round(ttest_promo$conf.int[1], 2), ",", round(ttest_promo$conf.int[2], 2), "] EUR\n")
 if (ttest_promo$conf.int[1] > 0 | ttest_promo$conf.int[2] < 0) {
-  cat("-> CI không chứa 0 -> xác nhận khuyến mãi CÓ ảnh hưởng có ý nghĩa\n")
+  cat("→ Khoảng KHÔNG chứa 0 → xác nhận khuyến mãi CÓ ảnh hưởng\n")
 }
 
-#2b. Cohen's d (Welch-corrected)
-cat("\nb) Effect size: Cohen's d (Welch-corrected, pooled_sd = FALSE)\n")
-cohen_result <- effectsize::cohens_d(sales ~ promo, data = train_df, pooled_sd = FALSE)
-cohen_d      <- cohen_result$Cohens_d
-print(cohen_result)
-cat("-> Cohen's d:", round(cohen_d, 3), "\n")
-cat("-> Mức:", as.character(effectsize::interpret_cohens_d(abs(cohen_d))),
-    "| Thang đo: small=0.2 | medium=0.5 | large>=0.8\n")
-
-#2c. Wilcoxon Rank-Sum: đối chứng phi tham số
-cat("\nc) Wilcoxon Rank-Sum / Mann-Whitney U (phi tham số - đối chứng)\n")
+# 2c. Kiểm định Phi tham số (Wilcoxon Rank Sum) làm đối chứng
+cat("\n c) Wilcoxon Rank Sum (Kiểm định phi tham số — Đối chứng) \n")
 wilcox_result <- wilcox.test(sales ~ promo, data = train_df)
 print(wilcox_result)
-cat("-> Wilcoxon p-value:", format(wilcox_result$p.value, digits = 4), "\n")
+cat("→ p-value (Wilcoxon):", format(wilcox_result$p.value, scientific = TRUE, digits = 4), "\n")
 
-#2d. t-test trên log(sales): kiểm tra độ vững
-cat("\nd) t-test trên log(sales) (robustness check)\n")
-ttest_log <- t.test(log_sales ~ promo, data = train_df)
-cat("-> log t-test p-value:", format(ttest_log$p.value, digits = 4), "\n")
-
-if (ttest_promo$p.value < 0.05 & wilcox_result$p.value < 0.05) {
-  cat("\n[ok] Cả t-test và Wilcoxon đều xác nhận -> KẾT QUẢ ĐÁNG TIN CẬY\n")
+if (p_parametric_promo < 0.05 & wilcox_result$p.value < 0.05) {
+  cat("→ ✓ Cả kiểm định tham số và phi tham số đều xác nhận sự khác biệt → KẾT QUẢ ĐÁNG TIN CẬY\n")
 }
 
-cat("\n[Lưu ý p-value]\n")
-cat("  p-value != xác suất H0 đúng\n")
-cat("  p-value = P(quan sát cực đoan >= quan sát thực | H0 đúng)\n")
-cat("  Ý nghĩa thống kê != Ý nghĩa thực tiễn -> luôn xem effect size\n\n")
-
+# 2d. Effect size (Cohen's d)
+cat("\n d) Effect size (Cohen's d) \n")
+# Chọn pooled_sd động: nếu đồng nhất phương sai thì TRUE, ngược lại FALSE
+pooled_sd_flag <- ifelse(p_levene_promo >= 0.05, TRUE, FALSE)
+cohen_result <- effectsize::cohens_d(sales ~ promo, data = train_df, pooled_sd = pooled_sd_flag)
+print(cohen_result)
+cat("→ Cohen's d:", round(cohen_result$Cohens_d, 3), "\n")
+cat("→ Interpretation:", as.character(effectsize::interpret_cohens_d(abs(cohen_result$Cohens_d))), "\n")
 
 
 # 3. TƯƠNG QUAN: sales ~ competition_distance (Spearman + Pearson)
