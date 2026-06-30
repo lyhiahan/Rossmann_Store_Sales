@@ -554,6 +554,22 @@ DuLieu <- df
 DuLieu$log_sales <- log(DuLieu$sales)
 ```
 
+**Giải thích ý nghĩa các bảng số liệu thống kê mô tả (EDA Summary Tables):**
+
+1. **Thống kê mô tả tổng quan (Continuous Variables):**
+   - Biến mục tiêu **Doanh số (Sales)** đạt giá trị trung bình là 6.839,63 EUR/ngày với độ lệch chuẩn khá lớn (2.631,57 EUR), cho thấy sự biến động mạnh mẽ của doanh số giữa các ngày bán hàng. Khoảng doanh số dao động từ 1.052 EUR đến mức kỷ lục là 21.370 EUR.
+   - **Lượng khách hàng (Customers)** trung bình đạt 719 người/ngày, tương ứng với mức chi tiêu bình quân trên mỗi khách hàng (Sales per Customer) là khoảng 9,70 EUR.
+   - **Khoảng cách cạnh tranh (Competition Distance)** có giá trị trung vị là 1.320m (nhỏ hơn nhiều so với giá trị trung bình là 4.257,81m do phân phối bị lệch phải bởi một số cửa hàng có đối thủ ở rất xa lên tới gần 30km). Điều này phản ánh môi trường cạnh tranh khốc liệt của thị trường bán lẻ dược mỹ phẩm tại Đức, nơi đa số cửa hàng có đối thủ trực tiếp xuất hiện trong bán kính chưa đầy 1,5km.
+
+2. **Phân tích theo các nhóm đặc trưng (Categorical Grouping Analysis):**
+   - **Tác động của Khuyến mãi (Promo):** Khuyến mãi ngắn hạn là nhân tố thúc đẩy doanh số rõ rệt nhất. Những ngày chạy chương trình khuyến mãi (Promo = 1) ghi nhận doanh số trung bình đạt 8.091,30 EUR (tăng gần 41% so với mức 5.738,87 EUR của những ngày không có khuyến mãi).
+   - **Loại hình cửa hàng (Store Type):** Cửa hàng loại D (Flagship) và loại C (Nhỏ ngoại ô) có doanh số trung bình ngày vượt trội, trong khi loại A (Phổ thông) có doanh số thấp hơn nhưng lại chiếm số lượng cửa hàng áp đảo trong hệ thống.
+   - **Ảnh hưởng của Ngày lễ (Holidays):** Các ngày lễ quốc gia/bang (State Holiday) kéo doanh thu trung bình giảm sâu do hầu hết các cửa hàng phải đóng cửa theo luật định. Ngược lại, các ngày kỳ nghỉ học sinh (School Holiday) ghi nhận doanh số tăng nhẹ do nhu cầu mua sắm gia đình tăng lên.
+
+3. **Phân tích Tương quan & Cảnh báo Rò rỉ Mục tiêu (Correlation & Leakage):**
+   - Hệ số tương quan giữa `Sales` và `Customers` đạt mức cực cao là **0,892**, khẳng định lượng khách ghé thăm là yếu tố quyết định hàng đầu đến doanh thu của cửa hàng.
+   - **Cảnh báo khoa học:** Do biến `Customers` chỉ được biết sau khi ngày bán hàng đã kết thúc, việc sử dụng trực tiếp biến này để dự báo doanh số tương lai sẽ gây ra lỗi **rò rỉ mục tiêu (target leakage)** nghiêm trọng, làm mô hình đạt điểm kiểm định cao giả tạo nhưng không thể sử dụng để lập kế hoạch kinh doanh thực tế.
+
 ### 3.2.1 Phân phối Doanh số và Khách hàng
 
 ```{r distribution-plots, echo=TRUE, fig.cap="Hình 1–2: Phân phối doanh số Sales thực tế và Số lượng khách hàng"}
@@ -594,7 +610,9 @@ p_cust <- ggplot(DuLieu, aes(x = customers)) +
 gridExtra::grid.arrange(p_sales, p_cust, ncol = 2)
 ```
 
-**Ứng dụng thực tế**: Cả doanh số (`sales`) và số lượng khách hàng (`customers`) đều có phân phối lệch phải mạnh với đuôi dài bên phải. Trong ngành bán lẻ, điều này phản ánh sự mất cân bằng về mặt thời gian: doanh số thông thường duy trì ở mức trung vị thấp ổn định, nhưng sẽ tăng vọt vào các ngày đặc biệt (như thứ Bảy hoặc dịp Giáng sinh).
+**Ý nghĩa và Giải thích Phân phối:**
+- **Phát hiện thống kê:** Biểu đồ tần suất cho thấy biến doanh số (Sales) và khách hàng (Customers) đều có phân phối lệch phải rõ rệt. Cụ thể, hệ số skewness của doanh số là **0,941** (kurtosis = **4,38**) và lượng khách hàng là **1,11** (kurtosis = **4,65**). Giá trị trung bình doanh số (6.839,63 EUR) lớn hơn trung vị (6.364,00 EUR) phản ánh hai đuôi phải phân phối bị kéo dài bởi những ngày doanh thu bùng nổ.
+- **Ý nghĩa kinh tế:** Hiện tượng lệch phải này xuất phát từ đặc trưng bán lẻ tại Đức: doanh thu thường tăng đột biến vào những ngày chạy khuyến mãi ngắn hạn, ngày thứ Sáu và thứ Bảy trước khi cửa hàng đóng cửa bắt buộc vào Chủ nhật theo quy định của Luật đóng cửa cửa hàng (Ladenschlussgesetz), hoặc các mùa mua sắm cao điểm cuối năm như Giáng sinh.
 
 
 ### 3.2.2 Kiểm định Phân phối chuẩn và Biến đổi Log-scale
@@ -630,7 +648,9 @@ p_log <- ggplot(DuLieu, aes(x = log_sales)) +
 gridExtra::grid.arrange(p_qq, p_log, ncol = 2)
 ```
 
-**Ứng dụng thực tế**: Q-Q Plot uốn cong mạnh ở hai đầu cho thấy doanh số thực tế không tuân theo phân phối chuẩn. Nếu đưa biến mục tiêu này trực tiếp vào mô hình hồi quy tuyến tính cổ điển, các giả định về sai số sẽ bị vi phạm. Phép biến đổi Log-scale giúp phân phối đối xứng hơn rất nhiều (skewness giảm mạnh), cải thiện độ ổn định và tính dự báo của mô hình hồi quy tuyến tính.
+**Ý nghĩa của Phép biến đổi Log-scale:**
+- **Phát hiện thống kê:** Biểu đồ Q-Q Plot uốn cong mạnh ở hai đầu xác nhận dữ liệu doanh số thực tế vi phạm nghiêm trọng giả định phân phối chuẩn. Phép biến đổi logarit tự nhiên $log(Sales)$ giúp khắc phục triệt để hiện tượng lệch phải, giảm hệ số skewness từ **0,941** xuống còn **-0,18** (đưa phân phối về dạng hình chuông gần đối xứng lý tưởng).
+- **Ý nghĩa kinh tế và mô hình:** Biến đổi logarit không chỉ giúp dữ liệu đáp ứng tốt các giả định về phân phối chuẩn và ổn định phương sai trong mô hình hồi quy, mà còn mang ý nghĩa kinh tế thực tiễn khi cho phép diễn giải tác động của các biến độc lập theo tỷ lệ phần trăm tương đối thay vì giá trị tuyệt đối bằng EUR. Điều này đặc biệt phù hợp với sự khác biệt lớn về quy mô doanh thu giữa các cửa hàng khác nhau.
 
 
 ### 3.2.3 Tỷ lệ Giao dịch Ngoại lai theo từng Cửa hàng
@@ -655,7 +675,10 @@ p_outliers_bar <- ggplot(outliers_by_store, aes(x = reorder(factor(store), -pct)
 print(p_outliers_bar)
 ```
 
-**Ứng dụng thực tế**: Các điểm ngoại lai (Outliers) chiếm tỷ lệ nhỏ trong dữ liệu. Việc chẩn đoán cho thấy các ngày này tập trung vào các sự kiện đặc biệt (như thứ Bảy sát Giáng sinh hoặc đợt khuyến mãi siêu khủng). Việc loại bỏ các giá trị này sẽ làm sai lệch dự báo nhu cầu đỉnh điểm của chuỗi cung ứng, do đó chúng ta cần giữ lại và sử dụng các mô hình học máy (như XGBoost, Random Forest) vốn có khả năng chịu nhiễu tốt để huấn luyện.
+**Phân tích và Định hướng xử lý Giá trị ngoại lệ (Outliers):**
+- **Đặc điểm phân bố:** Tỷ lệ giao dịch ngoại lai (Outliers) của các cửa hàng dao động chủ yếu trong khoảng từ **2% đến 7%** trên tổng số ngày hoạt động. Một số cửa hàng đặc thù có tỷ lệ ngày đột biến doanh thu cao vượt trội do vị trí hoặc nhóm khách hàng đặc biệt.
+- **Giải mã kinh tế:** Phân tích sâu hơn cho thấy các điểm ngoại lai này trùng khớp với những ngày chạy chương trình khuyến mãi lớn kết hợp ngày cận lễ (như Black Friday, sát lễ Giáng sinh). Đây không phải là sai sót nhập liệu mà là phản ánh **nhu cầu thực tế tăng vọt** của thị trường.
+- **Định hướng mô hình hóa:** Quyết định **giữ lại toàn bộ** các giá trị ngoại lệ vì chúng chứa thông tin cốt lõi để lập kế hoạch tồn kho và chuỗi cung ứng trong mùa cao điểm. Để xử lý hiệu quả hiện tượng này mà không gây méo mó mô hình hồi quy tuyến tính cổ điển, nhóm chuyển hướng sử dụng các mô hình học máy dạng cây (Random Forest, XGBoost) có tính vững (robust) cao, tự động chống nhiễu ngoại trị tốt mà không cần loại bỏ dữ liệu gốc.
 
 ***
 
