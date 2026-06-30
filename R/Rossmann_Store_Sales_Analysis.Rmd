@@ -401,21 +401,15 @@ cat("HOÀN TẤT — Rò rỉ dữ liệu = 0 (ZERO)\n")
 ***
 ## 3.2 Thống kê mô tả và phân tích phân phối sau xử lý (Exploratory Data Analysis)
 
-```{r eda}
-# EXPLORATORY DATA ANALYSIS (EDA)
-# 
-# Mô tả: Thống kê mô tả, phân tích phân phối, phân tích nhóm
-# Input: readRDS(here("data", "processed", "df_clean.rds"))
-# Sử dụng: get_summary_stats() từ R/utils.R
-#           COLORS, theme_rossmann() từ R/00_setup.R
-
-
-# Đọc dữ liệu
+```{r eda-setup, echo=TRUE}
+# Đọc dữ liệu sạch
 df <- readRDS(here("data", "processed", "df_clean.rds"))
-cat("Dữ liệu:", format(nrow(df), big.mark = ","), "dòng x", ncol(df), "cột\n\n")
+cat("Dữ liệu sạch sau lọc nhiễu:", format(nrow(df), big.mark = ","), "dòng x", ncol(df), "cột\n")
+```
 
-# PHẦN 1: THỐNG KÊ MÔ TẢ TỔNG QUAN
-cat(" PHẦN 1: THỐNG KÊ MÔ TẢ \n")
+### 3.2.1 Thống kê mô tả tổng quan (Descriptive Statistics)
+
+```{r eda-summary, echo=TRUE}
 numeric_cols <- c("sales", "customers", "competition_distance", "sales_per_customer")
 
 summary_numeric <- df %>%
@@ -436,9 +430,15 @@ summary_numeric <- df %>%
     .groups  = "drop"
   )
 print(summary_numeric)
+```
 
-# PHẦN 2: PHÂN TÍCH PHÂN PHỐI
-cat("\n PHẦN 2: PHÂN TÍCH PHÂN PHỐI \n")
+**Ý nghĩa thống kê mô tả**:
+- **Doanh số (Sales):** Đạt trung bình 6.839,63 EUR/ngày với độ lệch chuẩn lớn (2.631,57 EUR), phản ánh tính biến động mạnh do chịu ảnh hưởng từ các yếu tố thời gian và chương trình khuyến mãi.
+- **Lượng khách (Customers):** Trung bình có 719,26 khách/ngày. Khoảng cách đối thủ (`competition_distance`) có trung vị 1.320m, cho thấy mật độ cạnh tranh tương đối cao.
+
+### 3.2.2 Phép biến đổi Logarithm ổn định phương sai
+
+```{r eda-distribution, echo=TRUE}
 skew_sales <- skewness(df$sales)
 kurt_sales <- kurtosis(df$sales)
 skew_cust  <- skewness(df$customers)
@@ -454,9 +454,97 @@ dist_stats <- tibble(
   `Độ nhọn`  = round(c(kurt_sales, kurt_log_s, kurt_cust, kurtosis(df$log_customers)), 3)
 )
 print(dist_stats)
+```
 
-# PHẦN 3: PHÂN TÍCH THEO NHÓM
-cat("\n PHẦN 3: PHÂN TÍCH THEO NHÓM \n")
+**Ý nghĩa kiểm định phân phối**:
+- Doanh số và Khách hàng gốc có độ lệch phải lớn (Skewness tương ứng là 0,941 và 1,11).
+- Phép biến đổi Logarithm giúp đưa Doanh số về dạng đối xứng ($Skewness = -0,18$, $Kurtosis = 2,98$), xấp xỉ phân phối chuẩn lý thuyết ($Skewness = 0, Kurtosis = 3$), giúp thỏa mãn giả định của các mô hình tuyến tính.
+
+### 3.2.3 Biểu đồ Phân phối Doanh số và Khách hàng
+
+```{r distribution-plots, echo=TRUE, fig.cap="Hình 1–2: Phân phối doanh số Sales thực tế và Số lượng khách hàng"}
+mean_s <- mean(df$sales)
+median_s <- median(df$sales)
+skew_sales <- moments::skewness(df$sales)
+kurt_sales <- moments::kurtosis(df$sales)
+skew_cust <- moments::skewness(df$customers)
+kurt_cust <- moments::kurtosis(df$customers)
+
+DuLieu <- df
+
+p_sales <- ggplot(DuLieu, aes(x = sales)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 60,
+                 fill = "#2196F3", alpha = 0.55, color = "white", linewidth = 0.2) +
+  geom_density(color = "#E53935", linewidth = 1.2) +
+  geom_vline(xintercept = mean_s, color = "#FF9800", linetype = "dashed", linewidth = 1) +
+  geom_vline(xintercept = median_s, color = "#4CAF50", linetype = "dotdash", linewidth = 1) +
+  labs(
+    title   = "Phân phối doanh số (Sales)",
+    subtitle = paste0("Skewness = ", round(skew_sales, 2), " | Kurtosis = ", round(kurt_sales, 2)),
+    x = "Doanh số (EUR/ngày/cửa hàng)", y = "Mật độ"
+  ) +
+  scale_x_continuous(labels = scales::comma) +
+  GiaoDienRossmann
+
+p_cust <- ggplot(DuLieu, aes(x = customers)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 50,
+                 fill = "#00ACC1", alpha = 0.6, color = "white", linewidth = 0.2) +
+  geom_density(color = "#E53935", linewidth = 1) +
+  geom_vline(xintercept = mean(DuLieu$customers), color = "#FF9800",
+             linetype = "dashed", linewidth = 0.8) +
+  labs(title = "Phân phối số khách hàng (Customers)",
+       subtitle = paste0("Skewness = ", round(skew_cust, 2),
+                          " | Kurtosis = ", round(kurt_cust, 2)),
+       x = "Số khách hàng", y = "Mật độ") +
+  scale_x_continuous(labels = scales::comma) +
+  GiaoDienRossmann
+
+gridExtra::grid.arrange(p_sales, p_cust, ncol = 2)
+```
+
+**Ý nghĩa biểu đồ phân phối**: 
+- **Hình 1 & 2:** Trực quan hóa phân phối lệch phải rõ rệt của Doanh số và Khách hàng. Đuôi dài bên phải biểu diễn những ngày doanh thu tăng đột biến (nhờ Promo hoặc ngày cận lễ), là nét đặc trưng của mô hình bán lẻ thực tế.
+
+### 3.2.4 Kiểm định phân phối chuẩn và Kiểm chứng Log-scale
+
+```{r normality-check, echo=TRUE, fig.cap="Hình 3-4: Q-Q Plot kiểm tra tính chuẩn và Phân phối Log(Sales)"}
+skew_sales <- moments::skewness(DuLieu$sales)
+skew_log_s <- moments::skewness(DuLieu$log_sales)
+
+p_qq <- ggplot(DuLieu, aes(sample = sales)) +
+  stat_qq(color = "#2196F3", alpha = 0.15, size = 0.4) +
+  stat_qq_line(color = "#E53935", linewidth = 1) +
+  labs(
+    title    = "Q-Q Plot kiểm tra tính chuẩn",
+    subtitle = "Điểm lệch khỏi đường lý thuyết ở 2 đuôi",
+    x = "Quantile lý thuyết", y = "Quantile thực tế (Sales)"
+  ) +
+  GiaoDienRossmann
+
+p_log <- ggplot(DuLieu, aes(x = log_sales)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 50,
+                 fill = "#4CAF50", alpha = 0.55, color = "white", linewidth = 0.2) +
+  geom_density(color = "#E53935", linewidth = 1.2) +
+  stat_function(fun = dnorm,
+                args = list(mean = mean(DuLieu$log_sales), sd = sd(DuLieu$log_sales)),
+                color = "grey30", linewidth = 1, linetype = "dashed") +
+  labs(
+    title    = "Phân phối Log(Sales)",
+    subtitle = paste0("Skewness giảm từ ", round(skew_sales, 2), " → ", round(skew_log_s, 3)),
+    x = "Log(Sales)", y = "Mật độ"
+  ) +
+  GiaoDienRossmann
+
+gridExtra::grid.arrange(p_qq, p_log, ncol = 2)
+```
+
+**Ý nghĩa biểu đồ kiểm chứng**: 
+- **Hình 3:** Biểu đồ Q-Q Plot uốn cong mạnh ở 2 đầu xác nhận dữ liệu gốc vi phạm giả định chuẩn.
+- **Hình 4:** Phân phối của biến đổi $log(Sales)$ ôm sát đường lý thuyết phân phối chuẩn, chứng minh phép log-transform hoàn toàn phù hợp để xử lý dữ liệu trước khi chạy hồi quy.
+
+### 3.2.5 Thống kê phân tích theo nhóm (Grouped Analysis)
+
+```{r eda-groups, echo=TRUE}
 stats_storetype  <- get_summary_stats(df, store_type)
 stats_promo      <- get_summary_stats(df, promo)
 stats_assortment <- get_summary_stats(df, assortment)
@@ -487,7 +575,6 @@ stats_school <- df %>%
 cat("\n--- Thống kê theo School Holiday ---\n")
 print(stats_school)
 
-# CompetitionDistance
 stats_comp <- df %>%
   mutate(dist_group = cut(competition_distance,
                            breaks = c(0, 1000, 5000, 10000, Inf),
@@ -497,8 +584,16 @@ stats_comp <- df %>%
             .groups = "drop")
 cat("\n--- Thống kê theo Competition Distance ---\n")
 print(stats_comp)
+```
 
-# PHẦN 4: TƯƠNG QUAN
+**Ý nghĩa phân tích nhóm**:
+- **Store Type & Assortment:** Loại cửa hàng C (Nhỏ ngoại ô) và danh mục sản phẩm mở rộng (Extended) đạt doanh số trung bình cao nhất.
+- **Promo (Khuyến mãi):** Doanh số tăng vọt $41\%$ từ 5.738 EUR (không khuyến mãi) lên 8.091 EUR (có khuyến mãi), khẳng định khuyến mãi là động lực tăng trưởng chính.
+- **Thời gian & Cạnh tranh:** Doanh thu tăng mạnh vào đầu tuần (thứ 2) và cuối tuần (thứ 6, 7). Khoảng cách đối thủ gần hay xa không có tác động đơn lẻ rõ rệt đến doanh số.
+
+### 3.2.6 Phân tích tương quan & Cảnh báo rò rỉ dữ liệu (Target Leakage)
+
+```{r eda-correlation, echo=TRUE}
 cor_vars <- c("sales", "customers", "competition_distance",
               "sales_per_customer", "month", "is_weekend")
 numeric_for_cor <- df %>%
@@ -507,8 +602,15 @@ numeric_for_cor <- df %>%
 cor_matrix <- cor(numeric_for_cor, use = "complete.obs")
 cat("\n--- Ma trận tương quan (Correlation Matrix) ---\n")
 print(round(cor_matrix, 3))
+```
 
-# PHẦN 5: PHÂN TÍCH OUTLIER
+**Ý nghĩa tương quan và Cảnh báo quan trọng**:
+- Doanh số (`sales`) có tương quan tuyến tính Pearson cực mạnh với lượng khách (`customers`) ($r = 0,892$).
+- **Cảnh báo Target Leakage (Rò rỉ mục tiêu):** Số lượng khách hàng là đặc trưng không thể biết trước ở thời điểm dự báo tương lai. Do đó, việc loại bỏ biến `customers` (và biến phái sinh `sales_per_customer`) khỏi tập đặc trưng là cần thiết để tránh mô hình bị rò rỉ thông tin và hoạt động kém hiệu quả trên thực tế.
+
+### 3.2.7 Phân tích các điểm Ngoại lệ (Outliers Analysis)
+
+```{r eda-outliers, echo=TRUE}
 outlier_summary <- df %>%
   group_by(store) %>%
   summarise(
@@ -547,93 +649,13 @@ saveRDS(list(
   outlier_summary     = outlier_summary,
   monthly_stats       = monthly_stats
 ), here("output", "tables", "eda_results.rds"))
-
-cat(" EDA hoàn tất!\n")
-cat(" Kết quả → output/tables/eda_results.rds\n")
-DuLieu <- df
-DuLieu$log_sales <- log(DuLieu$sales)
 ```
 
-### 3.2.1 Phân phối Doanh số và Khách hàng
+**Ý nghĩa phân tích ngoại lệ**:
+- Các điểm doanh thu ngoại lệ (outliers) chiếm tỷ lệ nhỏ ở mỗi cửa hàng (tất cả đều dưới 10%).
+- Các ngày có doanh số cực đại này thường tập trung vào mùa lễ hội cuối năm (tháng 11 và tháng 12). Nhóm nghiên cứu giữ lại các điểm này vì chúng phản ánh đúng sức mua đỉnh điểm thực tế, và định hướng sử dụng mô hình học máy dạng cây (Random Forest, XGBoost) có tính vững vững cao với nhiễu ngoại lai.
 
-```{r distribution-plots, echo=TRUE, fig.cap="Hình 1–2: Phân phối doanh số Sales thực tế và Số lượng khách hàng"}
-mean_s <- mean(DuLieu$sales)
-median_s <- median(DuLieu$sales)
-skew_sales <- moments::skewness(DuLieu$sales)
-kurt_sales <- moments::kurtosis(DuLieu$sales)
-skew_cust <- moments::skewness(DuLieu$customers)
-kurt_cust <- moments::kurtosis(DuLieu$customers)
-
-p_sales <- ggplot(DuLieu, aes(x = sales)) +
-  geom_histogram(aes(y = after_stat(density)), bins = 60,
-                 fill = "#2196F3", alpha = 0.55, color = "white", linewidth = 0.2) +
-  geom_density(color = "#E53935", linewidth = 1.2) +
-  geom_vline(xintercept = mean_s, color = "#FF9800", linetype = "dashed", linewidth = 1) +
-  geom_vline(xintercept = median_s, color = "#4CAF50", linetype = "dotdash", linewidth = 1) +
-  labs(
-    title   = "Phân phối doanh số (Sales)",
-    subtitle = paste0("Skewness = ", round(skew_sales, 2), " | Kurtosis = ", round(kurt_sales, 2)),
-    x = "Doanh số (EUR/ngày/cửa hàng)", y = "Mật độ"
-  ) +
-  scale_x_continuous(labels = scales::comma) +
-  GiaoDienRossmann
-
-p_cust <- ggplot(DuLieu, aes(x = customers)) +
-  geom_histogram(aes(y = after_stat(density)), bins = 50,
-                 fill = "#00ACC1", alpha = 0.6, color = "white", linewidth = 0.2) +
-  geom_density(color = "#E53935", linewidth = 1) +
-  geom_vline(xintercept = mean(DuLieu$customers), color = "#FF9800",
-             linetype = "dashed", linewidth = 0.8) +
-  labs(title = "Phân phối số khách hàng (Customers)",
-       subtitle = paste0("Skewness = ", round(skew_cust, 2),
-                          " | Kurtosis = ", round(kurt_cust, 2)),
-       x = "Số khách hàng", y = "Mật độ") +
-  scale_x_continuous(labels = scales::comma) +
-  GiaoDienRossmann
-
-gridExtra::grid.arrange(p_sales, p_cust, ncol = 2)
-```
-
-**Ứng dụng thực tế**: Cả doanh số (`sales`) và số lượng khách hàng (`customers`) đều có phân phối lệch phải mạnh với đuôi dài bên phải. Trong ngành bán lẻ, điều này phản ánh sự mất cân bằng về mặt thời gian: doanh số thông thường duy trì ở mức trung vị thấp ổn định, nhưng sẽ tăng vọt vào các ngày đặc biệt (như thứ Bảy hoặc dịp Giáng sinh).
-
-
-### 3.2.2 Kiểm định Phân phối chuẩn và Biến đổi Log-scale
-
-```{r normality-check, echo=TRUE, fig.cap="Hình 3-4: Q-Q Plot kiểm tra tính chuẩn và Phân phối Log(Sales)"}
-skew_sales <- moments::skewness(DuLieu$sales)
-skew_log_s <- moments::skewness(DuLieu$log_sales)
-
-p_qq <- ggplot(DuLieu, aes(sample = sales)) +
-  stat_qq(color = "#2196F3", alpha = 0.15, size = 0.4) +
-  stat_qq_line(color = "#E53935", linewidth = 1) +
-  labs(
-    title    = "Q-Q Plot kiểm tra tính chuẩn",
-    subtitle = "Điểm lệch khỏi đường lý thuyết ở 2 đuôi",
-    x = "Quantile lý thuyết", y = "Quantile thực tế (Sales)"
-  ) +
-  GiaoDienRossmann
-
-p_log <- ggplot(DuLieu, aes(x = log_sales)) +
-  geom_histogram(aes(y = after_stat(density)), bins = 50,
-                 fill = "#4CAF50", alpha = 0.55, color = "white", linewidth = 0.2) +
-  geom_density(color = "#E53935", linewidth = 1.2) +
-  stat_function(fun = dnorm,
-                args = list(mean = mean(DuLieu$log_sales), sd = sd(DuLieu$log_sales)),
-                color = "grey30", linewidth = 1, linetype = "dashed") +
-  labs(
-    title    = "Phân phối Log(Sales)",
-    subtitle = paste0("Skewness giảm từ ", round(skew_sales, 2), " → ", round(skew_log_s, 3)),
-    x = "Log(Sales)", y = "Mật độ"
-  ) +
-  GiaoDienRossmann
-
-gridExtra::grid.arrange(p_qq, p_log, ncol = 2)
-```
-
-**Ứng dụng thực tế**: Q-Q Plot uốn cong mạnh ở hai đầu cho thấy doanh số thực tế không tuân theo phân phối chuẩn. Nếu đưa biến mục tiêu này trực tiếp vào mô hình hồi quy tuyến tính cổ điển, các giả định về sai số sẽ bị vi phạm. Phép biến đổi Log-scale giúp phân phối đối xứng hơn rất nhiều (skewness giảm mạnh), cải thiện độ ổn định và tính dự báo của mô hình hồi quy tuyến tính.
-
-
-### 3.2.3 Tỷ lệ Giao dịch Ngoại lai theo từng Cửa hàng
+### 3.2.8 Biểu đồ phân tích Tỷ lệ Ngoại lệ theo Cửa hàng
 
 ```{r outlier-plot, echo=TRUE, fig.cap="Hình 5: Tỷ lệ giao dịch ngoại lai theo từng cửa hàng"}
 outliers_by_store <- DuLieu %>%
@@ -655,7 +677,8 @@ p_outliers_bar <- ggplot(outliers_by_store, aes(x = reorder(factor(store), -pct)
 print(p_outliers_bar)
 ```
 
-**Ứng dụng thực tế**: Các điểm ngoại lai (Outliers) chiếm tỷ lệ nhỏ trong dữ liệu. Việc chẩn đoán cho thấy các ngày này tập trung vào các sự kiện đặc biệt (như thứ Bảy sát Giáng sinh hoặc đợt khuyến mãi siêu khủng). Việc loại bỏ các giá trị này sẽ làm sai lệch dự báo nhu cầu đỉnh điểm của chuỗi cung ứng, do đó chúng ta cần giữ lại và sử dụng các mô hình học máy (như XGBoost, Random Forest) vốn có khả năng chịu nhiễu tốt để huấn luyện.
+**Ý nghĩa biểu đồ ngoại lệ**:
+- **Hình 5:** Trực quan hóa tỷ lệ giao dịch ngoại lai. Tỷ lệ này phân bố đồng đều giữa các cửa hàng, chứng minh sự tồn tại của các điểm ngoại lai là do biến động ngẫu nhiên theo ngày (ngày khuyến mãi đặc biệt, sự kiện lễ tết) chứ không phải do sai lệch vận hành cục bộ ở một cửa hàng cụ thể nào.
 
 ***
 
