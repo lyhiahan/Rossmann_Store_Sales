@@ -106,7 +106,7 @@ GiaoDienRossmann <- theme_minimal(base_size = 12) +
   )
 MauCuaHang <- c("a" = "#2196F3", "b" = "#E53935", "c" = "#4CAF50", "d" = "#FF9800")
 MauKhuyenMai <- c("0" = "#90A4AE", "1" = "#E53935")
-here::i_am("full.rmd")
+here::i_am("R/Rossmann_Store_Sales_Analysis.Rmd")
 theme_rossmann <- function(base_size = 12) {
   theme_minimal(base_size = base_size) %+replace%
     theme(
