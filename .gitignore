@@ -2,16 +2,22 @@
 # Rossmann R Project .gitignore
 # ========================
 
+# --- IDE / Editor ---
+.vscode/
+.agents/
+skills-lock.json
+
 # --- Output files (tái tạo được từ code) ---
 data/processed/*.rds
 data/processed/*.csv
 output/tables/*.rds
+output/tables/*.csv
 output/figures/*.png
 output/figures/*.pdf
 
 # --- Report builds ---
-report/*.docx
-report/*.pptx
+report/
+docs/
 *.docx
 *.pptx
 
@@ -37,8 +43,3 @@ desktop.ini
 # --- Misc ---
 *.log
 *.tmp
-
-# --- Exceptions ---
-!presentation.html
-!slides/index.html
-

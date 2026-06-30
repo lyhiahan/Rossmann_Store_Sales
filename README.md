@@ -29,59 +29,35 @@ Dự án phân tích và dự đoán doanh số bán hàng của chuỗi cửa h
 ```
 Rossmann_Store_Sales/
 │
-├── .gitignore                                  # Git ignore rules
+├── .gitignore
 ├── .here                                       # Marker cho here package
-├── README.md                                   # ← File này
+├── README.md
 │
-├── data/                                       # Dữ liệu
+├── data/
 │   ├── raw/                                    # Dữ liệu gốc từ Kaggle
 │   │   ├── train.csv                           #   1,017,209 dòng × 9 cột
 │   │   └── store.csv                           #   1,115 dòng × 10 cột
-│   └── processed/                              # Dữ liệu sạch (pipeline tạo ra)
-│       ├── df_clean.rds                        #   Toàn bộ dữ liệu đã xử lý
-│       ├── train_data.rds                      #   Tập train (70%)
-│       ├── val_data.rds                        #   Tập validation (30%)
-│       ├── train_stats.rds                     #   Thống kê train (median, IQR)
-│       ├── rossmann_clean.csv                  #   Export CSV — full
-│       ├── rossmann_train_cleaned.csv          #   Export CSV — train
-│       └── rossmann_val_cleaned.csv            #   Export CSV — val
+│   └── processed/                              # Dữ liệu sạch (pipeline tạo ra, không tracked)
 │
 ├── R/                                          # Source code R
-│   ├── 00_setup.R                              # Quốc Anh — Packages, theme, config
-│   ├── utils.R                                 # Quốc Anh — Hàm tiện ích dùng chung
-│   ├── data_pipeline.R                         # Quốc Anh — ETL pipeline (chống data leakage)
-│   ├── statistical_tests.R                     # Gia Hân — Kiểm định thống kê
-│   ├── eda.R                                   # Thanh Phúc — Phân tích khám phá dữ liệu
-│   ├── visualization.Rmd                       # Gia Hân — 10 biểu đồ trực quan hóa
-│   ├── modeling.R                              # Đức Thắng — 3 mô hình ML + tuning
-│   ├── time_series.R                           # Thành Tài — ARIMA, ETS, STL Decomposition
-│   ├── evaluation.R                            # Thành Tài — Đánh giá & so sánh mô hình
-│   └── Rossmann_Store_Sales_Analysis.Rmd       # File RMD tổng hợp toàn bộ code
+│   ├── 00_setup.R                              # Packages, theme, config
+│   ├── utils.R                                 # Hàm tiện ích dùng chung
+│   ├── data_pipeline.R                         # ETL pipeline (chống data leakage)
+│   ├── statistical_tests.R                     # Kiểm định thống kê
+│   ├── eda.R                                   # Phân tích khám phá dữ liệu
+│   ├── visualization.R                         # Trực quan hóa dữ liệu
+│   ├── visualization.Rmd                       # 10 biểu đồ trực quan hóa nâng cao
+│   ├── modeling.R                              # 3 mô hình ML + tuning
+│   ├── time_series.R                           # ARIMA, ETS, STL Decomposition
+│   ├── evaluation.R                            # Đánh giá & so sánh mô hình
+│   └── Rossmann_Store_Sales_Analysis.Rmd       # File RMD tổng hợp toàn bộ (all-in-one)
 │
-├── output/                                     # Kết quả xuất ra
-│   ├── figures/                                # 44 biểu đồ PNG (EDA + Viz + Eval + TS)
-│   └── tables/                                 # Models, predictions, metrics (RDS/CSV)
-│       ├── models.rds                          #   3 trained models (LR, RF, XGB)
-│       ├── predictions.rds                     #   Predictions + actual values
-│       ├── feature_importance.rds              #   RF & XGB feature importance
-│       ├── eval_results.rds                    #   Bảng so sánh metrics
-│       ├── stat_tests.rds                      #   Kết quả kiểm định thống kê
-│       ├── eda_results.rds                     #   Kết quả EDA
-│       └── time_series_results.rds             #   ARIMA & ETS results
-│
-├── report/                                     # Báo cáo
-│   ├── Rossmann_Store_Sales_Merged.Rmd         # File RMD tổng hợp báo cáo chính
-│   └── main_report.html                        # Báo cáo HTML đã render
-│
-├── slides/                                     # Slide thuyết trình
-│   ├── index.html                              # Slide HTML
-│   ├── custom.css                              # Style slide
-│   ├── custom.js                               # Logic slide
-│   └── speaker_script.md                       # Kịch bản thuyết trình
-│
-└── docs/                                       # Tài liệu nhóm
-    └── HUONG_DAN_NHOM.md                       # Hướng dẫn quy trình làm việc
+└── output/                                     # Kết quả xuất ra (không tracked)
+    ├── figures/                                # Biểu đồ PNG
+    └── tables/                                 # Models, predictions, metrics (RDS/CSV)
 ```
+
+> **Lưu ý**: Các thư mục `data/processed/` và `output/` chứa file output được tái tạo từ code nên **không tracked trên Git**. Chạy pipeline để tạo lại.
 
 ---
 
@@ -104,7 +80,7 @@ train.csv + store.csv
         ▼
    ┌─────────────────────────┐
    │  data_pipeline.R        │   Merge → Filter (Store 1-50, 08/2014–07/2015)
-   │  (Quốc Anh)             │   → Clean → Split 70/30 TRƯỚC khi tính stats
+   │                         │   → Clean → Split 70/30 TRƯỚC khi tính stats
    └─────────┬───────────────┘   → Feature Engineering → Export RDS + CSV
              │
      ┌───────┴───────┐
