@@ -462,17 +462,30 @@ stats_promo      <- get_summary_stats(df, promo)
 stats_assortment <- get_summary_stats(df, assortment)
 stats_dow        <- get_summary_stats(df, day_of_week)
 
+cat("\n--- Thống kê theo Store Type ---\n")
+print(stats_storetype)
+cat("\n--- Thống kê theo Promo ---\n")
+print(stats_promo)
+cat("\n--- Thống kê theo Assortment ---\n")
+print(stats_assortment)
+cat("\n--- Thống kê theo Day of Week ---\n")
+print(stats_dow)
+
 # Holiday
 stats_holiday <- df %>%
   group_by(state_holiday) %>%
   summarise(n = n(), mean_sales = round(mean(sales)), median_sales = round(median(sales)),
             sd_sales = round(sd(sales)), mean_cust = round(mean(customers)), .groups = "drop") %>%
   arrange(desc(mean_sales))
+cat("\n--- Thống kê theo State Holiday ---\n")
+print(stats_holiday)
 
 stats_school <- df %>%
   group_by(school_holiday) %>%
   summarise(n = n(), mean_sales = round(mean(sales)), median_sales = round(median(sales)),
             mean_cust = round(mean(customers)), .groups = "drop")
+cat("\n--- Thống kê theo School Holiday ---\n")
+print(stats_school)
 
 # CompetitionDistance
 stats_comp <- df %>%
@@ -482,6 +495,8 @@ stats_comp <- df %>%
   group_by(dist_group) %>%
   summarise(n = n(), mean_sales = round(mean(sales)), median_sales = round(median(sales)),
             .groups = "drop")
+cat("\n--- Thống kê theo Competition Distance ---\n")
+print(stats_comp)
 
 # PHẦN 4: TƯƠNG QUAN
 cor_vars <- c("sales", "customers", "competition_distance",
@@ -490,6 +505,8 @@ numeric_for_cor <- df %>%
   select(all_of(cor_vars)) %>%
   mutate(across(everything(), as.numeric))
 cor_matrix <- cor(numeric_for_cor, use = "complete.obs")
+cat("\n--- Ma trận tương quan (Correlation Matrix) ---\n")
+print(round(cor_matrix, 3))
 
 # PHẦN 5: PHÂN TÍCH OUTLIER
 outlier_summary <- df %>%
@@ -500,6 +517,8 @@ outlier_summary <- df %>%
     pct       = round(n_outlier / n_total * 100, 1),
     .groups   = "drop"
   )
+cat("\n--- Tỷ lệ giao dịch ngoại lai (Top 10 cửa hàng cao nhất) ---\n")
+print(head(outlier_summary %>% arrange(desc(pct)), 10))
 
 monthly_stats <- df %>%
   group_by(month) %>%
@@ -510,6 +529,8 @@ monthly_stats <- df %>%
     n_obs        = n(),
     .groups      = "drop"
   )
+cat("\n--- Thống kê theo Tháng ---\n")
+print(monthly_stats)
 
 # Lưu kết quả EDA
 saveRDS(list(
