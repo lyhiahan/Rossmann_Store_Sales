@@ -554,6 +554,7 @@ DuLieu <- df
 DuLieu$log_sales <- log(DuLieu$sales)
 ```
 
+<<<<<<< HEAD
 **Giải thích ý nghĩa các bảng số liệu thống kê mô tả (EDA Summary Tables):**
 
 1. **Thống kê mô tả tổng quan (Continuous Variables):**
@@ -569,6 +570,19 @@ DuLieu$log_sales <- log(DuLieu$sales)
 3. **Phân tích Tương quan & Cảnh báo Rò rỉ Mục tiêu (Correlation & Leakage):**
    - Hệ số tương quan giữa `Sales` và `Customers` đạt mức cực cao là **0,892**, khẳng định lượng khách ghé thăm là yếu tố quyết định hàng đầu đến doanh thu của cửa hàng.
    - **Cảnh báo khoa học:** Do biến `Customers` chỉ được biết sau khi ngày bán hàng đã kết thúc, việc sử dụng trực tiếp biến này để dự báo doanh số tương lai sẽ gây ra lỗi **rò rỉ mục tiêu (target leakage)** nghiêm trọng, làm mô hình đạt điểm kiểm định cao giả tạo nhưng không thể sử dụng để lập kế hoạch kinh doanh thực tế.
+=======
+**Ý nghĩa kinh tế và Nhận xét từ các số liệu thống kê trên:**
+
+1. **Thống kê mô tả tổng quan:** Doanh số trung bình ngày của chuỗi cửa hàng Rossmann là 6.839,63 EUR, dao động lớn với độ lệch chuẩn 2.631,57 EUR. Lượng khách trung bình là 719,26 người/ngày. Khoảng cách đối thủ (`competition_distance`) có trung vị là 1.320m cho thấy mật độ cạnh tranh tương đối khốc liệt.
+2. **Kiểm định phân phối:** Cả Doanh số và Khách hàng đều lệch phải lớn (Skewness lần lượt là 0.941 và 1.11). Phép biến đổi logarit tự nhiên giúp giảm skewness của Doanh số về -0.18, giúp ổn định phương sai sai số và đưa dữ liệu về dạng phân phối gần chuẩn phục vụ các giả định hồi quy tuyến tính.
+3. **Phân tích theo nhóm:** 
+   - Loại cửa hàng C và danh mục sản phẩm mở rộng (Extended) mang lại doanh số trung bình cao nhất.
+   - Chiến dịch khuyến mãi (`promo = 1`) giúp tăng mạnh doanh số trung bình từ 5.738 EUR lên 8.091 EUR (tăng 41%), chứng tỏ đây là yếu tố kích cầu cốt lõi.
+   - Doanh số tập trung cao nhất vào thứ Hai (đầu tuần) và thứ Sáu (chuẩn bị cuối tuần). Khoảng cách cạnh tranh không có tác động đơn lẻ đáng kể.
+4. **Phân tích tương quan:** Doanh số và Khách hàng có tương quan tuyến tính thuận cực kỳ mạnh ($r = 0,892$). Tuy nhiên, do số lượng khách hàng là biến chưa biết trước ở thời điểm cần dự báo tương lai, việc đưa trực tiếp biến này vào mô hình sẽ gây ra hiện tượng rò rỉ mục tiêu (Target Leakage), làm mô hình mất giá trị thực tế.
+5. **Chẩn đoán ngoại lệ:** Các ngày doanh số tăng vọt (outliers) chiếm tỷ lệ nhỏ (dưới 10% ở tất cả các cửa hàng), thường rơi vào mùa lễ hội cuối năm (tháng 11 và tháng 12) hoặc ngày có khuyến mãi lớn. Nhóm quyết định không loại bỏ các giá trị này để bảo toàn thông tin về nhu cầu đỉnh điểm thực tế.
+
+>>>>>>> 2bf08074ef1d2506b77bf9ba85858037b26efeb1
 
 ### 3.2.1 Phân phối Doanh số và Khách hàng
 
