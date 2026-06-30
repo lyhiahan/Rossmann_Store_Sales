@@ -2473,30 +2473,16 @@ Kết luận chung: **XGBoost** nên được chọn làm mô hình dự báo do
 
 # 7. Time Series Analysis & Forecasting
 
-```{r time-series}
-# TIME SERIES ANALYSIS
-# File: R/time_series.R
-# 
-# Mô tả: Phân tích chuỗi thời gian — STL Decomposition, SARIMA, ETS, Forecast
-# Input : readRDS(here("data", "processed", "df_clean.rds"))
-# Output: output/tables/time_series_results.rds
-#         output/figures/p_ts_decomposition.png
-#         output/figures/p_ts_sarima_forecast.png
-#         output/figures/p_ts_ets_forecast.png
-#         output/figures/p_ts_comparison.png
-# }
+## 7.1. Mục tiêu và Chuẩn bị dữ liệu chuỗi thời gian
 
+Mục tiêu của phần này là phân tích chuỗi thời gian doanh số của Rossmann để nhận diện xu hướng dài hạn, tính mùa vụ và dự báo doanh số trung bình của toàn hệ thống trong tương lai. Điều này đóng vai trò quan trọng hỗ trợ lập kế hoạch cung ứng và vận hành vĩ mô cho chuỗi cửa hàng.
 
-# 
+Dữ liệu doanh số hàng ngày được gộp nhóm (aggregate) dưới dạng trung bình doanh số của tất cả các cửa hàng mở cửa trong ngày. Chuỗi thời gian được thiết lập với tần suất `frequency = 7` tương ứng với chu kỳ tuần (7 ngày).
 
-# 
+```{r ts-preparation}
 df <- readRDS(here("data", "processed", "df_clean.rds"))
 
-# 1. CHUẨN BỊ DỮ LIỆU CHUỖI THỜI GIAN
-cat(" 1. CHUẨN BỊ DỮ LIỆU \n")
-
 # Gộp nhóm (aggregate) doanh số trung bình theo ngày trên toàn bộ 50 cửa hàng.
-# avg_sales là trung bình doanh số của tất cả cửa hàng mở cửa trong ngày đó.
 daily_sales <- df %>%
   group_by(date) %>%
   summarise(
@@ -2507,84 +2493,79 @@ daily_sales <- df %>%
   ) %>%
   arrange(date)
 
-cat("Chuỗi thời gian:", nrow(daily_sales), "ngày\n")
-cat("Từ:", as.character(min(daily_sales$date)),
-    "đến:", as.character(max(daily_sales$date)), "\n")
-cat("Trung bình doanh số/ngày:",
-    round(mean(daily_sales$avg_sales), 0), "EUR\n")
-
-# frequency = 7 vì dữ liệu hàng ngày với chu kỳ mùa vụ tuần (7 ngày).
+# Tạo đối tượng ts với frequency = 7
 ts_daily <- ts(daily_sales$avg_sales, frequency = 7)
 
-cat("ts object: length =", length(ts_daily),
-    "| frequency =", frequency(ts_daily), "(weekly cycle)\n")
+# Tóm tắt chuỗi dữ liệu
+ts_summary <- data.frame(
+  Chi_so = c("Số ngày quan sát", "Từ ngày", "Đến ngày", "Trung bình doanh số/ngày"),
+  Gia_tri = c(
+    as.character(nrow(daily_sales)),
+    as.character(min(daily_sales$date)),
+    as.character(max(daily_sales$date)),
+    paste0(format(round(mean(daily_sales$avg_sales), 0), big.mark=","), " EUR")
+  )
+)
 
-# 2. TIME SERIES DECOMPOSITION (STL)
-cat("\n 2. STL DECOMPOSITION \n")
+knitr::kable(ts_summary, caption = "Tóm tắt đối tượng chuỗi thời gian")
+```
 
-# STL (Seasonal and Trend decomposition using Loess) phân tách chuỗi thành:
-#   - Trend:     xu hướng dài hạn (tăng/giảm tổng thể)
-#   - Seasonal:  biến động tuần hoàn (chu kỳ 7 ngày)
-#   - Remainder: phần dư/nhiễu (sự kiện bất thường như Giáng sinh)
+## 7.2. Phân tách chuỗi thời gian (STL Decomposition)
+
+Phương pháp STL (Seasonal and Trend decomposition using Loess) được sử dụng để phân tách chuỗi doanh số thành ba thành phần độc lập: xu hướng (Trend), mùa vụ tuần (Seasonal) và phần dư/nhiễu (Remainder).
+
+```{r ts-decomposition, fig.cap="Biến động phân tách chuỗi thời gian STL"}
 decomp <- stl(ts_daily, s.window = "periodic")
 
-cat("STL Decomposition hoàn tất\n")
-cat("  - Trend:     xu hướng dài hạn\n")
-cat("  - Seasonal:  chu kỳ tuần (7 ngày)\n")
-cat("  - Remainder: phần dư (noise)\n")
-
-# Biểu đồ phân tách STL — sử dụng theme_rossmann() của nhóm
 p_decomp <- autoplot(decomp) +
   labs(title    = "STL Decomposition — Doanh số trung bình theo ngày",
        subtitle = "Store 1–50 | 08/2014 – 07/2015") +
   theme_rossmann()
 
 print(p_decomp)
+
 ggsave(here("output", "figures", "p_ts_decomposition.png"), p_decomp,
        width = 10, height = 8, dpi = 150)
-cat("Đã lưu: output/figures/p_ts_decomposition.png\n")
+```
 
-# 3. CHIA TẬP TRAIN / TEST THEO TRỤC THỜI GIAN
-cat("\n 3. CHIA TẬP DỮ LIỆU (CHRONOLOGICAL SPLIT) \n")
+**Nhận xét về STL Decomposition:**
+- **Tính mùa vụ (Seasonal):** Chuỗi doanh số trung bình ngày của Rossmann có tính mùa vụ cực kỳ rõ nét theo chu kỳ tuần (7 ngày), thể hiện qua các đỉnh doanh số lặp lại đều đặn vào các ngày trong tuần và giảm sâu vào chủ nhật (do phần lớn cửa hàng đóng cửa).
+- **Xu hướng (Trend):** Thành phần xu hướng cho thấy doanh số có sự tăng trưởng nhẹ vào giai đoạn cuối năm 2014 và duy trì ổn định trong nửa đầu năm 2015.
+- **Phần dư (Remainder):** Ghi nhận những đột biến lớn vào tháng 12/2014, phản ánh ảnh hưởng mạnh mẽ của sự kiện mua sắm mùa Giáng sinh.
 
-# QUAN TRỌNG: Đối với chuỗi thời gian, PHẢI chia theo thứ tự thời gian
-# (80% đầu = Train, 20% cuối = Test), KHÔNG chia ngẫu nhiên.
-#
-# Sử dụng time(ts_daily)[index] thay vì c(1, n_train) để tránh lỗi
-# "subscript out of bounds" khi frequency ≠ 1 hoặc 12.
+## 7.3. Phân chia dữ liệu (Chronological Split)
+
+Đối với chuỗi thời gian, dữ liệu được chia theo thứ tự thời gian (Chronological Split) với tỷ lệ 80% đầu làm tập huấn luyện (Train set) và 20% cuối làm tập kiểm thử (Test set). Phương pháp này giúp tránh hiện tượng rò rỉ thông tin tương lai về quá khứ.
+
+```{r ts-split}
 n_ts    <- length(ts_daily)
 n_train <- floor(0.8 * n_ts)
 
 ts_train <- window(ts_daily, end   = time(ts_daily)[n_train])
 ts_test  <- window(ts_daily, start = time(ts_daily)[n_train + 1])
 
-cat("TS Train:", length(ts_train), "ngày (",
-    round(length(ts_train) / n_ts * 100, 1), "%)\n")
-cat("TS Test :", length(ts_test), "ngày (",
-    round(length(ts_test)  / n_ts * 100, 1), "%)\n")
+split_ts_summary <- data.frame(
+  Tap_du_lieu = c("Training Set", "Test Set"),
+  So_ngay = c(length(ts_train), length(ts_test)),
+  Ty_le = c(
+    paste0(round(length(ts_train) / n_ts * 100, 1), "%"),
+    paste0(round(length(ts_test)  / n_ts * 100, 1), "%")
+  )
+)
 
-# 4. MÔ HÌNH SARIMA — auto.arima()
-cat("\n 4. MÔ HÌNH SARIMA \n")
+knitr::kable(split_ts_summary, caption = "Phân chia tập dữ liệu chuỗi thời gian")
+```
 
-# auto.arima() tự động tìm bộ tham số Seasonal ARIMA (SARIMA) (p, d, q)(P, D, Q)[7] tối ưu
-# dựa trên tiêu chí AICc (Akaike Information Criterion corrected) vì chuỗi có frequency = 7.
+## 7.4. Mô hình dự báo SARIMA
+
+Mô hình Seasonal ARIMA (SARIMA) được huấn luyện bằng cách tự động tìm kiếm tổ hợp tham số $(p, d, q)(P, D, Q)[7]$ tối ưu thông qua hàm `auto.arima()` dựa trên chỉ số thông tin AICc.
+
+```{r ts-sarima, fig.cap="Dự báo doanh số bằng mô hình SARIMA"}
 fit_arima <- auto.arima(ts_train)
-
-cat("\nSARIMA Model Summary\n")
 order <- arimaorder(fit_arima)
-if (length(order) > 3) {
-  cat("  Mô hình: SARIMA(", order[1], ",", order[2], ",", order[3], ")(", 
-      order[4], ",", order[5], ",", order[6], ")[", order[7], "]\n", sep = "")
-} else {
-  cat("  Mô hình: ARIMA(", order[1], ",", order[2], ",", order[3], ")\n", sep = "")
-}
-cat("  AICc   :", round(fit_arima$aicc, 2), "\n")
-print(summary(fit_arima))
 
-# Dự báo trên horizon = số ngày của tập Test
 fc_arima <- forecast(fit_arima, h = length(ts_test))
 
-# Biểu đồ SARIMA Forecast vs Actual
 p_arima <- autoplot(fc_arima) +
   autolayer(ts_test, series = "Actual", color = COLORS$danger) +
   labs(title    = paste("SARIMA Forecast —", gsub("ARIMA", "SARIMA", format(fit_arima))),
@@ -2595,28 +2576,23 @@ p_arima <- autoplot(fc_arima) +
   theme(legend.position = "bottom")
 
 print(p_arima)
+
 ggsave(here("output", "figures", "p_ts_sarima_forecast.png"), p_arima,
        width = 10, height = 5, dpi = 150)
-cat("Đã lưu: output/figures/p_ts_sarima_forecast.png\n")
+```
 
-# 5. MÔ HÌNH ETS — ets()
-cat("\n 5. MÔ HÌNH ETS \n")
+**Nhận xét về SARIMA:**
+- Nhờ tích hợp các thành phần tự hồi quy và trung bình trượt có tính mùa vụ (Seasonal ARIMA), mô hình SARIMA nắm bắt rất tốt các dao động định kỳ hàng tuần. 
+- Trên tập dữ liệu Test, đường dự báo của SARIMA bám sát hành vi thực tế và mô tả chính xác các đỉnh dao động của chuỗi số liệu.
 
-# ets() tự động chọn tổ hợp tối ưu cho 3 thành phần:
-#   E (Error):    Additive (A) hoặc Multiplicative (M)
-#   T (Trend):    None (N), Additive (A), hoặc Damped (Ad)
-#   S (Seasonal): None (N), Additive (A), hoặc Multiplicative (M)
+## 7.5. Mô hình dự báo ETS
+
+Mô hình ETS (Error, Trend, Seasonal) là phương pháp san mịn mũ tự động lựa chọn tổ hợp tối ưu giữa các thành phần cộng (Additive) hoặc nhân (Multiplicative).
+
+```{r ts-ets, fig.cap="Dự báo doanh số bằng mô hình ETS"}
 fit_ets <- ets(ts_train)
-
-cat("\nETS Model Summary\n")
-cat("  Phương pháp:", fit_ets$method, "\n")
-cat("  AICc       :", round(fit_ets$aicc, 2), "\n")
-print(summary(fit_ets))
-
-# Dự báo
 fc_ets <- forecast(fit_ets, h = length(ts_test))
 
-# Biểu đồ ETS Forecast vs Actual
 p_ets <- autoplot(fc_ets) +
   autolayer(ts_test, series = "Actual", color = COLORS$danger) +
   labs(title    = paste("ETS Forecast —", fit_ets$method),
@@ -2627,18 +2603,25 @@ p_ets <- autoplot(fc_ets) +
   theme(legend.position = "bottom")
 
 print(p_ets)
+
 ggsave(here("output", "figures", "p_ts_ets_forecast.png"), p_ets,
        width = 10, height = 5, dpi = 150)
-cat("Đã lưu: output/figures/p_ts_ets_forecast.png\n")
+```
 
-# 6. ĐÁNH GIÁ & SO SÁNH SARIMA vs ETS
-cat("\n 6. ĐÁNH GIÁ MÔ HÌNH TIME SERIES \n")
+**Nhận xét về ETS:**
+- Mô hình ETS tự động chọn dạng cấu hình phù hợp để làm mịn chuỗi số liệu. 
+- Tuy nhiên, cấu trúc mô hình ETS có xu hướng làm mịn các biến động cực đoan, nên nó dễ bỏ lỡ một số đỉnh hoặc đáy doanh thu đột biến so với mô hình SARIMA.
 
+## 7.6. Đánh giá và so sánh mô hình
+
+Chúng ta tiến hành so sánh hai mô hình dự báo SARIMA và ETS dựa trên ba chỉ số sai số chính trên tập Test: RMSE, MAE và MAPE (%).
+
+```{r ts-comparison, fig.cap="So sánh dự báo của SARIMA và ETS so với thực tế"}
 actual_ts    <- as.numeric(ts_test)
 pred_arima   <- as.numeric(fc_arima$mean)
 pred_ets     <- as.numeric(fc_ets$mean)
 
-# Tính 3 chỉ số đánh giá trên tập Test
+# Tính các chỉ số đánh giá trên tập Test
 ts_results <- tibble(
   Model = c("SARIMA", "ETS"),
   RMSE  = c(
@@ -2655,16 +2638,10 @@ ts_results <- tibble(
   )
 )
 
-cat("\n Bảng so sánh metrics \n")
-print(ts_results)
-
+# Tìm mô hình tốt nhất
 best_ts <- ts_results %>% slice_min(RMSE, n = 1)
-cat("\n Mô hình Time Series tốt nhất:", best_ts$Model,
-    "với RMSE =", round(best_ts$RMSE, 2),
-    "| MAE =", round(best_ts$MAE, 2),
-    "| MAPE =", round(best_ts$MAPE, 2), "%\n")
 
-#  Biểu đồ so sánh Actual vs Forecast 
+# Biểu đồ so sánh
 comparison_ts <- tibble(
   Index  = seq_along(actual_ts),
   Actual = actual_ts,
@@ -2694,13 +2671,11 @@ p_ts_compare <- ggplot(comparison_ts, aes(x = Index)) +
   theme(legend.position = "bottom")
 
 print(p_ts_compare)
+
 ggsave(here("output", "figures", "p_ts_comparison.png"), p_ts_compare,
        width = 10, height = 5, dpi = 150)
-cat("Đã lưu: output/figures/p_ts_comparison.png\n")
 
-# 7. LƯU KẾT QUẢ
-cat("\n 7. LƯU KẾT QUẢ \n")
-
+# Lưu kết quả rds
 saveRDS(list(
   sarima_model   = fit_arima,
   ets_model      = fit_ets,
@@ -2712,20 +2687,16 @@ saveRDS(list(
   best_model     = best_ts$Model
 ), here("output", "tables", "time_series_results.rds"))
 
-cat("Đã lưu: output/tables/time_series_results.rds\n")
-cat("Biểu đồ đã xuất:\n")
-cat("   • p_ts_decomposition.png  — STL Decomposition\n")
-cat("   • p_ts_sarima_forecast.png — SARIMA Forecast vs Actual\n")
-cat("   • p_ts_ets_forecast.png   — ETS Forecast vs Actual\n")
-cat("   • p_ts_comparison.png     — So sánh SARIMA vs ETS\n")
+# Hiển thị bảng so sánh
+knitr::kable(ts_results, digits = 4, caption = "Bảng so sánh hiệu suất dự báo chuỗi thời gian")
 ```
 
-**Nhận xét:**
-- **Phân tách chuỗi thời gian (STL Decomposition):** Kết quả phân tách chỉ ra chuỗi doanh số trung bình ngày của Rossmann có tính mùa vụ cực kỳ rõ nét theo chu kỳ tuần (7 ngày), thể hiện qua các đỉnh doanh số lặp lại đều đặn vào các ngày trong tuần và giảm sâu vào chủ nhật (do phần lớn cửa hàng đóng cửa). Đồng thời, thành phần xu hướng (trend) cho thấy doanh số có sự tăng trưởng nhẹ vào giai đoạn cuối năm 2014 và duy trì ổn định trong nửa đầu năm 2015. Phần dư (remainder) ghi nhận những đột biến lớn vào tháng 12/2014, phản ánh ảnh hưởng mạnh mẽ của sự kiện mua sắm mùa Giáng sinh.
-- **Mô hình SARIMA:** Nhờ việc tích hợp các thành phần tự hồi quy và trung bình trượt có tính mùa vụ (Seasonal ARIMA), mô hình SARIMA nắm bắt rất tốt các dao động định kỳ hàng tuần. Trên tập dữ liệu Test, đường dự báo của SARIMA bám sát hành vi thực tế của chuỗi số liệu.
-- **Mô hình ETS:** Mô hình làm mịn mũ với các thành phần Sai số, Xu hướng và Mùa vụ (Error, Trend, Seasonal) cũng cho kết quả khả quan. Tuy nhiên, do cấu trúc mô hình ETS có xu hướng làm mịn các biến động cực đoan, nó có thể bỏ lỡ một số đỉnh hoặc đáy doanh thu đột biến so với SARIMA.
-- **So sánh hiệu suất:** Dựa trên các chỉ số đánh giá sai số dự báo trên tập Test (như RMSE, MAE, MAPE), mô hình **SARIMA** cho kết quả vượt trội hơn so với **ETS**, thể hiện qua mức sai số RMSE và MAPE thấp hơn đáng kể.
+**So sánh hiệu suất:**
+- Dựa trên bảng so sánh sai số trên tập Test, mô hình **SARIMA** cho kết quả vượt trội hơn so với **ETS**, thể hiện qua mức sai số RMSE và MAPE thấp hơn đáng kể.
+- Mô hình SARIMA bám sát tốt tính mùa vụ lặp lại tuần hoàn hàng tuần, trong khi ETS có phần san mịn quá mức làm giảm độ nhạy bén với các đỉnh doanh thu.
 
-**Kết luận:**
-- Phương pháp tiếp cận chuỗi thời gian là công cụ bổ trợ đắc lực cho các mô hình học máy (Machine Learning) ở phần trước. Trong khi các mô hình học máy tập trung dự báo doanh số chi tiết cho từng cửa hàng dựa trên các biến thuộc tính cụ thể, phân tích chuỗi thời gian giúp dự báo xu hướng tổng thể của toàn hệ thống trong tương lai.
-- **SARIMA** là mô hình chuỗi thời gian được khuyến nghị để lập kế hoạch dự báo doanh số trung hạn nhờ khả năng mô hình hóa chính xác tính mùa vụ tuần và xu hướng tăng trưởng dài hạn của Rossmann.
+## 7.7. Nhận xét và hàm ý quản trị
+
+- **Hàm ý quản trị:**
+  - Phương pháp tiếp cận chuỗi thời gian là công cụ bổ trợ đắc lực cho các mô hình học máy (Machine Learning) ở phần trước. Trong khi các mô hình học máy tập trung dự báo doanh số chi tiết cho từng cửa hàng dựa trên các biến thuộc tính cụ thể, phân tích chuỗi thời gian giúp ban lãnh đạo dự báo xu hướng tổng thể của toàn hệ thống trong tương lai.
+  - **SARIMA** được khuyến nghị lựa chọn để lập kế hoạch dự báo doanh số trung hạn, giúp chủ động điều phối chuỗi cung ứng tổng thể, chuẩn bị ngân sách và nguồn lực vĩ mô trước các thời kỳ cao điểm.
