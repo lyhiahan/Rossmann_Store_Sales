@@ -1,6 +1,6 @@
 # 🏪 Rossmann Store Sales Analysis
 
-> **Đồ án cuối kỳ** — Lập trình R cho phân tích dữ liệu
+> **Đồ án cuối kỳ — Nhóm 4** · Lập trình R cho phân tích dữ liệu
 
 ---
 
@@ -14,13 +14,13 @@ Dự án phân tích và dự đoán doanh số bán hàng của chuỗi cửa h
 
 ## 👥 Thành viên nhóm
 
-| STT | Họ và tên | Vai trò | File phụ trách |
-|:---:|-----------|---------|----------------|
-| 1 | **Quốc Anh** | Nhóm trưởng · Data Engineer · Báo cáo | `00_setup.R`, `utils.R`, `data_pipeline.R` |
-| 2 | **Thanh Phúc** | Data Analyst · EDA · Slide | `eda.R` |
-| 3 | **Gia Hân** | Data Visualization · Statistical Testing | `visualization.Rmd`, `statistical_tests.R` |
-| 4 | **Đức Thắng** | Machine Learning Engineer | `modeling.R` |
-| 5 | **Thành Tài** | Model Evaluation · Time Series | `evaluation.R`, `time_series.R` |
+| STT | Họ và tên | Vai trò |
+|:---:|-----------|---------|
+| 1 | **Đinh Quốc Anh** | Trưởng nhóm · Review & merge code · Setup Environment, Utility Functions, Statistical Testing |
+| 2 | **Lý Gia Hân** | Tạo repo · Data Visualization |
+| 3 | **Bùi Thanh Phúc** | Exploratory Data Analysis |
+| 4 | **Đỗ Thanh Thành Tài** | Time Series Analysis & Forecasting |
+| 5 | **Bùi Phạm Đức Thắng** | Modeling & Hyperparameter Tuning |
 
 ---
 
@@ -44,11 +44,11 @@ Rossmann_Store_Sales/
 │   ├── utils.R                                 # Hàm tiện ích dùng chung
 │   ├── data_pipeline.R                         # ETL pipeline (chống data leakage)
 │   ├── statistical_tests.R                     # Kiểm định thống kê
-│   ├── eda.R                                   # Phân tích khám phá dữ liệu
+│   ├── eda.R                                   # Phân tích khám phá dữ liệu (EDA)
 │   ├── visualization.R                         # Trực quan hóa dữ liệu
 │   ├── visualization.Rmd                       # 10 biểu đồ trực quan hóa nâng cao
-│   ├── modeling.R                              # 3 mô hình ML + tuning
-│   ├── time_series.R                           # ARIMA, ETS, STL Decomposition
+│   ├── modeling.R                              # 3 mô hình ML + Logistic Regression + tuning
+│   ├── time_series.R                           # SARIMA, ETS, STL Decomposition
 │   ├── evaluation.R                            # Đánh giá & so sánh mô hình
 │   └── Rossmann_Store_Sales_Analysis.Rmd       # File RMD tổng hợp toàn bộ (all-in-one)
 │
@@ -65,12 +65,13 @@ Rossmann_Store_Sales/
 
 ### Câu hỏi nghiên cứu
 
-1. Doanh số 50 cửa hàng Rossmann thay đổi như thế nào trong 12 tháng?
-2. Khuyến mãi (Promo) có tác động đáng kể đến doanh số không?
-3. Doanh thu có khác nhau giữa các loại cửa hàng (StoreType)?
-4. Ngày lễ và nghỉ học ảnh hưởng đến doanh số ra sao?
-5. Khoảng cách đối thủ cạnh tranh có tương quan với doanh số?
-6. Mô hình nào dự đoán doanh số tốt nhất?
+| Mã | Câu hỏi |
+|----|---------|
+| Q1 | Loại cửa hàng (Store Type) ảnh hưởng thế nào đến doanh số? |
+| Q2 | Khuyến mãi (Promo) có tác động đáng kể đến doanh số không? |
+| Q3 | Doanh số thay đổi theo ngày trong tuần và tháng ra sao? |
+| Q4 | Mối quan hệ giữa số lượng khách và doanh số mạnh đến mức nào? |
+| Q5 | Mô hình nào dự đoán doanh số tốt nhất? |
 
 ### Pipeline xử lý dữ liệu
 
@@ -95,19 +96,19 @@ train.csv + store.csv
  └───────┘     └───────────┘
 ```
 
-### Phương pháp phân tích
+### Phân công chi tiết
 
-| Giai đoạn | Nội dung | Kỹ thuật | File |
-|-----------|----------|----------|------|
-| **Setup** | Cài packages, theme, bảng màu | `here`, `ggplot2` | `00_setup.R` |
-| **Utils** | Hàm dùng chung: `clean_rossmann()`, `get_summary_stats()` | `dplyr` | `utils.R` |
-| **Data Pipeline** | Merge, filter, clean, split 70/30, feature engineering | `dplyr`, `janitor`, `lubridate` | `data_pipeline.R` |
-| **Kiểm định thống kê** | ANOVA, Welch t-test, Kruskal-Wallis, Spearman, Bootstrap CI | `stats`, `effectsize`, `car` | `statistical_tests.R` |
-| **EDA** | Thống kê mô tả, phân phối, tương quan, outlier | `moments`, `ggplot2` | `eda.R` |
-| **Trực quan hóa** | 10 biểu đồ nâng cao (Pareto, BCG, Waterfall, Dumbbell,...) | `ggplot2`, `plotly`, `ggcorrplot` | `visualization.Rmd` |
-| **Mô hình hóa** | Linear Regression, Random Forest, XGBoost + Grid Search | `caret`, `ranger`, `xgboost` | `modeling.R` |
-| **Chuỗi thời gian** | STL Decomposition, ARIMA, ETS, Forecast | `forecast` | `time_series.R` |
-| **Đánh giá** | RMSE, MAE, R², RMSPE, Actual vs Predicted, Residuals | `Metrics` | `evaluation.R` |
+| Phần | Nội dung | Phụ trách | File |
+|------|----------|-----------|------|
+| **Setup** | Cài packages, theme, bảng màu, config | Đinh Quốc Anh | `00_setup.R` |
+| **Utils** | Hàm dùng chung: `clean_rossmann()`, `get_summary_stats()` | Đinh Quốc Anh | `utils.R` |
+| **Data Pipeline** | Merge, filter, clean, split 70/30, feature engineering | Đinh Quốc Anh | `data_pipeline.R` |
+| **Statistical Testing** | Shapiro-Wilk, ANOVA, Welch t-test, Kruskal-Wallis, Wilcoxon, Spearman, Pearson, Chi-square, Bootstrap CI | Đinh Quốc Anh | `statistical_tests.R` |
+| **EDA** | Thống kê mô tả, phân phối, tương quan, outlier | Bùi Thanh Phúc | `eda.R` |
+| **Data Visualization** | 19 biểu đồ nâng cao (Pareto, BCG, Waterfall, Dumbbell,...) | Lý Gia Hân | `visualization.R`, `visualization.Rmd` |
+| **Modeling** | Linear Regression, Random Forest, XGBoost, Logistic Regression + Grid Search | Bùi Phạm Đức Thắng | `modeling.R` |
+| **Time Series** | STL Decomposition, SARIMA, ETS, Forecast | Đỗ Thanh Thành Tài | `time_series.R` |
+| **Evaluation** | RMSE, MAE, R², RMSPE, Actual vs Predicted, Residuals, Feature Importance | Đỗ Thanh Thành Tài | `evaluation.R` |
 
 ---
 
@@ -159,7 +160,7 @@ source("R/evaluation.R")
 rmarkdown::render("R/Rossmann_Store_Sales_Analysis.Rmd")
 ```
 
-> ⚠️ **Lưu ý**: File tổng hợp chạy toàn bộ pipeline từ đầu. Thời gian render khoảng 15–20 phút do bao gồm grid search XGBoost (9 combos) và Random Forest tuning.
+> ⚠️ **Lưu ý**: File tổng hợp chạy toàn bộ pipeline từ đầu. Thời gian render khoảng 15–20 phút do bao gồm grid search XGBoost và Random Forest tuning.
 
 ---
 
@@ -169,11 +170,13 @@ rmarkdown::render("R/Rossmann_Store_Sales_Analysis.Rmd")
 
 | Kiểm định | Kết quả | Ý nghĩa |
 |-----------|---------|----------|
-| ANOVA: Sales ~ StoreType | p < 0.001 | Doanh thu khác biệt giữa các loại cửa hàng |
+| ANOVA / Welch ANOVA: Sales ~ StoreType | p < 0.001 | Doanh thu khác biệt giữa các loại cửa hàng |
 | Welch t-test: Sales ~ Promo | p < 0.001 | Khuyến mãi tăng doanh thu có ý nghĩa thống kê |
-| Spearman: Sales ~ CompDist | \|ρ\| ≈ 0 | Khoảng cách đối thủ không ảnh hưởng đáng kể |
+| Pearson/Spearman: Sales ~ Customers | r ≈ 0.89 | Lượng khách là yếu tố quyết định doanh thu |
+| Spearman: Sales ~ CompetitionDistance | \|ρ\| ≈ 0 | Khoảng cách đối thủ không ảnh hưởng đáng kể |
+| Chi-square: Promo × DayOfWeek | p < 0.05 | Lịch khuyến mãi không phân bố ngẫu nhiên theo ngày |
 
-### So sánh mô hình
+### So sánh mô hình dự báo
 
 | Mô hình | RMSE | MAE | R² | RMSPE |
 |---------|------|-----|----|-------|
@@ -181,7 +184,17 @@ rmarkdown::render("R/Rossmann_Store_Sales_Analysis.Rmd")
 | Random Forest | Trung bình | Trung bình | Cao | Trung bình |
 | **XGBoost** | **Thấp nhất** | **Thấp nhất** | **Cao nhất** | **Thấp nhất** |
 
-> 🏆 **XGBoost** là mô hình tốt nhất trên tất cả các chỉ số đánh giá.
+> 🏆 **XGBoost** là mô hình dự báo doanh số tốt nhất trên tất cả các chỉ số đánh giá.
+
+### Phân tích chuỗi thời gian
+
+| Mô hình | Đặc điểm |
+|---------|----------|
+| STL Decomposition | Phân tách xu hướng, mùa vụ và phần dư |
+| SARIMA | Nắm bắt tốt dao động định kỳ hàng tuần, bám sát dữ liệu thực tế |
+| ETS | San mịn mũ tự động, ước lượng nhanh |
+
+> **SARIMA** được khuyến nghị cho dự báo doanh số trung hạn ở cấp hệ thống.
 
 ---
 
@@ -193,7 +206,7 @@ rmarkdown::render("R/Rossmann_Store_Sales_Analysis.Rmd")
 | Trực quan hóa | `ggplot2`, `plotly`, `ggcorrplot`, `corrplot`, `scales`, `gridExtra`, `RColorBrewer` |
 | Mô hình hóa | `caret`, `randomForest`, `ranger`, `xgboost`, `Metrics` |
 | Chuỗi thời gian | `forecast` |
-| Thống kê | `psych`, `moments`, `effectsize`, `car` |
+| Thống kê | `psych`, `moments`, `effectsize`, `car`, `rstatix` |
 | Báo cáo | `rmarkdown`, `knitr`, `kableExtra` |
 
 ---
@@ -202,10 +215,11 @@ rmarkdown::render("R/Rossmann_Store_Sales_Analysis.Rmd")
 
 Dự án áp dụng nguyên tắc **chia tập dữ liệu TRƯỚC khi tính toán thống kê**:
 
-1. **Split trước** → `train_data` (70%) và `val_data` (30%) bằng random sampling
+1. **Split trước** → `train_data` (70%) và `val_data` (30%) bằng random sampling (`seed = 42`)
 2. **Tính stats trên train** → `median(competition_distance)`, IQR bounds
 3. **Áp dụng stats cho cả hai** → đảm bảo validation set không bị "nhìn trước"
-4. **`sales_per_customer`** → CHỈ dùng cho EDA, **TUYỆT ĐỐI KHÔNG** đưa vào model (Target Leakage)
+4. **`sales_per_customer`** → CHỈ dùng cho EDA, **không** đưa vào model (Target Leakage)
+5. **Time Series** → sử dụng chronological split 80/20 riêng biệt, tránh trộn thông tin tương lai
 
 ---
 
