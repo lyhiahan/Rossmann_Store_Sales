@@ -294,7 +294,6 @@ stat_tests_results <- list(
   eta_squared        = eta_result,
   # 2. t-test / Wilcoxon
   ttest_promo        = ttest_promo,
-  ttest_log_promo    = ttest_log,
   cohen_d_promo      = cohen_result,
   wilcoxon_promo     = wilcox_result,
   ci_promo_diff      = ttest_promo$conf.int,
